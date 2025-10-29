@@ -9,3 +9,13 @@
     height: auto;
 }
 
+.action-buttons {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.2s linear;
+}
+
+tr:hover .action-buttons {
+    visibility: visible;
+    opacity: 1;
+}

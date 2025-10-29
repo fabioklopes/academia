@@ -1,19 +1,6 @@
 {% extends 'base.html' %}
-
-{% block styles %}
-<style>
-    .action-buttons {
-        visibility: hidden;
-        opacity: 0;
-        transition: visibility 0s, opacity 0.2s linear;
-    }
-
-    tr:hover .action-buttons {
-        visibility: visible;
-        opacity: 1;
-    }
-</style>
-{% endblock %}
+{% load static %}
+{% block title %}Lista de Alunos{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -26,9 +13,9 @@
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th scope="col">ALUNO</th>
-                        <th scope="col">FAIXA</th>
-                        <th scope="col">GRAUS</th>
+                        <th scope="col">Foto</th>
+                        <th scope="col">Nome Completo</th>
+                        <th scope="col"></th>
                         <th scope="col">Contato</th>
                         <th scope="col" class="text-end">Ações</th>
                     </tr>
@@ -42,16 +29,24 @@
                             {% else %}
                                 <span class="d-inline-block rounded-circle bg-secondary" style="width: 40px; height: 40px;"></span>
                             {% endif %}
-                            &nbsp;
-                            {{ student.first_name }} {{ student.last_name }}
                         </td>
-                        <td>{{ student.get_current_belt_display }}</td>
-                        <td>{{ student.get_current_degree_display }}</td>
+                        <td>{{ student.first_name }} {{ student.last_name }}</td>
+                        <td>
+                            {% if student.current_belt %}
+                                {% if student.current_degree == '0' %}
+                                    <img src="{% static 'medias/'|add:student.current_belt|add:'.png' %}" alt="{{ student.get_current_belt_display }}" width="120">
+                                {% else %}
+                                    <img src="{% static 'medias/'|add:student.current_belt|add:'_'|add:student.current_degree|add:'_DEGREES.png' %}" alt="{{ student.get_current_belt_display }} - {{ student.get_current_degree_display }}" width="120">
+                                {% endif %}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
                         <td>{{ student.phone }}</td>
                         <td class="text-end">
                             <div class="action-buttons">
                                 <a href="{% url 'edit_student' user_id=student.id %}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                <a href="#" class="btn btn-outline-danger btn-sm" onclick="confirmDelete({{ student.id }})">Remover</a>
+                                <a href="{% url 'delete_student' user_id=student.id %}" class="btn btn-outline-danger btn-sm">Remover</a>
                             </div>
                         </td>
                     </tr>
@@ -65,15 +60,4 @@
         </div>
     </div>
 </div>
-
-<!-- Modal de Confirmação de Exclusão (opcional, mas recomendado) -->
-<script>
-function confirmDelete(studentId) {
-    if (confirm("Tem certeza que deseja remover este aluno?")) {
-        // Aqui você pode adicionar a lógica para redirecionar para uma view de remoção
-        // Ex: window.location.href = `/api/alunos/removeraluno/${studentId}/`;
-        alert("Aluno " + studentId + " removido (implementar a view de remoção)");
-    }
-}
-</script>
 {% endblock %}

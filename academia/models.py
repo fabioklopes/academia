@@ -9,28 +9,28 @@ class User(models.Model):
     )
 
     BELTS = (
-        ('Branca', 'Branca'),
+        ('WHITE', 'Branca'),
         
-        ('CinzaBranca', 'Cinza / Branca'),
-        ('Cinza', 'Cinza'),
-        ('CinzaPreta', 'Cinza / Preta'),
+        ('GRAY_WHITE', 'Cinza e Branca'),
+        ('GRAY', 'Cinza'),
+        ('GRAY_BLACK', 'Cinza e Preta'),
 
-        ('AmarelaBranca', 'Amarela / Branca'),
-        ('Amarela', 'Amarela'),
-        ('AmarelaPreta', 'Amarela / Preta'),
+        ('YELLOW_WHITE', 'Amarela e Branca'),
+        ('YELLOW', 'Amarela'),
+        ('YELLOW_BLACK', 'Amarela e Preta'),
 
-        ('LaranjaBranca', 'Laranja / Branca'),
-        ('Laranja', 'Laranja'),
-        ('LaranjaPreta', 'Laranja / Preta'),
+        ('ORANGE_WHITE', 'Laranja e Branca'),
+        ('ORANGE', 'Laranja'),
+        ('ORANGE_BLACK', 'Laranja e Preta'),
 
-        ('VerdeBranca', 'Verde / Branca'),
-        ('Verde', 'Verde'),
-        ('VerdePreta', 'Verde / Preta'),
+        ('GREEN_WHITE', 'Verde e Branca'),
+        ('GREEN', 'Verde'),
+        ('GREEN_BLACK', 'Verde e Preta'),
         
-        ('Azul', 'Azul'),
-        ('Roxa', 'Roxa'),
-        ('Marrom', 'Marrom'),
-        ('Preta', 'Preta'),
+        ('BLUE', 'Azul'),
+        ('PURPLE', 'Roxa'),
+        ('BROWN', 'Marrom'),
+        ('BLACK', 'Preta'),
     )
 
     DEGREES = (
@@ -45,7 +45,7 @@ class User(models.Model):
 
     first_name = models.CharField(max_length=45, blank=False, null=False)
     last_name = models.CharField(max_length=50, blank=False, null=False)
-    identification = models.CharField(max_length=11, blank=False, null=False)
+    identification = models.CharField(max_length=11, unique=True, blank=False, null=False)
     image_profile = models.ImageField(upload_to='profiles/', blank=True, null=True)
     birthday = models.DateField()
     email = models.CharField(max_length=80, unique=True, blank=False, null=False)
@@ -53,9 +53,9 @@ class User(models.Model):
     access_group = models.CharField(max_length=3, choices=ACCESS_GROUP, blank=False, null=False, default='STU')
     phone = models.CharField(max_length=11, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
-    last_graduation = models.DateField(blank=True, null=True)
-    current_belt = models.CharField(max_length=20, choices=BELTS, blank=False, null=False)
-    current_degree = models.CharField(max_length=1, choices=DEGREES, blank=False, null=False)
+    current_belt = models.CharField(max_length=20, choices=BELTS, blank=True, null=True)
+    current_degree = models.CharField(max_length=1, choices=DEGREES, blank=True, null=True)
+    status = models.IntegerField(default=1) # 1 para ativo, 0 para inativo
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

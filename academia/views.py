@@ -12,9 +12,8 @@ def login(request):
 def logout(request):
     return render(request, 'logout.html')
 
-
 def list_students(request):
-    students = User.objects.order_by('first_name')
+    students = User.objects.filter(access_group='STU', status=1).order_by('first_name')
     context = {
         'students': students
     }
@@ -22,7 +21,6 @@ def list_students(request):
 
 def new_student(request):
     if request.method == 'POST':
-        # Obter dados do formulário
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         identification = request.POST.get('identification')
@@ -34,18 +32,16 @@ def new_student(request):
         start_date = request.POST.get('start_date')
         image_profile = request.FILES.get('image_profile')
 
-        # Tratar campos de data opcionais
         if not start_date:
             start_date = None
 
-        # Criar e salvar o novo aluno
         new_user = User(
             first_name=first_name,
             last_name=last_name,
             identification=identification,
             birthday=birthday,
             email=email,
-            keypass=make_password(identification),  # Usando o CPF como senha padrão
+            keypass=make_password(identification),
             access_group='STU',
             phone=phone,
             start_date=start_date,
@@ -54,18 +50,14 @@ def new_student(request):
             image_profile=image_profile
         )
         new_user.save()
+        return redirect('list_students')
 
-        # Redirecionar para uma página de sucesso
-        return redirect('index')
-
-    # Se for um GET, renderiza o formulário
     return render(request, 'new_student.html')
 
 def edit_student(request, user_id):
-    student = get_object_or_404(User, pk=user_id, access_group='STU')
+    student = get_object_or_404(User, pk=user_id, access_group='STU', status=1)
 
     if request.method == 'POST':
-        # Atualizar dados do aluno
         student.first_name = request.POST.get('first_name')
         student.last_name = request.POST.get('last_name')
         student.identification = request.POST.get('identification')
@@ -76,7 +68,6 @@ def edit_student(request, user_id):
         student.current_degree = request.POST.get('current_degree')
         start_date = request.POST.get('start_date')
 
-        # Tratar campos de data opcionais
         if not start_date:
             student.start_date = None
         else:
@@ -86,9 +77,24 @@ def edit_student(request, user_id):
             student.image_profile = request.FILES.get('image_profile')
 
         student.save()
-        return redirect('index') # Ou para a página de detalhes do aluno
+        return redirect('list_students')
+
+    context = {
+        'student': student,
+        'belts': User.BELTS,
+        'degrees': User.DEGREES
+    }
+    return render(request, 'edit_student.html', context)
+
+def delete_student(request, user_id):
+    student = get_object_or_404(User, pk=user_id, access_group='STU')
+
+    if request.method == 'POST':
+        student.status = 0
+        student.save()
+        return redirect('list_students')
 
     context = {
         'student': student
     }
-    return render(request, 'edit_student.html', context)
+    return render(request, 'delete_student.html', context)

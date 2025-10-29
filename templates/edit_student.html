@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% block title %}Editar Aluno{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -60,7 +59,7 @@
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
                                     <select class="form-select" id="current_belt" name="current_belt" aria-label="Faixa Atual">
-                                        {% for belt_key, belt_value in student.BELTS %}
+                                        {% for belt_key, belt_value in belts %}
                                             <option value="{{ belt_key }}" {% if student.current_belt == belt_key %}selected{% endif %}>{{ belt_value }}</option>
                                         {% endfor %}
                                     </select>
@@ -73,7 +72,7 @@
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
                                     <select class="form-select" id="current_degree" name="current_degree" aria-label="Graus na Faixa">
-                                        {% for degree_key, degree_value in student.DEGREES %}
+                                        {% for degree_key, degree_value in degrees %}
                                             <option value="{{ degree_key }}" {% if student.current_degree == degree_key %}selected{% endif %}>{{ degree_value }}</option>
                                         {% endfor %}
                                     </select>
