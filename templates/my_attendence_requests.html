@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Minhas Solicitações de Presença</h3>
+        <a href="{% url 'request_attendence' %}" class="btn btn-primary">Nova Solicitação</a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Turma</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                    <tr>
+                        <td>{{ request.class_obj.class_name }}</td>
+                        <td>{{ request.attendence_date|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge bg-{% if request.status == 'PEN' %}warning{% elif request.status == 'APR' %}success{% elif request.status == 'REJ' %}danger{% else %}secondary{% endif %}">
+                                {{ request.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if request.status == 'PEN' %}
+                                <a href="{% url 'cancel_attendence_request' request.id %}" class="btn btn-sm btn-outline-danger">Cancelar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">Nenhuma solicitação encontrada.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

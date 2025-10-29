@@ -15,7 +15,7 @@
                     <tr>
                         <th scope="col">Foto</th>
                         <th scope="col">Nome Completo</th>
-                        <th scope="col"></th>
+                        <th scope="col">Faixa</th>
                         <th scope="col">Contato</th>
                         <th scope="col" class="text-end">Ações</th>
                     </tr>
@@ -34,9 +34,9 @@
                         <td>
                             {% if student.current_belt %}
                                 {% if student.current_degree == '0' %}
-                                    <img src="{% static 'medias/'|add:student.current_belt|add:'.png' %}" alt="{{ student.get_current_belt_display }}" width="120">
+                                    <img src="{% static 'medias/'|add:student.current_belt|add:'.png' %}" alt="{{ student.get_current_belt_display }}" width="150">
                                 {% else %}
-                                    <img src="{% static 'medias/'|add:student.current_belt|add:'_'|add:student.current_degree|add:'_DEGREES.png' %}" alt="{{ student.get_current_belt_display }} - {{ student.get_current_degree_display }}" width="120">
+                                    <img src="{% static 'medias/'|add:student.current_belt|add:'_'|add:student.current_degree|add:'_DEGREES.png' %}" alt="{{ student.get_current_belt_display }} - {{ student.get_current_degree_display }}" width="150">
                                 {% endif %}
                             {% else %}
                                 N/A

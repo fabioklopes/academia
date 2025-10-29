@@ -1,16 +1,42 @@
 import datetime
+
+from django.contrib.auth import logout, login
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password
-from .models import User
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils import timezone
+from .models import User, Class, AttendenceRequest
+
 
 def index(request):
-    return render(request, 'index.html')
+    students = User.objects.all().filter(access_group='STU', status=1)
+    professors = User.objects.all().filter(access_group='PRO', status=1)
 
-def login(request):
+    context = {
+        'students': students,
+        'professors': professors,
+    }
+
+    return render(request, 'index.html', context)
+
+def login_view(request):
+    login(request)
     return render(request, 'login.html')
 
-def logout(request):
-    return render(request, 'logout.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('index')
+
+
+# --- FUNÇÕES DE VERIFICAÇÃO DE GRUPO ---
+def is_student(user):
+    return user.is_authenticated and user.access_group == 'STU'
+
+def is_teacher(user):
+    return user.is_authenticated and user.access_group == 'PRO'
+
+# --- VIEWS DE ALUNOS (CRUD) ---
 
 def list_students(request):
     students = User.objects.filter(access_group='STU', status=1).order_by('first_name')
@@ -35,7 +61,7 @@ def new_student(request):
         if not start_date:
             start_date = None
 
-        new_user = User(
+        new_user = User.objects.create(
             first_name=first_name,
             last_name=last_name,
             identification=identification,
@@ -49,7 +75,6 @@ def new_student(request):
             current_degree=current_degree,
             image_profile=image_profile
         )
-        new_user.save()
         return redirect('list_students')
 
     return render(request, 'new_student.html')
@@ -98,3 +123,96 @@ def delete_student(request, user_id):
         'student': student
     }
     return render(request, 'delete_student.html', context)
+
+# --- VIEWS DE SOLICITAÇÃO DE PRESENÇA (ALUNO) ---
+
+@login_required
+@user_passes_test(is_student)
+def request_attendence(request):
+    if request.method == 'POST':
+        class_id = request.POST.get('class_id')
+        dates = request.POST.getlist('dates')
+        reason = request.POST.get('reason')
+        class_obj = get_object_or_404(Class, pk=class_id)
+
+        for date_str in dates:
+            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+            AttendenceRequest.objects.create(
+                student=request.user,
+                class_obj=class_obj,
+                attendence_date=date,
+                reason=reason
+            )
+        return redirect('my_attendence_requests')
+
+    classes = Class.objects.filter(status=True)
+    context = {
+        'classes': classes
+    }
+    return render(request, 'request_attendence.html', context)
+
+@login_required
+@user_passes_test(is_student)
+def my_attendence_requests(request):
+    requests = AttendenceRequest.objects.filter(student=request.user)
+    context = {
+        'requests': requests
+    }
+    return render(request, 'my_attendence_requests.html', context)
+
+@login_required
+@user_passes_test(is_student)
+def cancel_attendence_request(request, request_id):
+    att_request = get_object_or_404(AttendenceRequest, pk=request_id, student=request.user, status='PEN')
+    att_request.status = 'CAN'
+    att_request.save()
+    return redirect('my_attendence_requests')
+
+# --- VIEWS DE GERENCIAMENTO DE PRESENÇA (PROFESSOR) ---
+
+@login_required
+@user_passes_test(is_teacher)
+def teacher_dashboard(request):
+    pending_requests_count = AttendenceRequest.objects.filter(status='PEN').count()
+    active_students_count = User.objects.filter(access_group='STU', status=1).count()
+    context = {
+        'pending_requests_count': pending_requests_count,
+        'active_students_count': active_students_count,
+    }
+    return render(request, 'teacher_dashboard.html', context)
+
+@login_required
+@user_passes_test(is_teacher)
+def list_attendence_requests(request):
+    pending_requests = AttendenceRequest.objects.filter(status='PEN')
+    processed_requests = AttendenceRequest.objects.filter(processed_by=request.user).exclude(status='PEN')
+    context = {
+        'pending_requests': pending_requests,
+        'processed_requests': processed_requests
+    }
+    return render(request, 'list_attendence_requests.html', context)
+
+@login_required
+@user_passes_test(is_teacher)
+def process_attendence_request(request, request_id):
+    att_request = get_object_or_404(AttendenceRequest, pk=request_id, status='PEN')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        rejection_reason = request.POST.get('rejection_reason')
+
+        if action == 'approve':
+            att_request.status = 'APR'
+        elif action == 'reject':
+            att_request.status = 'REJ'
+            att_request.rejection_reason = rejection_reason
+        
+        att_request.processed_by = request.user
+        att_request.processed_at = timezone.now()
+        att_request.save()
+        return redirect('list_attendence_requests')
+
+    context = {
+        'request': att_request
+    }
+    return render(request, 'process_attendence_request.html', context)

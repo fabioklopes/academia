@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3>Solicitações de Presença Pendentes</h3>
+    <div class="card mb-4">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Turma</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in pending_requests %}
+                    <tr>
+                        <td>{{ request.student.first_name }} {{ request.student.last_name }}</td>
+                        <td>{{ request.class_obj.class_name }}</td>
+                        <td>{{ request.attendence_date|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'process_attendence_request' request.id %}" class="btn btn-sm btn-primary">Analisar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">Nenhuma solicitação pendente.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h3>Minhas Solicitações Processadas</h3>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Turma</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in processed_requests %}
+                    <tr>
+                        <td>{{ request.student.first_name }} {{ request.student.last_name }}</td>
+                        <td>{{ request.class_obj.class_name }}</td>
+                        <td>{{ request.attendence_date|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge bg-{% if request.status == 'APR' %}success{% else %}danger{% endif %}">
+                                {{ request.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">Nenhuma solicitação processada por você.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

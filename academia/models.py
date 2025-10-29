@@ -1,7 +1,8 @@
 from django.db import models
+from django.utils import timezone
 
 class User(models.Model):
-
+    # ... (código do modelo User inalterado) ...
     ACCESS_GROUP = (
         ('ADM', 'Administradores'),
         ('PRO', 'Professores'),
@@ -11,21 +12,21 @@ class User(models.Model):
     BELTS = (
         ('WHITE', 'Branca'),
         
-        ('GRAY_WHITE', 'Cinza e Branca'),
+        ('GRAY_WHITE', 'Cinza / Branca'),
         ('GRAY', 'Cinza'),
-        ('GRAY_BLACK', 'Cinza e Preta'),
+        ('GRAY_BLACK', 'Cinza / Preta'),
 
-        ('YELLOW_WHITE', 'Amarela e Branca'),
+        ('YELLOW_WHITE', 'Amarela / Branca'),
         ('YELLOW', 'Amarela'),
-        ('YELLOW_BLACK', 'Amarela e Preta'),
+        ('YELLOW_BLACK', 'Amarela / Preta'),
 
-        ('ORANGE_WHITE', 'Laranja e Branca'),
+        ('ORANGE_WHITE', 'Laranja / Branca'),
         ('ORANGE', 'Laranja'),
-        ('ORANGE_BLACK', 'Laranja e Preta'),
+        ('ORANGE_BLACK', 'Laranja / Preta'),
 
-        ('GREEN_WHITE', 'Verde e Branca'),
+        ('GREEN_WHITE', 'Verde / Branca'),
         ('GREEN', 'Verde'),
-        ('GREEN_BLACK', 'Verde e Preta'),
+        ('GREEN_BLACK', 'Verde / Preta'),
         
         ('BLUE', 'Azul'),
         ('PURPLE', 'Roxa'),
@@ -67,8 +68,8 @@ class User(models.Model):
     def __str__(self):
         return f"({self.access_group}) {self.first_name} {self.last_name}"
 
-
 class Group_Role(models.Model):
+    # ... (código do modelo Group_Role inalterado) ...
     name = models.CharField(max_length=25, unique=True, blank=False, null=False)
     description = models.TextField(blank=True, null=True)
     permissions = models.JSONField(blank=True, null=True, default=dict)
@@ -82,8 +83,8 @@ class Group_Role(models.Model):
     def __str__(self):
         return f"{self.name} - {self.description}"
 
-
 class Class(models.Model):
+    # ... (código do modelo Class inalterado) ...
     class_name = models.CharField(max_length=50, unique=True, blank=False, null=False)
     description = models.TextField(blank=True, null=True)
     status = models.BooleanField(default=True, verbose_name='Turma ativa?')
@@ -98,30 +99,30 @@ class Class(models.Model):
     def __str__(self):
         return f"{self.class_name} - {self.description}"
 
-
 class AttendenceRequest(models.Model):
+    STATUS_CHOICES = (
+        ('PEN', 'Pendente'),
+        ('APR', 'Aprovado'),
+        ('REJ', 'Rejeitado'),
+        ('CAN', 'Cancelado'),
+    )
+
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'access_group': 'STU'})
-    attendence_date = models.DateField()
-    reason = models.TextField(blank=True, null=True)
-    attendence_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='attendence_by', limit_choices_to={'access_group': 'PRO'})
+    class_obj = models.ForeignKey(Class, on_delete=models.CASCADE, verbose_name="Turma")
+    attendence_date = models.DateField(verbose_name="Data da Solicitação")
+    reason = models.TextField(blank=True, null=True, verbose_name="Observação")
+    status = models.CharField(max_length=3, choices=STATUS_CHOICES, default='PEN')
+    
+    processed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='processed_requests', limit_choices_to={'access_group': 'PRO'})
+    processed_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, null=True, verbose_name="Motivo da Rejeição")
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Solicitação de Presença'
         verbose_name_plural = 'Solicitações de Presenças'
+        ordering = ['-attendence_date']
     
     def __str__(self):
-        return f"Presença de {self.student} em {self.attendence_date}"
-
-
-class AttendenceAproval(models.Model):
-    attendence_request = models.ForeignKey(AttendenceRequest, on_delete=models.CASCADE)
-    approved = models.BooleanField(default=False)
-    approval_date = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = 'Aprovação de Presença'
-        verbose_name_plural = 'Aprovações de Presenças'
-    
-    def __str__(self):
-        status = "Aprovado" if self.approved else "Rejeitado"
-        return f"{status} - {self.attendence_request}"
+        return f"Solicitação de {self.student} para {self.class_obj} em {self.attendence_date}"

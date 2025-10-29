@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Solicitar Presença</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="class_id" class="form-label">Selecione a Turma</label>
+                            <select class="form-select" id="class_id" name="class_id" required>
+                                <option selected disabled>Escolha uma turma...</option>
+                                {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.class_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dates" class="form-label">Selecione as Datas</label>
+                            <input type="text" class="form-control" id="dates" name="dates" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Observação (Opcional)</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Enviar Solicitação</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    flatpickr("#dates", {
+        mode: "multiple",
+        dateFormat: "Y-m-d",
+        minDate: "today"
+    });
+</script>
+{% endblock %}

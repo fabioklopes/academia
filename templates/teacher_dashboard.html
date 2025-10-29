@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Painel do Professor</h2>
+    <div class="row">
+        <!-- Card de Solicitações de Presença -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Solicitações de Presença</h5>
+                    <p class="card-text">Acompanhe e gerencie os pedidos de presença dos alunos.</p>
+                    {% if pending_requests_count > 0 %}
+                        <div class="alert alert-warning mt-auto">
+                            <strong>{{ pending_requests_count }}</strong> solicitação{{ pending_requests_count|pluralize }} pendente{{ pending_requests_count|pluralize }}.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success mt-auto">
+                            Nenhuma solicitação pendente.
+                        </div>
+                    {% endif %}
+                    <a href="{% url 'list_attendence_requests' %}" class="btn btn-primary stretched-link mt-2">Gerenciar Solicitações</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de Lista de Alunos -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Alunos</h5>
+                    <p class="card-text">Visualize a lista de todos os alunos ativos na academia.</p>
+                    <div class="alert alert-info mt-auto">
+                        <strong>{{ active_students_count }}</strong> aluno{{ active_students_count|pluralize }} ativo{{ active_students_count|pluralize }}.
+                    </div>
+                    <a href="{% url 'list_students' %}" class="btn btn-secondary stretched-link mt-2">Ver Lista de Alunos</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adicione mais cards aqui para outras funcionalidades -->
+
+    </div>
+</div>
+{% endblock %}
