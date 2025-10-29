@@ -1,0 +1,93 @@
+{% extends "template.html" %}
+{% block title %}Página Inicial{% endblock %}
+
+{% block content %}
+
+<div class="container row justify-content-center gap-3 mt-4">
+
+    <!-- [Aprovação de Presenças dos Alunos] -->
+    <div class="card text-bg-warning text-center mb-3" style="max-width: 18rem;">
+        <div class="card-header">
+            <h4>
+                <i class="bi bi-calendar-check-fill"></i> <br>
+                Presenças de Alunos
+            </h4>
+        </div>
+        <div class="card-body text-center">
+            <p class="card-title">
+                Aguardando aprovação... <br>
+                <h1>19</h1>
+            </p>
+        </div>
+    </div>
+
+
+    <!-- [Total de Alunos Ativos] -->
+    <div class="card text-bg-primary text-center mb-3" style="max-width: 18rem;">
+        <div class="card-header">
+            <h4>
+                <i class="bi bi-people-fill"></i> <br>
+                Total de Alunos
+            </h4>
+        </div>
+        <div class="card-body text-center">
+            <p class="card-title">
+                Total de Alunos Ativos <br>
+                <h1>86</h1>
+            </p>
+        </div>
+    </div>
+
+
+    <!-- [Total de Professores] -->
+    <div class="card text-bg-light text-center mb-3" style="max-width: 18rem;">
+        <div class="card-header">
+            <h4>
+                <i class="bi bi-mortarboard-fill"></i> <br>
+                Professores
+            </h4>
+        </div>
+        <div class="card-body text-center">
+            <p class="card-title">
+                Professores ativos <br>
+                <h1>3</h1>
+            </p>
+        </div>
+    </div>
+
+
+    <!-- [Aniversariantes do Mês] -->
+    <div class="card text-bg-success text-center mb-3" style="max-width: 18rem;">
+        <div class="card-header">
+            <h4>
+                <i class="bi bi-cake-fill"></i> <br>
+                Aniversariantes
+            </h4>
+        </div>
+        <div class="card-body text-center">
+            <p class="card-title">
+                Aniversariantes em {% now "F" %} <br>
+                <h1>nenhum</h1>
+            </p>
+        </div>
+    </div>
+
+
+<!-- [Turmas Ativas] -->
+    <div class="card text-bg-secondary text-center mb-3" style="max-width: 18rem;">
+        <div class="card-header">
+            <h4>
+                <i class="bi bi-patch-check-fill"></i> <br>
+                Turmas Ativas
+            </h4>
+        </div>
+        <div class="card-body text-center">
+            <p class="card-title">
+                Aulas criadas<br>
+                <h1>3</h1>
+            </p>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

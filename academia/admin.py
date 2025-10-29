@@ -1,3 +1,8 @@
 from django.contrib import admin
+from .models import User, Group_Role, Class, AttendenceRequest, AttendenceAproval
 
-# Register your models here.
+admin.site.register(User)
+admin.site.register(Group_Role)
+admin.site.register(Class)
+admin.site.register(AttendenceRequest)
+admin.site.register(AttendenceAproval)

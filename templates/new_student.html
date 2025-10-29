@@ -1,0 +1,121 @@
+{% extends 'template.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Cadastro de Alunos</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'new_student' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Primeiro Nome" required>
+                                    <label for="first_name">Primeiro Nome</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Último Nome" required>
+                                    <label for="last_name">Último Nome</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="identification" name="identification" placeholder="Documento (CPF)" pattern="\d{11}" title="Digite um CPF válido com 11 dígitos" required>
+                                    <label for="identification">Documento (CPF)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control" id="birthday" name="birthday" required>
+                                    <label for="birthday">Data de Nascimento</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" required>
+                                <label for="email">E-mail</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="WhatsApp" pattern="[0-9]{11}" title="Digite um número de WhatsApp válido com DDD (ex: 11987654321)">
+                                    <label for="phone">WhatsApp</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <select class="form-select" id="current_belt" name="current_belt" aria-label="Faixa Atual">
+                                        <option selected disabled>Selecione a faixa</option>
+                                        <option value="Branca">Branca</option>
+                                        <option value="CinzaBranca">Cinza / Branca</option>
+                                        <option value="Cinza">Cinza</option>
+                                        <option value="CinzaPreta">Cinza / Preta</option>
+                                        <option value="AmarelaBranca">Amarela / Branca</option>
+                                        <option value="Amarela">Amarela</option>
+                                        <option value="AmarelaPreta">Amarela / Preta</option>
+                                        <option value="LaranjaBranca">Laranja / Branca</option>
+                                        <option value="Laranja">Laranja</option>
+                                        <option value="LaranjaPreta">Laranja / Preta</option>
+                                        <option value="VerdeBranca">Verde / Branca</option>
+                                        <option value="Verde">Verde</option>
+                                        <option value="VerdePreta">Verde / Preta</option>
+                                        <option value="Azul">Azul</option>
+                                        <option value="Roxa">Roxa</option>
+                                        <option value="Marrom">Marrom</option>
+                                        <option value="Preta">Preta</option>
+                                    </select>
+                                    <label for="current_belt">Faixa Atual</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <select class="form-select" id="current_degree" name="current_degree" aria-label="Graus na Faixa">
+                                        <option selected disabled>Selecione os graus</option>
+                                        <option value="0">Nenhum</option>
+                                        <option value="1">1 Grau</option>
+                                        <option value="2">2 Graus</option>
+                                        <option value="3">3 Graus</option>
+                                        <option value="4">4 Graus</option>
+                                        <option value="5">5 Graus</option>
+                                        <option value="6">6 Graus</option>
+                                    </select>
+                                    <label for="current_degree">Graus na Faixa</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control" id="start_date" name="start_date">
+                                    <label for="start_date">Data de Início dos Treinos</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image_profile" class="form-label">Upload de Foto de Perfil</label>
+                            <input class="form-control" type="file" id="image_profile" name="image_profile" accept="image/*" capture="user">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Cadastrar Aluno</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
