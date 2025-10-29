@@ -99,7 +99,7 @@ class Class(models.Model):
     def __str__(self):
         return f"{self.class_name} - {self.description}"
 
-class AttendenceRequest(models.Model):
+class AttendanceRequest(models.Model):
     STATUS_CHOICES = (
         ('PEN', 'Pendente'),
         ('APR', 'Aprovado'),
@@ -109,7 +109,7 @@ class AttendenceRequest(models.Model):
 
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'access_group': 'STU'})
     class_obj = models.ForeignKey(Class, on_delete=models.CASCADE, verbose_name="Turma")
-    attendence_date = models.DateField(verbose_name="Data da Solicitação")
+    attendance_date = models.DateField(verbose_name="Data da Solicitação")
     reason = models.TextField(blank=True, null=True, verbose_name="Observação")
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, default='PEN')
     
@@ -122,7 +122,7 @@ class AttendenceRequest(models.Model):
     class Meta:
         verbose_name = 'Solicitação de Presença'
         verbose_name_plural = 'Solicitações de Presenças'
-        ordering = ['-attendence_date']
+        ordering = ['-attendance_date']
     
     def __str__(self):
-        return f"Solicitação de {self.student} para {self.class_obj} em {self.attendence_date}"
+        return f"Solicitação de {self.student} para {self.class_obj} em {self.attendance_date}"

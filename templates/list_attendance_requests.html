@@ -19,9 +19,9 @@
                     <tr>
                         <td>{{ request.student.first_name }} {{ request.student.last_name }}</td>
                         <td>{{ request.class_obj.class_name }}</td>
-                        <td>{{ request.attendence_date|date:"d/m/Y" }}</td>
+                        <td>{{ request.attendance_date|date:"d/m/Y" }}</td>
                         <td>
-                            <a href="{% url 'process_attendence_request' request.id %}" class="btn btn-sm btn-primary">Analisar</a>
+                            <a href="{% url 'process_attendance_request' request.id %}" class="btn btn-sm btn-primary">Analisar</a>
                         </td>
                     </tr>
                     {% empty %}
@@ -51,7 +51,7 @@
                     <tr>
                         <td>{{ request.student.first_name }} {{ request.student.last_name }}</td>
                         <td>{{ request.class_obj.class_name }}</td>
-                        <td>{{ request.attendence_date|date:"d/m/Y" }}</td>
+                        <td>{{ request.attendance_date|date:"d/m/Y" }}</td>
                         <td>
                             <span class="badge bg-{% if request.status == 'APR' %}success{% else %}danger{% endif %}">
                                 {{ request.get_status_display }}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Login</h3>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="mb-3 form-floating">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="seu@email.com" required>
+                            <label for="email">E-mail</label>
+                        </div>
+                        <div class="mb-3 form-floating">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Senha" required>
+                            <label for="password">Senha</label>
+                        </div>
+                        <div class="mb-3 form-floating">
+                            <select class="form-select" id="access_group" name="access_group" required>
+                                <option value="STU" selected>Sou Aluno</option>
+                                <option value="PRO">Sou Professor</option>
+                                <option value="ADM">Sou Administrador</option>
+                            </select>
+                            <label for="access_group">Tipo de Acesso</label>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Entrar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

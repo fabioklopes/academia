@@ -10,6 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+    {% block styles %}{% endblock %}
 </head>
 
 <body>
@@ -25,16 +26,28 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                    <div class="navbar-nav">
+                    <div class="navbar-nav me-auto mb-2 mb-lg-0">
                         <a class="nav-link" href="{% url 'index' %}">Início</a>
-                        <a class="nav-link" href="{% url 'list_students' %}">Alunos</a>
-                        <a class="nav-link" href="{% url 'teacher_dashboard' %}">Professores</a>
-                        <a class="nav-link" href="{% url 'index' %}">Presenças</a>
+
+                        {% if user.is_authenticated %}
+                            {% if user.access_group == 'PRO' %}
+                                <!-- Links do Professor -->
+                                <a class="nav-link" href="{% url 'teacher_dashboard' %}">Painel do Professor</a>
+                                <a class="nav-link" href="{% url 'list_students' %}">Alunos</a>
+                                <a class="nav-link" href="{% url 'list_attendance_requests' %}">Solicitações de Presença</a>
+                            {% elif user.access_group == 'STU' %}
+                                <!-- Links do Aluno -->
+                                <a class="nav-link" href="{% url 'my_attendance_requests' %}">Minhas Presenças</a>
+                            {% endif %}
+                        {% else %}
+                            <!-- Links para Visitantes (não logados) -->
+                            <a class="nav-link" href="{% url 'list_students' %}">Alunos</a>
+                        {% endif %}
                     </div>
 
-                    <div class="d-flex">
+                    <div class="navbar-nav">
                         {% if user.is_authenticated %}
-                        <a class="nav-link" href="#">{{ user.username }}</a>
+                        <span class="navbar-text me-2">Olá, {{ user.first_name }}</span>
                         <a class="nav-link" href="{% url 'logout' %}">Logout</a>
                         {% else %}
                         <a class="nav-link" href="{% url 'login' %}">Login</a>
@@ -50,9 +63,8 @@
         {% endblock %}
     </div>
 
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>

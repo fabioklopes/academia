@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Novo Aluno{% endblock %}
+{% load static %}
 
 {% block content %}
 <div class="container mt-5">
@@ -7,12 +7,12 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-0">Criando um Novo Aluno...</h3>
+                    <h3 class="mb-0">Cadastro de Alunos</h3>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" action="{% url 'new_student' %}">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'new_student' %}" id="student-form">
                         {% csrf_token %}
-                        <!-- ... (campos anteriores do formulário) ... -->
+                        <!-- ... (campos de nome, documento, etc.) ... -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
@@ -27,11 +27,10 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
-                                    <input type="number" class="form-control" id="identification" name="identification" placeholder="Documento (CPF)" pattern="\d{11}" title="Digite um CPF válido com 11 dígitos" required>
+                                    <input type="text" class="form-control" id="identification" name="identification" placeholder="Documento (CPF)" pattern="\d{11}" title="Digite um CPF válido com 11 dígitos" required>
                                     <label for="identification">Documento (CPF)</label>
                                 </div>
                             </div>
@@ -42,7 +41,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="mb-3">
                             <div class="form-floating">
                                 <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" required>
@@ -50,22 +48,31 @@
                             </div>
                         </div>
 
+                        <!-- Campos de Senha -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
-                                    <input type="number" class="form-control" id="phone" name="phone" placeholder="WhatsApp" pattern="[0-9]{11}" title="Digite um número de WhatsApp válido com DDD (ex: 11987654321)">
-                                    <label for="phone">WhatsApp (digite apenas os números)</label>
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Senha" required>
+                                    <label for="password">Senha</label>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
-                                    <input type="date" class="form-control" id="start_date" name="start_date">
-                                    <label for="start_date">Data de Início dos Treinos</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirmar Senha" required>
+                                    <label for="confirm_password">Confirmar Senha</label>
                                 </div>
                             </div>
                         </div>
+                        <div id="password-error" class="alert alert-danger" style="display: none;">As senhas não coincidem.</div>
 
+                        <!-- ... (outros campos: faixa, foto, etc.) ... -->
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="WhatsApp" pattern="[0-9]{11}" title="Digite um número de WhatsApp válido com DDD (ex: 11987654321)">
+                                    <label for="phone">WhatsApp</label>
+                                </div>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
                                     <select class="form-select" id="current_belt" name="current_belt" aria-label="Faixa Atual">
@@ -91,6 +98,8 @@
                                     <label for="current_belt">Faixa Atual</label>
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
                                     <select class="form-select" id="current_degree" name="current_degree" aria-label="Graus na Faixa">
@@ -106,15 +115,15 @@
                                     <label for="current_degree">Graus na Faixa</label>
                                 </div>
                             </div>
-
-
-
-
-
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control" id="start_date" name="start_date">
+                                    <label for="start_date">Data de Início dos Treinos</label>
+                                </div>
+                            </div>
                         </div>
-
                         <div class="mb-3">
-                            <label class="form-label">Selecione a sua foto de perfil</label><br />
+                            <label class="form-label">Upload de Foto de Perfil</label>
                             <div>
                                 <button type="button" class="btn btn-outline-secondary btn-sm" id="upload-btn">Selecionar do dispositivo</button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm" id="camera-btn">Usar Câmera</button>
@@ -133,6 +142,7 @@
 
 {% block scripts %}
 <script>
+    // Script para upload de foto
     const uploadBtn = document.getElementById('upload-btn');
     const cameraBtn = document.getElementById('camera-btn');
     const fileInput = document.getElementById('image_profile');
@@ -153,6 +163,21 @@
             fileNameDisplay.textContent = `Arquivo selecionado: ${fileInput.files[0].name}`;
         } else {
             fileNameDisplay.textContent = '';
+        }
+    });
+
+    // Script para validação de senha
+    const studentForm = document.getElementById('student-form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const passwordError = document.getElementById('password-error');
+
+    studentForm.addEventListener('submit', function(e) {
+        if (password.value !== confirmPassword.value) {
+            e.preventDefault(); // Impede o envio do formulário
+            passwordError.style.display = 'block';
+        } else {
+            passwordError.style.display = 'none';
         }
     });
 </script>
