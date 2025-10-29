@@ -45,7 +45,7 @@ class User(models.Model):
 
     first_name = models.CharField(max_length=45, blank=False, null=False)
     last_name = models.CharField(max_length=50, blank=False, null=False)
-    identification = models.CharField(max_length=11, unique=True, blank=False, null=False)
+    identification = models.CharField(max_length=11, blank=False, null=False)
     image_profile = models.ImageField(upload_to='profiles/', blank=True, null=True)
     birthday = models.DateField()
     email = models.CharField(max_length=80, unique=True, blank=False, null=False)
@@ -53,8 +53,9 @@ class User(models.Model):
     access_group = models.CharField(max_length=3, choices=ACCESS_GROUP, blank=False, null=False, default='STU')
     phone = models.CharField(max_length=11, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
-    current_belt = models.CharField(max_length=20, choices=BELTS, blank=True, null=True)
-    current_degree = models.CharField(max_length=1, choices=DEGREES, blank=True, null=True)
+    last_graduation = models.DateField(blank=True, null=True)
+    current_belt = models.CharField(max_length=20, choices=BELTS, blank=False, null=False)
+    current_degree = models.CharField(max_length=1, choices=DEGREES, blank=False, null=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

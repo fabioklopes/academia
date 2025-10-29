@@ -6,14 +6,19 @@ from .models import User
 def index(request):
     return render(request, 'index.html')
 
-
 def login(request):
     return render(request, 'login.html')
-
 
 def logout(request):
     return render(request, 'logout.html')
 
+
+def list_students(request):
+    students = User.objects.order_by('first_name')
+    context = {
+        'students': students
+    }
+    return render(request, 'alunos.html', context)
 
 def new_student(request):
     if request.method == 'POST':
@@ -28,6 +33,10 @@ def new_student(request):
         current_degree = request.POST.get('current_degree')
         start_date = request.POST.get('start_date')
         image_profile = request.FILES.get('image_profile')
+
+        # Tratar campos de data opcionais
+        if not start_date:
+            start_date = None
 
         # Criar e salvar o novo aluno
         new_user = User(
@@ -65,7 +74,13 @@ def edit_student(request, user_id):
         student.phone = request.POST.get('phone')
         student.current_belt = request.POST.get('current_belt')
         student.current_degree = request.POST.get('current_degree')
-        student.start_date = request.POST.get('start_date')
+        start_date = request.POST.get('start_date')
+
+        # Tratar campos de data opcionais
+        if not start_date:
+            student.start_date = None
+        else:
+            student.start_date = start_date
         
         if 'image_profile' in request.FILES:
             student.image_profile = request.FILES.get('image_profile')

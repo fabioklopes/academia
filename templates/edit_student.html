@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block title %}Editar Aluno{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -11,6 +12,7 @@
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" action="{% url 'edit_student' user_id=student.id %}">
                         {% csrf_token %}
+                        <!-- ... (campos anteriores do formulário) ... -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-floating">
@@ -87,11 +89,16 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="image_profile" class="form-label">Upload de Foto de Perfil</label>
+                            <label class="form-label">Upload de Foto de Perfil</label>
                             {% if student.image_profile %}
                                 <p>Atual: <a href="{{ student.image_profile.url }}">{{ student.image_profile.name }}</a></p>
                             {% endif %}
-                            <input class="form-control" type="file" id="image_profile" name="image_profile" accept="image/*" capture="user">
+                            <div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="upload-btn">Selecionar do dispositivo</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="camera-btn">Usar Câmera</button>
+                            </div>
+                            <input class="form-control" type="file" id="image_profile" name="image_profile" accept="image/*" style="display: none;">
+                            <div id="file-name-display" class="mt-2 text-muted"></div>
                         </div>
 
                         <button type="submit" class="btn btn-primary">Salvar Alterações</button>
@@ -101,4 +108,31 @@
         </div>
     </div>
 </div>
+
+{% block scripts %}
+<script>
+    const uploadBtn = document.getElementById('upload-btn');
+    const cameraBtn = document.getElementById('camera-btn');
+    const fileInput = document.getElementById('image_profile');
+    const fileNameDisplay = document.getElementById('file-name-display');
+
+    uploadBtn.addEventListener('click', () => {
+        fileInput.removeAttribute('capture');
+        fileInput.click();
+    });
+
+    cameraBtn.addEventListener('click', () => {
+        fileInput.setAttribute('capture', 'user');
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = `Arquivo selecionado: ${fileInput.files[0].name}`;
+        } else {
+            fileNameDisplay.textContent = '';
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}
