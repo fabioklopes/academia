@@ -1,5 +1,9 @@
+"""
+    Developed by: Fábio Klevinskas Lopes
+    Version: 3.0 (30/10/2025)
+"""
 from django.urls import path
-from . import views
+from academia import views
 
 urlpatterns = [
     # URLs Gerais

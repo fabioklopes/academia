@@ -4,7 +4,7 @@ import os
 import hashlib
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth import logout as auth_logout
 from django.utils import timezone
 from .models import User, Class, AttendanceRequest
 
@@ -25,16 +25,19 @@ def login_view(request):
             if user.access_group != access_group_form:
                 return render(request, 'login.html', {'error': 'Tipo de acesso incorreto para este usuário.'})
 
-            # Verifica a senha usando SHA256
             hashed_password_form = hashlib.sha256(password.encode('utf-8')).hexdigest()
             if hashed_password_form == user.keypass:
-                user.backend = 'django.contrib.auth.backends.ModelBackend'
-                auth_login(request, user)
+                # --- Início da Correção: Login Manual ---
+                # Em vez de auth_login(request, user), gerenciamos a sessão manualmente.
+                request.session['_auth_user_id'] = user.id
+                request.session['_auth_user_backend'] = 'django.contrib.auth.backends.ModelBackend'
+                request.session.save()
+                # --- Fim da Correção ---
                 
                 if user.access_group == 'PRO':
                     return redirect('teacher_dashboard')
                 elif user.access_group == 'STU':
-                    return redirect('my_attendence_requests')
+                    return redirect('my_attendance_requests')
                 else: # ADM
                     return redirect('index')
             else:
@@ -91,7 +94,6 @@ def new_student(request):
         if not start_date:
             start_date = None
 
-        # Criptografa a senha com SHA256
         hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
 
         User.objects.create(
@@ -180,16 +182,16 @@ def request_attendance(request):
             AttendanceRequest.objects.create(
                 student=request.user,
                 class_obj=class_obj,
-                attendence_date=date,
+                attendance_date=date,
                 reason=reason
             )
-        return redirect('my_attendence_requests')
+        return redirect('my_attendance_requests')
 
     classes = Class.objects.filter(status=True)
     context = {
         'classes': classes
     }
-    return render(request, 'request_attendence.html', context)
+    return render(request, 'request_attendance.html', context)
 
 @login_required
 @user_passes_test(is_student)
@@ -206,7 +208,7 @@ def cancel_attendance_request(request, request_id):
     att_request = get_object_or_404(AttendanceRequest, pk=request_id, student=request.user, status='PEN')
     att_request.status = 'CAN'
     att_request.save()
-    return redirect('my_attendence_requests')
+    return redirect('my_attendance_requests')
 
 # --- VIEWS DE GERENCIAMENTO DE PRESENÇA (PROFESSOR) ---
 
