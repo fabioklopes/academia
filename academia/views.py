@@ -11,7 +11,13 @@ from .models import User, Class, AttendanceRequest
 # --- VIEWS GERAIS ---
 
 def index(request):
-    return render(request, 'index.html')
+    students = User.objects.all().filter(access_group='STU', status=1)
+    professors = User.objects.all().filter(access_group='PRO', status=1)
+    context = {
+        'students': students,
+        'professors': professors,
+    }
+    return render(request, 'index.html', context)
 
 def login_view(request):
     if request.method == 'POST':
@@ -27,19 +33,17 @@ def login_view(request):
 
             hashed_password_form = hashlib.sha256(password.encode('utf-8')).hexdigest()
             if hashed_password_form == user.keypass:
-                # --- Início da Correção: Login Manual ---
-                # Em vez de auth_login(request, user), gerenciamos a sessão manualmente.
+                # Gerencia a sessão manualmente
                 request.session['_auth_user_id'] = user.id
                 request.session['_auth_user_backend'] = 'django.contrib.auth.backends.ModelBackend'
-                request.session.save()
-                # --- Fim da Correção ---
                 
-                if user.access_group == 'PRO':
-                    return redirect('teacher_dashboard')
-                elif user.access_group == 'STU':
-                    return redirect('my_attendance_requests')
-                else: # ADM
-                    return redirect('index')
+                # Armazena o nome do usuário na sessão para exibição
+                request.session['user_first_name'] = user.first_name
+                request.session['user_last_name'] = user.last_name
+                request.session['user_access_group'] = user.access_group
+                request.session.save()
+                
+                return redirect('index')
             else:
                 return render(request, 'login.html', {'error': 'Credenciais inválidas.'})
 
@@ -49,20 +53,28 @@ def login_view(request):
     return render(request, 'login.html')
 
 def logout_view(request):
+    # Limpa a sessão manualmente para garantir que o nome saia
+    try:
+        del request.session['user_first_name']
+        del request.session['user_last_name']
+    except KeyError:
+        pass # Não faz nada se as chaves já não existirem
+    
     auth_logout(request)
     return redirect('index')
 
 # --- FUNÇÕES DE VERIFICAÇÃO DE GRUPO ---
-
 def is_student(user):
     return user.is_authenticated and user.access_group == 'STU'
 
 def is_teacher(user):
     return user.is_authenticated and user.access_group == 'PRO'
 
+def is_administrator(user):
+    return user.is_authenticated and user.access_group == 'ADM'
+
 # --- VIEWS DE ALUNOS (CRUD) ---
 
-@login_required
 @user_passes_test(is_teacher)
 def list_students(request):
     students = User.objects.filter(access_group='STU', status=1).order_by('first_name')
@@ -114,7 +126,6 @@ def new_student(request):
 
     return render(request, 'new_student.html')
 
-@login_required
 @user_passes_test(is_teacher)
 def edit_student(request, user_id):
     student = get_object_or_404(User, pk=user_id, access_group='STU', status=1)
@@ -155,7 +166,6 @@ def edit_student(request, user_id):
     }
     return render(request, 'edit_student.html', context)
 
-@login_required
 @user_passes_test(is_teacher)
 def delete_student(request, user_id):
     student = get_object_or_404(User, pk=user_id, access_group='STU')
@@ -193,7 +203,6 @@ def request_attendance(request):
     }
     return render(request, 'request_attendance.html', context)
 
-@login_required
 @user_passes_test(is_student)
 def my_attendance_requests(request):
     requests = AttendanceRequest.objects.filter(student=request.user)
@@ -202,7 +211,6 @@ def my_attendance_requests(request):
     }
     return render(request, 'my_attendance_requests.html', context)
 
-@login_required
 @user_passes_test(is_student)
 def cancel_attendance_request(request, request_id):
     att_request = get_object_or_404(AttendanceRequest, pk=request_id, student=request.user, status='PEN')
@@ -212,7 +220,6 @@ def cancel_attendance_request(request, request_id):
 
 # --- VIEWS DE GERENCIAMENTO DE PRESENÇA (PROFESSOR) ---
 
-@login_required
 @user_passes_test(is_teacher)
 def teacher_dashboard(request):
     pending_requests_count = AttendanceRequest.objects.filter(status='PEN').count()
@@ -223,7 +230,6 @@ def teacher_dashboard(request):
     }
     return render(request, 'teacher_dashboard.html', context)
 
-@login_required
 @user_passes_test(is_teacher)
 def list_attendance_requests(request):
     pending_requests = AttendanceRequest.objects.filter(status='PEN')
@@ -234,7 +240,6 @@ def list_attendance_requests(request):
     }
     return render(request, 'list_attendance_requests.html', context)
 
-@login_required
 @user_passes_test(is_teacher)
 def process_attendance_request(request, request_id):
     att_request = get_object_or_404(AttendanceRequest, pk=request_id, status='PEN')

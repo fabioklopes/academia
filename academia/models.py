@@ -68,21 +68,6 @@ class User(models.Model):
     def __str__(self):
         return f"({self.access_group}) {self.first_name} {self.last_name}"
 
-class Group_Role(models.Model):
-    # ... (código do modelo Group_Role inalterado) ...
-    name = models.CharField(max_length=25, unique=True, blank=False, null=False)
-    description = models.TextField(blank=True, null=True)
-    permissions = models.JSONField(blank=True, null=True, default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = 'Regra de Grupo'
-        verbose_name_plural = 'Regras de Grupos'
-    
-    def __str__(self):
-        return f"{self.name} - {self.description}"
-
 class Class(models.Model):
     # ... (código do modelo Class inalterado) ...
     class_name = models.CharField(max_length=50, unique=True, blank=False, null=False)

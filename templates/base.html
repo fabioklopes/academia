@@ -1,70 +1,68 @@
 {% load static %}
 
 <!doctype html>
-<html lang="en">
+<html lang="pt-br">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CRTN Belém - {% block title %}{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
-    {% block styles %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"/>
+    <link rel="icon" href="{% static 'medias/logo.jpg' %}" type="image/x-icon">
 </head>
 
 <body>
-    <div class="container mt-2 mb-4">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-body" data-bs-theme="dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="{% url 'index' %}">
-                    <img class="logo-home" src="{% static 'medias/logo.jpg' %}" alt="Logotipo CRTN">
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+<div class="container mt-2 mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-body" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <img class="logo-home" src="{% static 'medias/logo.jpg' %}" alt="Logotipo CRTN">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false"
                     aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                    <div class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <a class="nav-link" href="{% url 'index' %}">Início</a>
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <a class="nav-link" href="{% url 'index' %}">Início</a>
 
-                        {% if user.is_authenticated %}
-                            {% if user.access_group == 'PRO' %}
-                                <!-- Links do Professor -->
-                                <a class="nav-link" href="{% url 'teacher_dashboard' %}">Painel do Professor</a>
-                                <a class="nav-link" href="{% url 'list_students' %}">Alunos</a>
-                                <a class="nav-link" href="{% url 'list_attendance_requests' %}">Solicitações de Presença</a>
-                            {% elif user.access_group == 'STU' %}
-                                <!-- Links do Aluno -->
-                                <a class="nav-link" href="{% url 'my_attendance_requests' %}">Minhas Presenças</a>
-                            {% endif %}
-                        {% else %}
-                            <!-- Links para Visitantes (não logados) -->
-                            <a class="nav-link" href="{% url 'list_students' %}">Alunos</a>
-                        {% endif %}
-                    </div>
+                    {% if request.session.user_access_group == 'PRO' %}
+                        <!-- Links do Professor -->
+                        <a class="nav-link" href="{% url 'teacher_dashboard' %}">Dashboard</a>
+                        <a class="nav-link" href="{% url 'list_students' %}">Alunos</a>
+                        <a class="nav-link" href="{% url 'list_attendance_requests' %}">Solicitações</a>
+                    {% elif request.session.user_access_group == 'STU' %}
+                        <!-- Links do Aluno -->
+                        <a class="nav-link" href="{% url 'my_attendance_requests' %}">Minhas Solicitações</a>
+                        <a class="nav-link" href="{% url 'request_attendance' %}">Solicitar Presença</a>
+                    {% endif %}
 
-                    <div class="navbar-nav">
-                        {% if user.is_authenticated %}
-                        <span class="navbar-text me-2">Olá, {{ user.first_name }}</span>
-                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
-                        {% else %}
+                </div>
+
+                <div class="navbar-nav">
+                    {% if request.session.user_first_name %}
+                        <span class="navbar-text me-3">
+                                Olá, {{ request.session.user_first_name }} {{ request.session.user_last_name }}
+                            </span>
+                        <a class="nav-link" href="{% url 'logout' %}">(Sair)</a>
+                    {% else %}
                         <a class="nav-link" href="{% url 'login' %}">Login</a>
-                        {% endif %}
-                    </div>
+                    {% endif %}
                 </div>
             </div>
-        </nav>
-    </div>
+        </div>
+    </nav>
+</div>
 
-    <div class="container">
-        {% block content %}
-        {% endblock %}
-    </div>
+<div class="container">
+    {% block content %}
+    {% endblock %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
