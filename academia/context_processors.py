@@ -1,4 +1,4 @@
-from .models import User, AttendanceRequest, Pedido, Graduacao
+from .models import User, AttendanceRequest, Pedido
 
 def pending_tasks_processor(request):
     if not request.user.is_authenticated:
@@ -6,33 +6,10 @@ def pending_tasks_processor(request):
 
     # For Students: Only show notifications from Professor/Admin
     if request.user.is_student():
-        # Example: Check for newly approved attendance requests or graduations
-        # For now, let's assume 'notified' field in Graduacao means it's a new notification
-        # You might need to define what constitutes a "notification from professor/admin"
-        # For this example, let's say approved attendance requests and new graduations
-        
-        # Count approved attendance requests that haven't been seen by the student
-        # (This would require an additional field in AttendanceRequest like 'student_notified')
-        # For now, we'll just count approved ones as a placeholder
-        approved_attendance_count = AttendanceRequest.objects.filter(
-            student=request.user, 
-            status='APR',
-            # student_notified=False # This field would need to be added to the model
-        ).count()
-
-        # Count new graduations that haven't been seen by the student
-        new_graduations_count = Graduacao.objects.filter(
-            aluno=request.user, 
-            notified=False
-        ).count()
-
-        total_student_notifications = approved_attendance_count + new_graduations_count
-        
+        # For now, students don't have specific pending tasks displayed in the toast
+        # This can be extended later if needed for student-specific notifications
         return {
-            'has_pending_tasks': total_student_notifications > 0,
-            'student_notifications_count': total_student_notifications,
-            'approved_attendance_count': approved_attendance_count,
-            'new_graduations_count': new_graduations_count,
+            'has_pending_tasks': False,
         }
 
     # For Professors and Admins: Show administrative pending tasks
