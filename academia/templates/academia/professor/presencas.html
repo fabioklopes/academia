@@ -1,0 +1,82 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Gerenciar Presenças - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Gerenciar Solicitações de Presença</h4>
+            </div>
+            <div class="card-body">
+                {% if pending_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Turma</th>
+                                    <th>Data da Presença</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in pending_requests %}
+                                    <tr>
+                                        <td>{{ request.student.get_full_name }}</td>
+                                        <td>{{ request.turma.nome }}</td>
+                                        <td>{{ request.attendance_date|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'professor_presenca_aprovar' request.id %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success">Aprovar</button>
+                                            </form>
+                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ request.id }}">
+                                                Rejeitar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nenhuma solicitação de presença pendente.</p>
+                {% endif %}
+                <div class="mt-3">
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals de Rejeição -->
+{% for request in pending_requests %}
+<div class="modal fade" id="rejectModal{{ request.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ request.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectModalLabel{{ request.id }}">Rejeitar Solicitação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'professor_presenca_rejeitar' request.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Tem certeza que deseja rejeitar a solicitação de presença de <strong>{{ request.student.get_full_name }}</strong> para a turma <strong>{{ request.turma.nome }}</strong> em <strong>{{ request.attendance_date|date:"d/m/Y" }}</strong>?</p>
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Motivo da Rejeição (Opcional)</label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Rejeitar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

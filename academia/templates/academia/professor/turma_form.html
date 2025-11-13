@@ -1,0 +1,41 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}{% if turma %}Editar{% else %}Nova{% endif %} Turma - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>{% if turma %}Editar{% else %}Nova{% endif %} Turma</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome da Turma</label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="{% if turma %}{{ turma.nome }}{% endif %}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3">{% if turma %}{{ turma.descricao }}{% endif %}</textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="ativa" name="ativa" {% if turma and turma.ativa %}checked{% elif not turma %}checked{% endif %}>
+                        <label class="form-check-label" for="ativa">Turma Ativa</label>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <a href="{% url 'professor_turmas' %}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

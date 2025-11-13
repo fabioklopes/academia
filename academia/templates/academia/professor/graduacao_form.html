@@ -1,0 +1,25 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Editar Graduação - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Editar Graduação - {{ aluno.first_name }} {{ aluno.last_name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <a href="{% url 'professor_graduacoes' %}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+from django.urls import path
+from academia import views
+
+
+urlpatterns = [
+    # Home/Index
+    path('', views.index, name='index'),
+    
+    # Autenticação
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('solicitar-acesso/', views.solicitar_acesso, name='solicitar_acesso'),
+    
+    # Dashboard
+    path('dashboard/', views.dashboard, name='dashboard'),
+    
+    # Perfil
+    path('perfil/', views.perfil, name='perfil'),
+    path('perfil/editar/', views.perfil_editar, name='perfil_editar'),
+    
+    # Painel do Aluno
+    path('aluno/marcar-presenca/', views.aluno_marcar_presenca, name='aluno_marcar_presenca'),
+    path('aluno/cancelar-presenca/<int:presenca_id>/', views.aluno_cancelar_presenca, name='aluno_cancelar_presenca'),
+    path('aluno/presencas/', views.aluno_presencas, name='aluno_presencas'),
+    path('aluno/relatorios/', views.aluno_relatorios, name='aluno_relatorios'),
+    path('aluno/graduacoes/', views.aluno_graduacoes, name='aluno_graduacoes'), # New URL for student graduations
+    
+    # Painel do Professor - Turmas
+    path('professor/turmas/', views.professor_turmas, name='professor_turmas'),
+    path('professor/turmas/nova/', views.professor_turma_nova, name='professor_turma_nova'),
+    path('professor/turmas/<int:turma_id>/editar/', views.professor_turma_editar, name='professor_turma_editar'),
+
+    # Painel do Professor - Alunos
+    path('professor/alunos/', views.professor_alunos, name='professor_alunos'),
+    path('professor/aluno/<int:aluno_id>/desativar/', views.professor_aluno_desativar, name='professor_aluno_desativar'),
+    path('professor/aluno/<int:aluno_id>/ativar/', views.professor_aluno_ativar, name='professor_aluno_ativar'),
+    path('professor/aluno/<int:aluno_id>/definir-tipo/', views.professor_aluno_definir_tipo, name='professor_aluno_definir_tipo'),
+
+    # Painel do Professor - Presenças
+    path('professor/presencas/', views.professor_presencas, name='professor_presencas'),
+    path('professor/presenca/<int:presenca_id>/aprovar/', views.professor_presenca_aprovar, name='professor_presenca_aprovar'),
+    path('professor/presenca/<int:presenca_id>/rejeitar/', views.professor_presenca_rejeitar, name='professor_presenca_rejeitar'),
+
+    # Painel do Professor - Graduacoes
+    path('professor/graduacoes/', views.professor_graduacoes, name='professor_graduacoes'),
+    path('professor/graduacao/<int:aluno_id>/editar/', views.professor_graduacao_editar, name='professor_graduacao_editar'),
+
+    # Painel do Professor - Planos de Aula
+    path('professor/planos-aula/', views.professor_planos_aula, name='professor_planos_aula'),
+    path('professor/planos-aula/novo/', views.professor_plano_aula_novo, name='professor_plano_aula_novo'),
+    path('professor/planos-aula/<int:plano_id>/editar/', views.professor_plano_aula_editar, name='professor_plano_aula_editar'),
+
+    # Painel do Professor - Rankings
+    path('professor/rankings/', views.professor_rankings, name='professor_rankings'),
+    path('professor/rankings/novo/', views.professor_ranking_novo, name='professor_ranking_novo'),
+
+    # Painel do Professor - Pedidos
+    path('professor/pedidos/', views.professor_pedidos, name='professor_pedidos'),
+    path('professor/pedido/<int:pedido_id>/aprovar/', views.professor_pedido_aprovar, name='professor_pedido_aprovar'),
+    path('professor/pedido/<int:pedido_id>/rejeitar/', views.professor_pedido_rejeitar, name='professor_pedido_rejeitar'),
+
+    # Painel do Professor - Relatórios
+    path('professor/relatorios/', views.professor_relatorios, name='professor_relatorios'),
+]
