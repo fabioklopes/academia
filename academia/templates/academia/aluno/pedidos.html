@@ -16,29 +16,45 @@
                         <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
-                                    <th>Item</th>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
                                     <th>Quantidade</th>
                                     <th>Status</th>
                                     <th>Data da Solicitação</th>
+                                    <th>Observações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for pedido in pedidos %}
                                     <tr>
+                                        <td>{{ pedido.item.get_tipo_display }}</td>
                                         <td>{{ pedido.item.nome }}</td>
                                         <td>{{ pedido.quantidade }}</td>
                                         <td>
                                             {% if pedido.status == 'PEND' %}
-                                                <span class="badge bg-warning">Pendente</span>
+                                                <span class="badge bg-warning text-dark">Pendente</span>
                                             {% elif pedido.status == 'APRO' %}
-                                                <span class="badge bg-success">Aprovado</span>
+                                                <span class="badge bg-primary">Aprovado</span>
+                                            {% elif pedido.status == 'CANC' %}
+                                                <span class="badge bg-secondary">Cancelado</span>
                                             {% elif pedido.status == 'REJE' %}
                                                 <span class="badge bg-danger">Rejeitado</span>
                                             {% elif pedido.status == 'ENTR' %}
-                                                <span class="badge bg-info">Entregue</span>
+                                                <span class="badge bg-info text-dark">Aguardando Entrega</span>
+                                            {% elif pedido.status == 'FINA' %}
+                                                <span class="badge bg-success">Finalizado</span>
                                             {% endif %}
                                         </td>
                                         <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            {% if pedido.status == 'REJE' and pedido.rejection_reason %}
+                                                <small class="text-danger">{{ pedido.rejection_reason }}</small>
+                                            {% elif pedido.status == 'CANC' and pedido.cancellation_reason %}
+                                                <small class="text-muted">{{ pedido.cancellation_reason }}</small>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

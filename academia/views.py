@@ -10,13 +10,13 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
 from .models import User, Turma, AttendanceRequest, TurmaAluno, Presenca, Graduacao, PlanoAula, ItemPlanoAula, Ranking, PosicaoRanking, Pedido, Item
-from .forms import GraduacaoForm, ItemForm, PedidoForm
+from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm
 import calendar
 
-# Imports para Relatórios
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from openpyxl import Workbook
+# Imports para Relatórios (comentado temporariamente - instalar reportlab e openpyxl se necessário)
+# from reportlab.pdfgen import canvas
+# from reportlab.lib.pagesizes import letter
+# from openpyxl import Workbook
 
 # --- VIEWS GERAIS ---
 
@@ -143,7 +143,7 @@ def dashboard(request):
         solicitacoes_presenca = AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').count()
         alunos_ativos = User.objects.filter(group_role='STD', turmas__professor=request.user, active=True).distinct().count()
         alunos_pendentes = User.objects.filter(group_role='STD', is_active=False).distinct().count()
-        pedidos_pendentes = Pedido.objects.filter(status='PEND').count() # Corrected query
+        pedidos_pendentes = Pedido.objects.filter(status='PEND').count()
         context = {
             'turmas_count': turmas_count,
             'solicitacoes_presenca': solicitacoes_presenca,
@@ -158,21 +158,19 @@ def dashboard(request):
         total_professors = User.objects.filter(group_role='PRO', is_active=True).count()
         total_active_turmas = Turma.objects.filter(ativa=True).count()
         pending_attendance_requests = AttendanceRequest.objects.filter(status='PEN').order_by('-attendance_date')[:5]
-        pending_pedidos = Pedido.objects.filter(status='PEND').order_by('-data_solicitacao')[:5]
-
-        # Data for admin dashboard cards (similar to professor dashboard)
+        pedidos_pendentes = Pedido.objects.filter(status='PEND').count()
+        
         turmas_count = Turma.objects.filter(ativa=True).count()
         solicitacoes_presenca = AttendanceRequest.objects.filter(status='PEN').count()
         alunos_ativos = User.objects.filter(group_role='STD', is_active=True).count()
         alunos_pendentes = User.objects.filter(group_role='STD', is_active=False).count()
-        pedidos_pendentes = Pedido.objects.filter(status='PEND').count() # Corrected query
 
         context = {
             'total_students': total_students,
             'total_professors': total_professors,
             'total_active_turmas': total_active_turmas,
             'pending_attendance_requests': pending_attendance_requests,
-            'pending_pedidos': pedidos_pendentes, # Use the corrected count
+            'pending_pedidos': pedidos_pendentes,
             'turmas_count': turmas_count,
             'solicitacoes_presenca': solicitacoes_presenca,
             'alunos_ativos': alunos_ativos,
@@ -326,16 +324,133 @@ def professor_turmas(request):
 
 @login_required
 def professor_turma_nova(request):
-    # Lógica para criar nova turma
-    return render(request, 'academia/professor/turma_form.html')
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        form = TurmaForm(request.POST, user=request.user)
+        if form.is_valid():
+            turma = form.save(commit=False)
+            # Se for professor, definir automaticamente como professor da turma
+            if request.user.group_role == 'PRO':
+                turma.professor = request.user
+            turma.save()
+            messages.success(request, f'Turma "{turma.nome}" criada com sucesso!')
+            return redirect('professor_turmas')
+    else:
+        form = TurmaForm(user=request.user)
+    
+    return render(request, 'academia/professor/turma_form.html', {'form': form})
 
 @login_required
 def professor_turma_editar(request, turma_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
     if request.user.group_role == 'ADM':
         turma = get_object_or_404(Turma, pk=turma_id)
     else:
         turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
-    return render(request, 'academia/professor/turma_form.html', {'turma': turma})
+    
+    if request.method == 'POST':
+        form = TurmaForm(request.POST, instance=turma, user=request.user)
+        if form.is_valid():
+            turma = form.save(commit=False)
+            # Se for professor, manter como professor da turma
+            if request.user.group_role == 'PRO':
+                turma.professor = request.user
+            turma.save()
+            messages.success(request, f'Turma "{turma.nome}" atualizada com sucesso!')
+            return redirect('professor_turmas')
+    else:
+        form = TurmaForm(instance=turma, user=request.user)
+    
+    return render(request, 'academia/professor/turma_form.html', {'form': form, 'turma': turma})
+
+@login_required
+def professor_turma_alunos(request, turma_id):
+    """View para gerenciar alunos de uma turma específica"""
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.user.group_role == 'ADM':
+        turma = get_object_or_404(Turma, pk=turma_id)
+    else:
+        turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
+    
+    # Alunos já na turma
+    alunos_turma = TurmaAluno.objects.filter(turma=turma, status='APRO').select_related('aluno')
+    
+    # Alunos disponíveis para adicionar (ativos e não estão na turma)
+    alunos_ids_na_turma = alunos_turma.values_list('aluno_id', flat=True)
+    alunos_disponiveis = User.objects.filter(
+        group_role='STD', 
+        is_active=True
+    ).exclude(id__in=alunos_ids_na_turma).order_by('first_name', 'last_name')
+    
+    context = {
+        'turma': turma,
+        'alunos_turma': alunos_turma,
+        'alunos_disponiveis': alunos_disponiveis,
+    }
+    return render(request, 'academia/professor/turma_alunos.html', context)
+
+@login_required
+def professor_turma_adicionar_aluno(request, turma_id):
+    """View para adicionar um ou mais alunos à turma"""
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.user.group_role == 'ADM':
+        turma = get_object_or_404(Turma, pk=turma_id)
+    else:
+        turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
+    
+    if request.method == 'POST':
+        alunos_ids = request.POST.getlist('alunos')
+        if not alunos_ids:
+            messages.error(request, 'Selecione pelo menos um aluno.')
+            return redirect('professor_turma_alunos', turma_id=turma_id)
+        
+        count = 0
+        for aluno_id in alunos_ids:
+            aluno = get_object_or_404(User, pk=aluno_id, group_role='STD')
+            # Verificar se já não está na turma
+            if not TurmaAluno.objects.filter(turma=turma, aluno=aluno).exists():
+                TurmaAluno.objects.create(
+                    turma=turma,
+                    aluno=aluno,
+                    status='APRO',
+                    data_aprovacao=timezone.now()
+                )
+                count += 1
+        
+        if count > 0:
+            messages.success(request, f'{count} aluno(s) adicionado(s) à turma "{turma.nome}" com sucesso!')
+        else:
+            messages.warning(request, 'Nenhum aluno foi adicionado. Eles já podem estar na turma.')
+        
+        return redirect('professor_turma_alunos', turma_id=turma_id)
+    
+    return redirect('professor_turma_alunos', turma_id=turma_id)
+
+@login_required
+def professor_turma_remover_aluno(request, turma_id, aluno_id):
+    """View para remover um aluno da turma"""
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.user.group_role == 'ADM':
+        turma = get_object_or_404(Turma, pk=turma_id)
+    else:
+        turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
+    
+    turma_aluno = get_object_or_404(TurmaAluno, turma=turma, aluno_id=aluno_id)
+    aluno_nome = turma_aluno.aluno.get_full_name()
+    turma_aluno.delete()
+    
+    messages.success(request, f'Aluno "{aluno_nome}" removido da turma "{turma.nome}" com sucesso!')
+    return redirect('professor_turma_alunos', turma_id=turma_id)
 
 @login_required
 def professor_alunos(request):
@@ -579,16 +694,15 @@ def professor_pedido_aprovar(request, pedido_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    if pedido.item.quantidade is not None:
-        if pedido.quantidade > pedido.item.quantidade:
-            messages.error(request, 'Não há estoque suficiente para aprovar este pedido.')
-            return redirect('professor_pedidos')
-        pedido.item.quantidade -= pedido.quantidade
-        pedido.item.save()
-
-    pedido.status = 'APRO'
-    pedido.save()
-    messages.success(request, 'Pedido aprovado com sucesso!')
+    if request.method == 'POST':
+        # Mudar status para APRO (Aprovado/Atendido)
+        pedido.status = 'APRO'
+        pedido.aprovado_por = request.user
+        pedido.data_aprovacao = timezone.now()
+        pedido.save()
+        messages.success(request, 'Pedido atendido com sucesso!')
+        return redirect('professor_pedidos')
+    
     return redirect('professor_pedidos')
 
 @login_required
@@ -596,9 +710,29 @@ def professor_pedido_rejeitar(request, pedido_id):
     pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    pedido.status = 'REJE'
-    pedido.save()
-    messages.success(request, 'Pedido rejeitado com sucesso!')
+    
+    if request.method == 'POST':
+        reason = request.POST.get('rejection_reason', 'Sem motivo especificado.')
+        pedido.status = 'REJE'
+        pedido.rejection_reason = reason
+        pedido.save()
+        messages.success(request, 'Pedido rejeitado com sucesso!')
+        return redirect('professor_pedidos')
+    return redirect('professor_pedidos')
+
+@login_required
+def professor_pedido_cancelar(request, pedido_id):
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        reason = request.POST.get('cancellation_reason', 'Sem motivo especificado.')
+        pedido.status = 'CANC'
+        pedido.cancellation_reason = reason
+        pedido.save()
+        messages.success(request, 'Pedido cancelado com sucesso!')
+        return redirect('professor_pedidos')
     return redirect('professor_pedidos')
 
 @login_required
@@ -606,11 +740,37 @@ def professor_pedido_entregar(request, pedido_id):
     pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    pedido.status = 'ENTR'
-    pedido.data_aprovacao = timezone.now()
-    pedido.aprovado_por = request.user
-    pedido.save()
-    messages.success(request, 'Pedido marcado como entregue!')
+    
+    if request.method == 'POST':
+        # Verificar e descontar estoque apenas ao entregar
+        if pedido.item.quantidade is not None:
+            if pedido.quantidade > pedido.item.quantidade:
+                messages.error(request, 'Não há estoque suficiente para entregar este pedido.')
+                return redirect('professor_pedidos')
+            pedido.item.quantidade -= pedido.quantidade
+            pedido.item.save()
+        
+        final_value = request.POST.get('final_value')
+        if final_value:
+            pedido.final_value = final_value
+        
+        pedido.status = 'ENTR'
+        pedido.save()
+        messages.success(request, 'Pedido marcado como entregue!')
+        return redirect('professor_pedidos')
+    return redirect('professor_pedidos')
+
+@login_required
+def professor_pedido_finalizar(request, pedido_id):
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        pedido.status = 'FINA'
+        pedido.save()
+        messages.success(request, 'Pedido finalizado com sucesso!')
+        return redirect('professor_pedidos')
     return redirect('professor_pedidos')
 
 @login_required

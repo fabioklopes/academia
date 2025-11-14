@@ -113,8 +113,8 @@
                 <i class="bi bi-cart fs-1 {% if pedidos_pendentes > 0 %}text-warning{% else %}text-success{% endif %} mb-3"></i>
                 <h5 class="card-title">Pedidos</h5>
                 <p class="card-text">
-                    {% if pedidos_pendentes.count > 0 %}
-                        {{ pedidos_pendentes.count }} pendente{% if pedidos_pendentes.count != 1 %}s{% endif %}
+                    {% if pedidos_pendentes > 0 %}
+                        {{ pedidos_pendentes }} pendente{% if pedidos_pendentes != 1 %}s{% endif %}
                     {% else %}
                         Nenhuma pendência
                     {% endif %}

@@ -31,6 +31,9 @@ urlpatterns = [
     path('professor/turmas/', views.professor_turmas, name='professor_turmas'),
     path('professor/turmas/nova/', views.professor_turma_nova, name='professor_turma_nova'),
     path('professor/turmas/<int:turma_id>/editar/', views.professor_turma_editar, name='professor_turma_editar'),
+    path('professor/turmas/<int:turma_id>/alunos/', views.professor_turma_alunos, name='professor_turma_alunos'),
+    path('professor/turmas/<int:turma_id>/alunos/adicionar/', views.professor_turma_adicionar_aluno, name='professor_turma_adicionar_aluno'),
+    path('professor/turmas/<int:turma_id>/alunos/<int:aluno_id>/remover/', views.professor_turma_remover_aluno, name='professor_turma_remover_aluno'),
 
     # Painel do Professor - Alunos
     path('professor/alunos/', views.professor_alunos, name='professor_alunos'),
@@ -57,7 +60,9 @@ urlpatterns = [
     path('professor/pedidos/', views.professor_pedidos, name='professor_pedidos'),
     path('professor/pedido/<int:pedido_id>/aprovar/', views.professor_pedido_aprovar, name='professor_pedido_aprovar'),
     path('professor/pedido/<int:pedido_id>/rejeitar/', views.professor_pedido_rejeitar, name='professor_pedido_rejeitar'),
+    path('professor/pedido/<int:pedido_id>/cancelar/', views.professor_pedido_cancelar, name='professor_pedido_cancelar'),
     path('professor/pedido/<int:pedido_id>/entregar/', views.professor_pedido_entregar, name='professor_pedido_entregar'),
+    path('professor/pedido/<int:pedido_id>/finalizar/', views.professor_pedido_finalizar, name='professor_pedido_finalizar'),
 
     # Painel do Professor - Planos de Aula
     path('professor/planos-aula/', views.professor_planos_aula, name='professor_planos_aula'),

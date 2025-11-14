@@ -295,7 +295,7 @@ class PlanoAula(models.Model):
     
     class Meta:
         verbose_name = 'Plano de Aula'
-        verbose_name_plural = 'Planos de Aula'
+        verbose_name_plural = 'Plano de Aulas'
         ordering = ['-data_inicio']
     
     def __str__(self):
@@ -396,10 +396,12 @@ class Item(models.Model):
 
 class Pedido(models.Model):
     STATUS_CHOICES = [
-        ('PEND', 'Pendente'),
-        ('APRO', 'Aprovado'),
-        ('REJE', 'Rejeitado'),
-        ('ENTR', 'Entregue'),
+        ('PEND', 'Pendente'), # 01 padrão (warning)
+        ('APRO', 'Aprovado'), # 02 pedido aceito (primary)
+        ('CANC', 'Cancelado'), # 03 pedido cancelado (secondary)
+        ('REJE', 'Rejeitado'), # 04 pedido rejeitado (danger)
+        ('ENTR', 'Aguardando entrega'), # 05 na fila para entrega (info)
+        ('FINA', 'Finalizado'), # 06 pedido finalizado (success)
     ]
     
     aluno = models.ForeignKey(
@@ -426,6 +428,9 @@ class Pedido(models.Model):
         limit_choices_to={'group_role__in': ['PRO', 'ADM']},
         related_name='pedidos_aprovados'
     )
+    rejection_reason = models.TextField('Motivo da Rejeição', blank=True, null=True)
+    cancellation_reason = models.TextField('Motivo do Cancelamento', blank=True, null=True)
+    final_value = models.DecimalField('Valor Final', max_digits=10, decimal_places=2, null=True, blank=True)
     
     class Meta:
         verbose_name = 'Pedido'

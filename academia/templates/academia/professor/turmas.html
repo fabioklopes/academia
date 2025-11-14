@@ -46,7 +46,12 @@
                                         </td>
                                         <td>{{ turma.data_criacao|date:"d/m/Y" }}</td>
                                         <td>
-                                            <a href="{% url 'professor_turma_editar' turma.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                            <a href="{% url 'professor_turma_alunos' turma.id %}" class="btn btn-sm btn-outline-success" title="Gerenciar Alunos">
+                                                <i class="bi bi-people"></i> Alunos
+                                            </a>
+                                            <a href="{% url 'professor_turma_editar' turma.id %}" class="btn btn-sm btn-outline-primary" title="Editar Turma">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </a>
                                         </td>
                                     </tr>
                                 {% endfor %}
