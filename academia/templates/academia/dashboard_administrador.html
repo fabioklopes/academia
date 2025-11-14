@@ -1,6 +1,6 @@
 {% extends 'academia/base.html' %}
 
-{% block title %}Dashboard Administrador - Academia de Jiu-Jitsu{% endblock %}
+{% block title %}Painel do Administrador - Academia de Jiu-Jitsu{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -110,9 +110,15 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-cart fs-1 text-success mb-3"></i>
+                <i class="bi bi-cart fs-1 {% if pedidos_pendentes > 0 %}text-warning{% else %}text-success{% endif %} mb-3"></i>
                 <h5 class="card-title">Pedidos</h5>
-                <p class="card-text">{{ pedidos_pendentes }} pendente(s)</p>
+                <p class="card-text">
+                    {% if pedidos_pendentes > 0 %}
+                        {{ pedidos_pendentes }} pendente{% if pedidos_pendentes != 1 %}s{% endif %}
+                    {% else %}
+                        Nenhuma pendência
+                    {% endif %}
+                </p>
                 <a href="{% url 'professor_pedidos' %}" class="btn btn-primary">Gerenciar</a>
             </div>
         </div>

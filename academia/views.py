@@ -9,8 +9,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout, auth
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
-from .models import User, Turma, AttendanceRequest, TurmaAluno, Presenca, Graduacao, PlanoAula, ItemPlanoAula, Ranking, PosicaoRanking, Pedido
-from .forms import GraduacaoForm
+from .models import User, Turma, AttendanceRequest, TurmaAluno, Presenca, Graduacao, PlanoAula, ItemPlanoAula, Ranking, PosicaoRanking, Pedido, Item
+from .forms import GraduacaoForm, ItemForm, PedidoForm
 import calendar
 
 # Imports para Relatórios
@@ -143,7 +143,7 @@ def dashboard(request):
         solicitacoes_presenca = AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').count()
         alunos_ativos = User.objects.filter(group_role='STD', turmas__professor=request.user, active=True).distinct().count()
         alunos_pendentes = User.objects.filter(group_role='STD', is_active=False).distinct().count()
-        pedidos_pendentes = Pedido.objects.filter(aluno__turmas__professor=request.user, status='PEND').distinct().count()
+        pedidos_pendentes = Pedido.objects.filter(status='PEND').count() # Corrected query
         context = {
             'turmas_count': turmas_count,
             'solicitacoes_presenca': solicitacoes_presenca,
@@ -165,14 +165,14 @@ def dashboard(request):
         solicitacoes_presenca = AttendanceRequest.objects.filter(status='PEN').count()
         alunos_ativos = User.objects.filter(group_role='STD', is_active=True).count()
         alunos_pendentes = User.objects.filter(group_role='STD', is_active=False).count()
-        pedidos_pendentes = Pedido.objects.filter(status='PEND').count()
+        pedidos_pendentes = Pedido.objects.filter(status='PEND').count() # Corrected query
 
         context = {
             'total_students': total_students,
             'total_professors': total_professors,
             'total_active_turmas': total_active_turmas,
             'pending_attendance_requests': pending_attendance_requests,
-            'pending_pedidos': pending_pedidos,
+            'pending_pedidos': pedidos_pendentes, # Use the corrected count
             'turmas_count': turmas_count,
             'solicitacoes_presenca': solicitacoes_presenca,
             'alunos_ativos': alunos_ativos,
@@ -287,6 +287,29 @@ def aluno_graduacoes(request):
     return render(request, 'academia/aluno/graduacoes.html', {'graduacoes': graduacoes})
 
 @login_required
+def aluno_pedidos(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+    pedidos = Pedido.objects.filter(aluno=request.user)
+    return render(request, 'academia/aluno/pedidos.html', {'pedidos': pedidos})
+
+@login_required
+def aluno_pedido_novo(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+    if request.method == 'POST':
+        form = PedidoForm(request.POST)
+        if form.is_valid():
+            pedido = form.save(commit=False)
+            pedido.aluno = request.user
+            pedido.save()
+            messages.success(request, 'Pedido realizado com sucesso!')
+            return redirect('aluno_pedidos')
+    else:
+        form = PedidoForm()
+    return render(request, 'academia/aluno/pedido_form.html', {'form': form})
+
+@login_required
 def aluno_relatorios(request):
     # Lógica para gerar relatórios do aluno
     return render(request, 'academia/aluno/relatorios.html')
@@ -316,20 +339,23 @@ def professor_turma_editar(request, turma_id):
 
 @login_required
 def professor_alunos(request):
-    alunos = User.objects.filter(group_role='STD').order_by('-is_active')
+    alunos = User.objects.filter(group_role='STD').order_by('first_name')
     return render(request, 'academia/professor/alunos.html', {'alunos': alunos})
 
 @login_required
 def professor_aluno_desativar(request, aluno_id):
     aluno = get_object_or_404(User, pk=aluno_id, group_role='STD')
+    aluno.is_active = False
     aluno.active = False
     aluno.save()
+    messages.success(request, f'O usuário {aluno.get_full_name()} foi desativado com sucesso.')
     return redirect('professor_alunos')
 
 @login_required
 def professor_aluno_ativar(request, aluno_id):
     aluno = get_object_or_404(User, pk=aluno_id)
     aluno.is_active = True
+    aluno.active = True
     aluno.save()
     messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado com sucesso.')
     return redirect('professor_alunos')
@@ -537,29 +563,157 @@ def professor_ranking_novo(request):
 
 @login_required
 def professor_pedidos(request):
-    if request.user.group_role == 'ADM':
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.user.is_admin:
         pedidos = Pedido.objects.all()
     else:
-        pedidos = Pedido.objects.filter(aluno__turmas__professor=request.user).distinct()
+        pedidos = Pedido.objects.filter(item__isnull=False, aluno__turmas__professor=request.user).distinct()
+
     return render(request, 'academia/professor/pedidos.html', {'pedidos': pedidos})
 
 @login_required
 def professor_pedido_aprovar(request, pedido_id):
     pedido = get_object_or_404(Pedido, pk=pedido_id)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if pedido.item.quantidade is not None:
+        if pedido.quantidade > pedido.item.quantidade:
+            messages.error(request, 'Não há estoque suficiente para aprovar este pedido.')
+            return redirect('professor_pedidos')
+        pedido.item.quantidade -= pedido.quantidade
+        pedido.item.save()
+
     pedido.status = 'APRO'
     pedido.save()
+    messages.success(request, 'Pedido aprovado com sucesso!')
     return redirect('professor_pedidos')
 
 @login_required
 def professor_pedido_rejeitar(request, pedido_id):
     pedido = get_object_or_404(Pedido, pk=pedido_id)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
     pedido.status = 'REJE'
     pedido.save()
+    messages.success(request, 'Pedido rejeitado com sucesso!')
     return redirect('professor_pedidos')
 
 @login_required
-def professor_relatorios(request):
-    return render(request, 'academia/professor/relatorios.html')
+def professor_pedido_entregar(request, pedido_id):
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    pedido.status = 'ENTR'
+    pedido.data_aprovacao = timezone.now()
+    pedido.aprovado_por = request.user
+    pedido.save()
+    messages.success(request, 'Pedido marcado como entregue!')
+    return redirect('professor_pedidos')
+
+@login_required
+def professor_itens(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    itens = Item.objects.all()
+    return render(request, 'academia/professor/itens.html', {'itens': itens})
+
+@login_required
+def professor_item_novo(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    if request.method == 'POST':
+        form = ItemForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Item criado com sucesso!')
+            return redirect('professor_itens')
+    else:
+        form = ItemForm()
+    return render(request, 'academia/professor/item_form.html', {'form': form})
+
+@login_required
+def professor_item_editar(request, item_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    item = get_object_or_404(Item, pk=item_id)
+    if request.method == 'POST':
+        form = ItemForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Item atualizado com sucesso!')
+            return redirect('professor_itens')
+    else:
+        form = ItemForm(instance=item)
+    return render(request, 'academia/professor/item_form.html', {'form': form})
+
+@login_required
+def professor_item_deletar(request, item_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    item = get_object_or_404(Item, pk=item_id)
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, 'Item deletado com sucesso!')
+        return redirect('professor_itens')
+    return render(request, 'academia/professor/item_confirm_delete.html', {'item': item})
+
+@login_required
+def aluno_pedidos(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+    pedidos = Pedido.objects.filter(aluno=request.user)
+    return render(request, 'academia/aluno/pedidos.html', {'pedidos': pedidos})
+
+@login_required
+def aluno_pedido_novo(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+    if request.method == 'POST':
+        form = PedidoForm(request.POST)
+        if form.is_valid():
+            pedido = form.save(commit=False)
+            pedido.aluno = request.user
+            pedido.save()
+            messages.success(request, 'Pedido realizado com sucesso!')
+            return redirect('aluno_pedidos')
+    else:
+        form = PedidoForm()
+    return render(request, 'academia/aluno/pedido_form.html', {'form': form})
+
+@login_required
+def relatorio_pedidos(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    pedidos = Pedido.objects.all()
+    
+    # Filtering logic
+    aluno_id = request.GET.get('aluno')
+    item_id = request.GET.get('item')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if aluno_id:
+        pedidos = pedidos.filter(aluno_id=aluno_id)
+    if item_id:
+        pedidos = pedidos.filter(item_id=item_id)
+    if start_date:
+        pedidos = pedidos.filter(data_solicitacao__gte=start_date)
+    if end_date:
+        pedidos = pedidos.filter(data_solicitacao__lte=end_date)
+        
+    alunos = User.objects.filter(group_role='STD')
+    itens = Item.objects.all()
+
+    context = {
+        'pedidos': pedidos,
+        'alunos': alunos,
+        'itens': itens,
+    }
+    return render(request, 'academia/professor/relatorio_pedidos.html', context)
 
 
 # --- FUNÇÕES DE VERIFICAÇÃO DE GRUPO ---

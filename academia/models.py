@@ -379,16 +379,22 @@ class PosicaoRanking(models.Model):
         return f"{self.ranking} - {self.aluno} - {self.posicao}º lugar"
 
 
-class Pedido(models.Model):
-    """Modelo para controle de pedidos (Kimonos, Faixas, etc.)"""
+class Item(models.Model):
     TIPO_CHOICES = [
         ('KIMONO', 'Kimono'),
         ('FAIXA', 'Faixa'),
-        ('HASHGUARD', 'Hashguard'),
-        ('EXAME', 'Exame de Graduação'),
-        ('TROCA_FAIXA', 'Troca de Faixa'),
+        ('RASHGUARD', 'Rashguard'),
+        ('TAXA', 'Taxa'),
     ]
-    
+    nome = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    quantidade = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return self.nome
+
+class Pedido(models.Model):
     STATUS_CHOICES = [
         ('PEND', 'Pendente'),
         ('APRO', 'Aprovado'),
@@ -402,8 +408,8 @@ class Pedido(models.Model):
         limit_choices_to={'group_role': 'STD'},
         related_name='pedidos'
     )
-    tipo = models.CharField('Tipo', max_length=11, choices=TIPO_CHOICES)
-    descricao = models.TextField('Descrição', blank=True)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='pedidos')
+    quantidade = models.IntegerField(default=1)
     status = models.CharField(
         'Status',
         max_length=4,
@@ -427,4 +433,4 @@ class Pedido(models.Model):
         ordering = ['-data_solicitacao']
     
     def __str__(self):
-        return f"{self.aluno} - {self.get_tipo_display()} - {self.get_status_display()}"
+        return f"{self.aluno} - {self.item.nome} - {self.get_status_display()}"

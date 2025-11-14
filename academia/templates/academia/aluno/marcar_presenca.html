@@ -27,7 +27,7 @@
                             <input type="date" id="date-input" class="form-control">
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
-                            <button type="button" id="add-date" class="btn btn-sm btn-primary w-100">Adicionar</button>
+                            <button type="button" id="add-date" class="btn btn-sm btn-outline-primary w-100">Adicionar</button>
                         </div>
                     </div>
                     <div id="selected-dates-list" class="mb-3">
@@ -35,8 +35,8 @@
                         <ul class="list-group"></ul>
                     </div>
                     <div id="selected-dates-inputs"></div>
-                    <button type="submit" class="btn btn-primary">Solicitar Presenças</button>
-                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-outline-primary">Solicitar Presenças</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
                 </form>
             </div>
         </div>
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
-            removeBtn.className = 'btn btn-danger btn-sm';
+            removeBtn.className = 'btn btn-outline-danger btn-sm';
             removeBtn.textContent = 'Remover';
             removeBtn.addEventListener('click', () => {
                 selectedDates.delete(date);

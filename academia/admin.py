@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     User, Turma, TurmaAluno, Presenca, Graduacao,
-    PlanoAula, ItemPlanoAula, Ranking, PosicaoRanking, Pedido
+    PlanoAula, ItemPlanoAula, Ranking, PosicaoRanking, Pedido, Item
 )
 
 
@@ -78,9 +78,16 @@ class PosicaoRankingAdmin(admin.ModelAdmin):
     search_fields = ['aluno__first_name', 'aluno__last_name', 'ranking__titulo']
 
 
+@admin.register(Item)
+class ItemAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'tipo', 'valor', 'quantidade']
+    list_filter = ['tipo']
+    search_fields = ['nome']
+
+
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
-    list_display = ['aluno', 'tipo', 'status', 'data_solicitacao']
-    list_filter = ['tipo', 'status', 'data_solicitacao']
-    search_fields = ['aluno__first_name', 'aluno__last_name']
+    list_display = ['aluno', 'item', 'quantidade', 'status', 'data_solicitacao']
+    list_filter = ['status', 'data_solicitacao', 'item__tipo']
+    search_fields = ['aluno__first_name', 'aluno__last_name', 'item__nome']
 

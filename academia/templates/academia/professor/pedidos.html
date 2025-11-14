@@ -52,8 +52,8 @@
                                         <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
                                         <td>
                                             {% if pedido.status == 'PEND' %}
-                                                <a href="{% url 'professor_pedido_aprovar' pedido.id %}" class="btn btn-sm btn-success">Aprovar</a>
-                                                <a href="{% url 'professor_pedido_rejeitar' pedido.id %}" class="btn btn-sm btn-danger">Rejeitar</a>
+                                                <a href="{% url 'professor_pedido_aprovar' pedido.id %}" class="btn btn-sm btn-outline-success">Aprovar</a>
+                                                <a href="{% url 'professor_pedido_rejeitar' pedido.id %}" class="btn btn-sm btn-outline-danger">Rejeitar</a>
                                             {% else %}
                                                 -
                                             {% endif %}
@@ -68,11 +68,10 @@
                 {% endif %}
                 
                 <div class="mt-3">
-                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Voltar</a>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
-

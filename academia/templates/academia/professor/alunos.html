@@ -40,16 +40,20 @@
                                             {% if aluno.is_active %}
                                                 <span class="badge bg-success">Ativo</span>
                                             {% else %}
-                                                <span class="badge bg-warning">Pendente</span>
+                                                {% if aluno.active %}
+                                                    <span class="badge bg-danger">Inativo</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Pendente</span>
+                                                {% endif %}
                                             {% endif %}
                                         </td>
                                         <td>
                                             {% if not aluno.is_active %}
-                                                <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-success">Ativar</a>
+                                                <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-outline-success">Ativar</a>
                                             {% else %}
-                                                <a href="{% url 'professor_aluno_desativar' aluno.id %}" class="btn btn-sm btn-danger">Desativar</a>
-                                                <a href="{% url 'professor_aluno_definir_tipo' aluno.id %}" class="btn btn-sm btn-info">Alterar Tipo</a>
+                                                <a href="{% url 'professor_aluno_desativar' aluno.id %}" class="btn btn-sm btn-outline-danger">Desativar</a>
                                             {% endif %}
+                                            <a href="{% url 'professor_aluno_definir_tipo' aluno.id %}" class="btn btn-sm btn-outline-info">Alterar Tipo</a>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -61,7 +65,7 @@
                 {% endif %}
                 
                 <div class="mt-3">
-                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Voltar</a>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
                 </div>
             </div>
         </div>

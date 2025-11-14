@@ -1,21 +1,21 @@
 {% extends 'academia/base.html' %}
 
-{% block title %}Editar Graduação - Academia de Jiu-Jitsu{% endblock %}
+{% block title %}Novo Pedido - Academia de Jiu-Jitsu{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-8 offset-md-2">
         <div class="card">
             <div class="card-header">
-                <h4>Editar Graduação - {{ aluno.first_name }} {{ aluno.last_name }}</h4>
+                <h4>Novo Pedido</h4>
             </div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-outline-primary">Salvar</button>
-                        <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-outline-primary">Fazer Pedido</button>
+                        <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>
                 </form>
             </div>

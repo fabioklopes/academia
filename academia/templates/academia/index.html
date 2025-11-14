@@ -33,7 +33,7 @@
         <h1 class="display-4 fw-bold mb-4">Academia de Jiu-Jitsu</h1>
         <p class="lead mb-4">Sistema de Gestão de Presenças e Controle de Alunos</p>
         <div class="d-flex gap-3 justify-content-center">
-            <a href="{% url 'login' %}" class="btn btn-light btn-lg px-5">
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-5">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Fazer Login
             </a>
             <a href="{% url 'solicitar_acesso' %}" class="btn btn-outline-light btn-lg px-5">
@@ -92,7 +92,7 @@
                     <h2 class="mb-0">Bem-vindo, {{ user.first_name }}!</h2>
                 </div>
             </div>
-            <a href="{% url 'dashboard' %}" class="btn btn-primary">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
                 <i class="bi bi-speedometer2 me-2"></i>Ir para Dashboard
             </a>
         </div>
@@ -112,7 +112,7 @@
                 <i class="bi bi-calendar-plus fs-1 text-primary mb-3"></i>
                 <h5>Marcar Presença</h5>
                 <p class="text-muted">Solicite presença para uma ou mais datas</p>
-                <a href="{% url 'aluno_marcar_presenca' %}" class="btn btn-primary">Acessar</a>
+                <a href="{% url 'aluno_marcar_presenca' %}" class="btn btn-outline-primary">Acessar</a>
             </div>
         </div>
     </div>
@@ -122,7 +122,7 @@
                 <i class="bi bi-list-check fs-1 text-success mb-3"></i>
                 <h5>Minhas Presenças</h5>
                 <p class="text-muted">Visualize todas as suas presenças</p>
-                <a href="{% url 'aluno_presencas' %}" class="btn btn-success">Acessar</a>
+                <a href="{% url 'aluno_presencas' %}" class="btn btn-outline-success">Acessar</a>
             </div>
         </div>
     </div>
@@ -132,7 +132,7 @@
                 <i class="bi bi-graph-up fs-1 text-info mb-3"></i>
                 <h5>Relatórios</h5>
                 <p class="text-muted">Visualize seus relatórios de presença</p>
-                <a href="{% url 'aluno_relatorios' %}" class="btn btn-info">Acessar</a>
+                <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-info">Acessar</a>
             </div>
         </div>
     </div>
@@ -144,7 +144,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-people fs-1 text-primary mb-3"></i>
                 <h6>Turmas</h6>
-                <a href="{% url 'professor_turmas' %}" class="btn btn-sm btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_turmas' %}" class="btn btn-sm btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -153,7 +153,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-calendar-check fs-1 text-warning mb-3"></i>
                 <h6>Aprovar Presenças</h6>
-                <a href="{% url 'professor_presencas' %}" class="btn btn-sm btn-warning">Acessar</a>
+                <a href="{% url 'professor_presencas' %}" class="btn btn-sm btn-outline-warning">Acessar</a>
             </div>
         </div>
     </div>
@@ -162,7 +162,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-award fs-1 text-danger mb-3"></i>
                 <h6>Graduações</h6>
-                <a href="{% url 'professor_graduacoes' %}" class="btn btn-sm btn-danger">Gerenciar</a>
+                <a href="{% url 'professor_graduacoes' %}" class="btn btn-sm btn-outline-danger">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -171,7 +171,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-file-earmark-bar-graph fs-1 text-info mb-3"></i>
                 <h6>Relatórios</h6>
-                <a href="{% url 'professor_relatorios' %}" class="btn btn-sm btn-info">Acessar</a>
+                <a href="{% url 'professor_relatorios' %}" class="btn btn-sm btn-outline-info">Acessar</a>
             </div>
         </div>
     </div>
