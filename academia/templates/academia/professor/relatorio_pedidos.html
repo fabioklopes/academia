@@ -1,0 +1,102 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Relatório de Pedidos - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Relatório de Pedidos</h4>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-4 p-3 border rounded">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="aluno" class="form-label">Aluno</label>
+                            <select name="aluno" id="aluno" class="form-select">
+                                <option value="">Todos</option>
+                                {% for aluno in alunos %}
+                                    <option value="{{ aluno.id }}" {% if request.GET.aluno == aluno.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ aluno.get_full_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="item" class="form-label">Item</label>
+                            <select name="item" id="item" class="form-select">
+                                <option value="">Todos</option>
+                                {% for item in itens %}
+                                    <option value="{{ item.id }}" {% if request.GET.item == item.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ item.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="start_date" class="form-label">Data Início</label>
+                            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ request.GET.start_date }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="end_date" class="form-label">Data Fim</label>
+                            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ request.GET.end_date }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+                        </div>
+                    </div>
+                </form>
+
+                {% if pedidos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Item</th>
+                                    <th>Quantidade</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Data da Solicitação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pedido in pedidos %}
+                                    <tr>
+                                        <td>{{ pedido.aluno.get_full_name }}</td>
+                                        <td>{{ pedido.item.nome }}</td>
+                                        <td>{{ pedido.quantidade }}</td>
+                                        <td>R$ {{ pedido.item.valor|default:"-" }}</td>
+                                        <td>
+                                            {% if pedido.status == 'PEND' %}
+                                                <span class="badge bg-warning">Pendente</span>
+                                            {% elif pedido.status == 'APRO' %}
+                                                <span class="badge bg-success">Aprovado</span>
+                                            {% elif pedido.status == 'REJE' %}
+                                                <span class="badge bg-danger">Rejeitado</span>
+                                            {% elif pedido.status == 'ENTR' %}
+                                                <span class="badge bg-info">Entregue</span>
+                                            {% elif pedido.status == 'FINA' %}
+                                                <span class="badge bg-dark">Finalizado</span>
+                                            {% elif pedido.status == 'CANC' %}
+                                                <span class="badge bg-secondary">Cancelado</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nenhum pedido encontrado para os filtros selecionados.</p>
+                {% endif %}
+                <div class="mt-3">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
