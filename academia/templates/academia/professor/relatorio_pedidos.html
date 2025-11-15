@@ -70,17 +70,17 @@
                                         <td>R$ {{ pedido.item.valor|default:"-" }}</td>
                                         <td>
                                             {% if pedido.status == 'PEND' %}
-                                                <span class="badge bg-warning">Pendente</span>
+                                                <span class="badge bg-warning text-dark">Pendente</span>
                                             {% elif pedido.status == 'APRO' %}
-                                                <span class="badge bg-success">Aprovado</span>
+                                                <span class="badge bg-primary">Aprovado</span>
+                                            {% elif pedido.status == 'CANC' %}
+                                                <span class="badge bg-secondary">Cancelado</span>
                                             {% elif pedido.status == 'REJE' %}
                                                 <span class="badge bg-danger">Rejeitado</span>
                                             {% elif pedido.status == 'ENTR' %}
-                                                <span class="badge bg-info">Entregue</span>
+                                                <span class="badge bg-info text-dark">Aguardando Entrega</span>
                                             {% elif pedido.status == 'FINA' %}
-                                                <span class="badge bg-dark">Finalizado</span>
-                                            {% elif pedido.status == 'CANC' %}
-                                                <span class="badge bg-secondary">Cancelado</span>
+                                                <span class="badge bg-success">Finalizado</span>
                                             {% endif %}
                                         </td>
                                         <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>

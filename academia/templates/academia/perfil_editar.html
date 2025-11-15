@@ -2,6 +2,25 @@
 
 {% block title %}Editar Perfil - Academia de Jiu-Jitsu{% endblock %}
 
+{% block extra_css %}
+<style>
+    .profile-photo-container img {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .profile-photo-container img:hover {
+        transform: scale(1.05);
+    }
+    #photoModal .modal-dialog {
+        max-width: 800px;
+    }
+    #photoModal .modal-body img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-md-8 offset-md-2">
@@ -38,20 +57,36 @@
                         <input type="file" class="form-control" id="photo" name="photo" accept="image/*" capture="camera">
                         <small class="form-text text-muted">Você pode selecionar uma foto do dispositivo ou usar a câmera.</small>
                         {% if user.photo %}
-                            <div class="mt-2">
-                                <img src="{{ user.photo.url }}" alt="Foto atual" width="100" class="rounded">
+                            <div class="mt-2 profile-photo-container">
+                                <img src="{{ user.photo.url }}" alt="Foto atual" width="100" class="rounded-2" data-bs-toggle="modal" data-bs-target="#photoModal">
                             </div>
                         {% endif %}
                     </div>
                     
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                        <a href="{% url 'perfil' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-outline-primary">Salvar Alterações</button>
+                        <a href="{% url 'perfil' %}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
+<!-- Modal da Foto -->
+{% if user.photo %}
+<div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="photoModalLabel">{{ user.get_full_name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="{{ user.photo.url }}" alt="Foto atual ampliada">
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
