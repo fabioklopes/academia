@@ -1,0 +1,81 @@
+{% extends 'academia/base.html' %}
+{% load academia_tags %}
+
+{% block title %}Graduações - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Controle de Graduações</h4>
+            </div>
+            <div class="card-body">
+                {% if alunos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Faixa</th>
+                                    <th>Grau</th>
+                                    <th>Data Graduação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for aluno in alunos %}
+                                    {% with graduacao=graduacoes|lookup:aluno.id %}
+                                    <tr>
+                                        <td>
+                                            {% if aluno.photo %}
+                                                <img src="{{ aluno.photo.url }}" alt="Foto" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle me-2 d-inline-block align-middle" style="width: 32px; height: 32px;">
+                                                    <i class="bi bi-person text-white" style="font-size: 20px; line-height: 32px;"></i>
+                                                </div>
+                                            {% endif %}
+                                            {{ aluno.first_name }} {{ aluno.last_name }}
+                                        </td>
+                                        <td>
+                                            {% if graduacao %}
+                                                {{ graduacao.get_faixa_display }}
+                                            {% else %}
+                                                <span class="text-muted">Não definido</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if graduacao %}
+                                                {{ graduacao.grau|format_grau }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if graduacao and graduacao.data_graduacao %}
+                                                {{ graduacao.data_graduacao|date:"d/m/Y" }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'professor_graduacao_editar' aluno.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nenhum aluno cadastrado.</p>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

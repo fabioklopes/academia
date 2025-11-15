@@ -1,0 +1,95 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Marcar Presença - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Marcar Presença</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="turma_id" class="form-label">Turma</label>
+                        <select name="turma_id" id="turma_id" class="form-select" required>
+                            <option value="">Selecione a turma</option>
+                            {% for turma_aluno in turmas_aluno %}
+                                <option value="{{ turma_aluno.turma.id }}">{{ turma_aluno.turma.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="date-input" class="form-label">Data da Presença</label>
+                            <input type="date" id="date-input" class="form-control">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" id="add-date" class="btn btn-sm btn-outline-primary w-100">Adicionar</button>
+                        </div>
+                    </div>
+                    <div id="selected-dates-list" class="mb-3">
+                        <h6>Datas Selecionadas:</h6>
+                        <ul class="list-group"></ul>
+                    </div>
+                    <div id="selected-dates-inputs"></div>
+                    <button type="submit" class="btn btn-outline-primary">Solicitar Presenças</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectedDates = new Set();
+    const dateInput = document.getElementById('date-input');
+    const addDateBtn = document.getElementById('add-date');
+    const selectedDatesList = document.querySelector('#selected-dates-list ul');
+    const selectedDatesInputs = document.getElementById('selected-dates-inputs');
+
+    addDateBtn.addEventListener('click', () => {
+        const date = dateInput.value;
+        if (date && !selectedDates.has(date)) {
+            selectedDates.add(date);
+            updateSelectedDates();
+        }
+    });
+
+    function updateSelectedDates() {
+        selectedDatesList.innerHTML = '';
+        selectedDatesInputs.innerHTML = '';
+        const sortedDates = Array.from(selectedDates).sort();
+        
+        sortedDates.forEach(date => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.textContent = new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-outline-danger btn-sm';
+            removeBtn.textContent = 'Remover';
+            removeBtn.addEventListener('click', () => {
+                selectedDates.delete(date);
+                updateSelectedDates();
+            });
+            
+            listItem.appendChild(removeBtn);
+            selectedDatesList.appendChild(listItem);
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'dates';
+            input.value = date;
+            selectedDatesInputs.appendChild(input);
+        });
+    }
+});
+</script>
+{% endblock %}
