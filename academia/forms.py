@@ -26,12 +26,30 @@ class ItemForm(forms.ModelForm):
 class PedidoForm(forms.ModelForm):
     class Meta:
         model = Pedido
-        fields = ['item', 'quantidade', 'final_value'] # Added final_value
+        fields = ['item', 'quantidade']
         widgets = {
             'item': forms.Select(attrs={'class': 'form-select'}),
-            'quantidade': forms.NumberInput(attrs={'class': 'form-control'}),
-            'final_value': forms.NumberInput(attrs={'class': 'form-control'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'value': '1'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtra os itens para mostrar apenas os que têm estoque
+        self.fields['item'].queryset = Item.objects.filter(quantidade__gt=0)
+
+    def clean_quantidade(self):
+        # Validação para garantir que a quantidade não exceda o estoque
+        quantidade = self.cleaned_data.get('quantidade')
+        item = self.cleaned_data.get('item')
+
+        if item and quantidade:
+            if quantidade > item.quantidade:
+                raise forms.ValidationError(f"A quantidade solicitada ({quantidade}) excede o estoque disponível ({item.quantidade}).")
+        
+        if quantidade <= 0:
+            raise forms.ValidationError("A quantidade deve ser pelo menos 1.")
+
+        return quantidade
 
 class TurmaForm(forms.ModelForm):
     class Meta:

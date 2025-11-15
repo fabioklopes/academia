@@ -2,6 +2,7 @@ import datetime
 import time
 import os
 import hashlib
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -295,17 +296,40 @@ def aluno_pedidos(request):
 def aluno_pedido_novo(request):
     if not request.user.is_student():
         raise PermissionDenied
+    
     if request.method == 'POST':
         form = PedidoForm(request.POST)
         if form.is_valid():
             pedido = form.save(commit=False)
+            item = pedido.item
+            
+            # Lógica de reserva de estoque
+            item.quantidade -= pedido.quantidade
+            item.save()
+
             pedido.aluno = request.user
+            pedido.final_value = item.valor * pedido.quantidade if item.valor else None
             pedido.save()
-            messages.success(request, 'Pedido realizado com sucesso!')
+            
+            messages.success(request, f'Pedido de "{item.nome}" realizado com sucesso! O item está reservado para você por 15 dias.')
             return redirect('aluno_pedidos')
     else:
         form = PedidoForm()
-    return render(request, 'academia/aluno/pedido_form.html', {'form': form})
+
+    # Prepara os dados dos itens para o JavaScript
+    itens = Item.objects.filter(quantidade__gt=0)
+    item_data = {
+        str(item.id): {
+            'valor': str(item.valor),
+            'quantidade': item.quantidade
+        } for item in itens
+    }
+    
+    context = {
+        'form': form,
+        'item_data_json': json.dumps(item_data)
+    }
+    return render(request, 'academia/aluno/pedido_form.html', context)
 
 @login_required
 def aluno_relatorios(request):
@@ -712,11 +736,17 @@ def professor_pedido_rejeitar(request, pedido_id):
         raise PermissionDenied
     
     if request.method == 'POST':
+        # Apenas devolve ao estoque se o pedido estava PENDENTE
+        if pedido.status == 'PEND':
+            item = pedido.item
+            item.quantidade += pedido.quantidade
+            item.save()
+
         reason = request.POST.get('rejection_reason', 'Sem motivo especificado.')
         pedido.status = 'REJE'
         pedido.rejection_reason = reason
         pedido.save()
-        messages.success(request, 'Pedido rejeitado com sucesso!')
+        messages.success(request, 'Pedido rejeitado com sucesso! O estoque foi atualizado.')
         return redirect('professor_pedidos')
     return redirect('professor_pedidos')
 
@@ -831,17 +861,40 @@ def aluno_pedidos(request):
 def aluno_pedido_novo(request):
     if not request.user.is_student():
         raise PermissionDenied
+    
     if request.method == 'POST':
         form = PedidoForm(request.POST)
         if form.is_valid():
             pedido = form.save(commit=False)
+            item = pedido.item
+            
+            # Lógica de reserva de estoque
+            item.quantidade -= pedido.quantidade
+            item.save()
+
             pedido.aluno = request.user
+            pedido.final_value = item.valor * pedido.quantidade if item.valor else None
             pedido.save()
-            messages.success(request, 'Pedido realizado com sucesso!')
+            
+            messages.success(request, f'Pedido de "{item.nome}" realizado com sucesso! O item está reservado para você por 15 dias.')
             return redirect('aluno_pedidos')
     else:
         form = PedidoForm()
-    return render(request, 'academia/aluno/pedido_form.html', {'form': form})
+
+    # Prepara os dados dos itens para o JavaScript
+    itens = Item.objects.filter(quantidade__gt=0)
+    item_data = {
+        str(item.id): {
+            'valor': str(item.valor),
+            'quantidade': item.quantidade
+        } for item in itens
+    }
+    
+    context = {
+        'form': form,
+        'item_data_json': json.dumps(item_data)
+    }
+    return render(request, 'academia/aluno/pedido_form.html', context)
 
 @login_required
 def relatorio_pedidos(request):
