@@ -27,6 +27,7 @@ urlpatterns = [
     path('aluno/pedidos/', views.aluno_pedidos, name='aluno_pedidos'),
     path('aluno/pedidos/novo/', views.aluno_pedido_novo, name='aluno_pedido_novo'),
     path('aluno/pedidos/<int:pedido_id>/cancelar/', views.aluno_pedido_cancelar, name='aluno_pedido_cancelar'),
+    path('aluno/gerar-relatorio/', views.gerar_relatorio_aluno, name='gerar_relatorio_aluno'), # New URL for student reports
     
     # Painel do Professor - Turmas
     path('professor/turmas/', views.professor_turmas, name='professor_turmas'),

@@ -3,6 +3,7 @@ import time
 import os
 import hashlib
 import json
+from datetime import timedelta # Added this import
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -404,6 +405,78 @@ def aluno_pedido_cancelar(request, pedido_id):
 def aluno_relatorios(request):
     # Lógica para gerar relatórios do aluno
     return render(request, 'academia/aluno/relatorios.html')
+
+@login_required
+def gerar_relatorio_aluno(request):
+    if not request.user.is_student():
+        raise PermissionDenied("Apenas alunos podem gerar relatórios.")
+
+    report_type = request.GET.get('report_type')
+    date_range = request.GET.get('date_range')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    today = datetime.date.today()
+    start_date = None
+    end_date = None
+
+    if date_range == 'current_month':
+        start_date = today.replace(day=1)
+        end_date = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+    elif date_range == 'custom':
+        try:
+            if start_date_str:
+                start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            if end_date_str:
+                end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, "Formato de data inválido. Use AAAA-MM-DD.")
+            return redirect('perfil') # Redirect back to profile with error
+
+    context = {
+        'report_type': report_type,
+        'start_date': start_date,
+        'end_date': end_date,
+        'report_data': [],
+        'report_title': '',
+        'no_data_message': 'Nenhum dado encontrado para o período selecionado.'
+    }
+
+    if report_type == 'frequencia':
+        context['report_title'] = 'Relatório de Frequência de Aulas'
+        attendance_records = AttendanceRequest.objects.filter(student=request.user, status='APR')
+        if start_date:
+            attendance_records = attendance_records.filter(attendance_date__gte=start_date)
+        if end_date:
+            attendance_records = attendance_records.filter(attendance_date__lte=end_date)
+        context['report_data'] = attendance_records.order_by('attendance_date').select_related('turma')
+        if not context['report_data'].exists():
+            context['no_data_message'] = 'Nenhuma presença aprovada encontrada para o período selecionado.'
+
+    elif report_type == 'pagamentos':
+        context['report_title'] = 'Relatório de Histórico de Pagamentos'
+        # Assuming a Payment model exists or will exist
+        # For now, just a placeholder
+        context['report_data'] = [] # No payment model yet
+        context['no_data_message'] = 'Funcionalidade de pagamentos ainda não implementada.'
+
+    elif report_type == 'graduacao':
+        context['report_title'] = 'Relatório de Progresso de Graduação'
+        graduation_records = Graduacao.objects.filter(aluno=request.user)
+        if start_date:
+            graduation_records = graduation_records.filter(data_graduacao__gte=start_date)
+        if end_date:
+            graduation_records = graduation_records.filter(data_graduacao__lte=end_date)
+        context['report_data'] = graduation_records.order_by('data_graduacao')
+        if not context['report_data'].exists():
+            context['no_data_message'] = 'Nenhum registro de graduação encontrado para o período selecionado.'
+
+    else:
+        messages.error(request, "Tipo de relatório inválido.")
+        return redirect('perfil')
+
+    return render(request, 'academia/aluno/relatorio_detalhe.html', context)
+
 
 # --- PAINEL DO PROFESSOR ---
 

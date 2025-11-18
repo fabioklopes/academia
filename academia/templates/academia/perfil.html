@@ -227,7 +227,55 @@
                 </div>
             </div>
 
-            <!-- Item 4: Alterar Senha -->
+            <!-- Item 4: Relatórios -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingRelatorios">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRelatorios" aria-expanded="false" aria-controls="collapseRelatorios">
+                        Relatórios
+                    </button>
+                </h2>
+                <div id="collapseRelatorios" class="accordion-collapse collapse" aria-labelledby="headingRelatorios" data-bs-parent="#accordionPerfil">
+                    <div class="accordion-body">
+                        <form method="get" action="{% url 'gerar_relatorio_aluno' %}"> {# Assuming a URL named 'gerar_relatorio_aluno' #}
+                            <div class="mb-3">
+                                <label for="report_type" class="form-label">Tipo de Relatório</label>
+                                <select class="form-select" id="report_type" name="report_type" required>
+                                    <option value="">Selecione o tipo de relatório</option>
+                                    <option value="frequencia">Frequência de Aulas</option>
+                                    <option value="pagamentos">Histórico de Pagamentos</option>
+                                    <option value="graduacao">Progresso de Graduação</option>
+                                    {# Add more report types as needed #}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="date_range" class="form-label">Período</label>
+                                <select class="form-select" id="date_range" name="date_range">
+                                    <option value="current_month">Mês Atual</option>
+                                    <option value="custom">Personalizado</option>
+                                </select>
+                            </div>
+
+                            <div id="custom_date_range_fields" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="start_date" class="form-label">Data Início</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="end_date" class="form-label">Data Fim</label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-outline-success">Gerar Relatório</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 5: Alterar Senha -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingPasswordChange">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePasswordChange" aria-expanded="false" aria-controls="collapsePasswordChange">
@@ -337,6 +385,21 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedBeltSize.textContent = size;
         });
     });
+
+    // Report date range logic
+    const dateRangeSelect = document.getElementById('date_range');
+    const customDateRangeFields = document.getElementById('custom_date_range_fields');
+
+    function toggleCustomDateFields() {
+        if (dateRangeSelect.value === 'custom') {
+            customDateRangeFields.style.display = 'block';
+        } else {
+            customDateRangeFields.style.display = 'none';
+        }
+    }
+
+    dateRangeSelect.addEventListener('change', toggleCustomDateFields);
+    toggleCustomDateFields(); // Initial call to set correct visibility
 });
 </script>
 {% endblock %}
