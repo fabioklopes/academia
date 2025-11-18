@@ -54,21 +54,15 @@ class PedidoForm(forms.ModelForm):
 class TurmaForm(forms.ModelForm):
     class Meta:
         model = Turma
-        fields = ['nome', 'descricao', 'professor', 'ativa']
+        fields = ['nome', 'descricao', 'ativa'] # Removed 'professor'
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'professor': forms.Select(attrs={'class': 'form-select'}),
             'ativa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
     
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        # Limitar professores apenas para PRO e ADM
-        self.fields['professor'].queryset = User.objects.filter(group_role__in=['PRO', 'ADM'], is_active=True)
-        
-        # Se for professor (não admin), definir automaticamente como professor da turma
-        if user and user.group_role == 'PRO':
-            self.fields['professor'].initial = user
-            self.fields['professor'].widget = forms.HiddenInput()
+        # The 'professor' field is no longer in the form, so no need to manipulate its queryset or initial value here.
+        # The view will handle assigning the professor.

@@ -1,0 +1,38 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Minhas Graduações{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Minhas Graduações</h1>
+
+    {% if graduacoes %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Faixa</th>
+                        <th>Grau</th>
+                        <th>Data da Graduação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for graduacao in graduacoes %}
+                        <tr>
+                            <td>{{ graduacao.get_faixa_display }}</td>
+                            <td>{{ graduacao.grau }}</td>
+                            <td>{{ graduacao.data_graduacao|date:"d/m/Y" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            Você ainda não possui graduações registradas.
+        </div>
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">Voltar para o Dashboard</a>
+</div>
+{% endblock %}

@@ -408,6 +408,7 @@ def aluno_relatorios(request):
 
 @login_required
 def gerar_relatorio_aluno(request):
+    print("gerar_relatorio_aluno view hit!") # Added print statement
     if not request.user.is_student():
         raise PermissionDenied("Apenas alunos podem gerar relatórios.")
 
@@ -434,6 +435,7 @@ def gerar_relatorio_aluno(request):
             return redirect('perfil') # Redirect back to profile with error
 
     context = {
+        'user': request.user, # Added user to context
         'report_type': report_type,
         'start_date': start_date,
         'end_date': end_date,
@@ -494,17 +496,16 @@ def professor_turma_nova(request):
         raise PermissionDenied
     
     if request.method == 'POST':
-        form = TurmaForm(request.POST, user=request.user)
+        form = TurmaForm(request.POST) # Removed user=request.user from here
         if form.is_valid():
             turma = form.save(commit=False)
-            # Se for professor, definir automaticamente como professor da turma
-            if request.user.group_role == 'PRO':
-                turma.professor = request.user
+            # Assign the current user as the professor
+            turma.professor = request.user
             turma.save()
             messages.success(request, f'Turma "{turma.nome}" criada com sucesso!')
             return redirect('professor_turmas')
     else:
-        form = TurmaForm(user=request.user)
+        form = TurmaForm() # Removed user=request.user from here
     
     return render(request, 'academia/professor/turma_form.html', {'form': form})
 
@@ -519,17 +520,19 @@ def professor_turma_editar(request, turma_id):
         turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
     
     if request.method == 'POST':
-        form = TurmaForm(request.POST, instance=turma, user=request.user)
+        form = TurmaForm(request.POST, instance=turma) # Removed user=request.user from here
         if form.is_valid():
             turma = form.save(commit=False)
-            # Se for professor, manter como professor da turma
+            # The professor field is not in the form, so it won't be overwritten.
+            # We explicitly ensure it remains the current user if they are a PRO.
+            # For ADM, the professor remains as it was.
             if request.user.group_role == 'PRO':
                 turma.professor = request.user
             turma.save()
             messages.success(request, f'Turma "{turma.nome}" atualizada com sucesso!')
             return redirect('professor_turmas')
     else:
-        form = TurmaForm(instance=turma, user=request.user)
+        form = TurmaForm(instance=turma) # Removed user=request.user from here
     
     return render(request, 'academia/professor/turma_form.html', {'form': form, 'turma': turma})
 
