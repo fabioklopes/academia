@@ -1,5 +1,4 @@
 {% extends 'academia/base.html' %}
-
 {% block title %}Meu Perfil - Academia de Jiu-Jitsu{% endblock %}
 
 {% block content %}
@@ -24,7 +23,7 @@
                         Dados do Perfil
                     </button>
                 </h2>
-                <div id="collapsePerfil" class="accordion-collapse collapse show" aria-labelledby="headingPerfil" data-bs-parent="#accordionPerfil">
+                <div id="collapsePerfil" class="accordion-collapse collapse" aria-labelledby="headingPerfil" data-bs-parent="#accordionPerfil">
                     <div class="accordion-body">
                         <div class="text-center mb-4">
                             {% if user.photo %}
@@ -92,7 +91,143 @@
                 </div>
             </div>
 
-            <!-- Item 2: Alterar Senha -->
+            <!-- Item 2: Meu Kimono -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingKimono">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKimono" aria-expanded="false" aria-controls="collapseKimono">
+                        Meu Kimono
+                    </button>
+                </h2>
+                <div id="collapseKimono" class="accordion-collapse collapse" aria-labelledby="headingKimono" data-bs-parent="#accordionPerfil">
+                    <div class="accordion-body">
+                        <form method="post" action="{% url 'perfil' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_kimono">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="height" class="form-label">Altura (cm)</label>
+                                    <input type="number" class="form-control" id="height" name="height" value="{{ user.height|default_if_none:'' }}" oninput="updateHeightDisplay()">
+                                    <small class="text-muted" id="heightDisplay"></small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="weight" class="form-label">Peso (kg)</label>
+                                    <input type="number" class="form-control" id="weight" name="weight" value="{{ user.weight|default_if_none:'' }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tamanho do Kimono</label>
+                                <input type="hidden" id="kimono_size" name="kimono_size" value="{{ user.kimono_size|default_if_none:'' }}">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered text-center" id="kimonoTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Tamanho</th>
+                                                <th>Altura</th>
+                                                <th>Peso</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr data-size="A0"><td>A0</td><td>1,55 a 1,60m</td><td>até 60kg</td></tr>
+                                            <tr data-size="A1"><td>A1</td><td>1,60 a 1,70m</td><td>até 75kg</td></tr>
+                                            <tr data-size="A2"><td>A2</td><td>1,70 a 1,80m</td><td>até 85kg</td></tr>
+                                            <tr data-size="A3"><td>A3</td><td>1,80 a 1,90m</td><td>até 95kg</td></tr>
+                                            <tr data-size="A4"><td>A4</td><td>1,90 a 2,00m</td><td>até 110kg</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p>Tamanho selecionado: <span id="selectedKimonoSize" class="fw-bold">{{ user.kimono_size|default:"Nenhum" }}</span></p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tamanho da Faixa</label>
+                                <input type="hidden" id="belt_size" name="belt_size" value="{{ user.belt_size|default_if_none:'' }}">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered text-center" id="beltTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Tamanho</th>
+                                                <th>Medida</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr data-size="A0"><td>A0</td><td>2,40m</td></tr>
+                                            <tr data-size="A1"><td>A1</td><td>2,60m</td></tr>
+                                            <tr data-size="A2"><td>A2</td><td>2,80m</td></tr>
+                                            <tr data-size="A3"><td>A3</td><td>3,00m</td></tr>
+                                            <tr data-size="A4"><td>A4</td><td>3,20m</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p>Tamanho selecionado: <span id="selectedBeltSize" class="fw-bold">{{ user.belt_size|default:"Nenhum" }}</span></p>
+                            </div>
+
+                            <button type="submit" class="btn btn-outline-primary">Salvar Informações do Kimono</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 3: Meus Pedidos -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingPedidos">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePedidos" aria-expanded="true" aria-controls="collapsePedidos">
+                        Meus Pedidos
+                    </button>
+                </h2>
+                <div id="collapsePedidos" class="accordion-collapse collapse show" aria-labelledby="headingPedidos" data-bs-parent="#accordionPerfil">
+                    <div class="accordion-body">
+                        {% if pedidos %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Tamanho</th>
+                                            <th>Data do Pedido</th>
+                                            <th>Status</th>
+                                            <th>Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for pedido in pedidos %}
+                                            <tr>
+                                                <td>{{ pedido.item.nome }}</td>
+                                                <td>{{ pedido.tamanho|default:"-" }}</td>
+                                                <td>{{ pedido.data_solicitacao|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if pedido.status == 'PEND' %}bg-warning text-dark
+                                                        {% elif pedido.status == 'APRO' %}bg-primary
+                                                        {% elif pedido.status == 'CANC' %}bg-secondary
+                                                        {% elif pedido.status == 'REJE' %}bg-danger
+                                                        {% elif pedido.status == 'ENTR' %}bg-info text-dark
+                                                        {% elif pedido.status == 'FINA' %}bg-success
+                                                        {% endif %}">
+                                                        {{ pedido.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if pedido.status == 'PEND' %}
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelarPedidoModal-{{ pedido.id }}">
+                                                            Cancelar
+                                                        </button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>Você ainda não fez nenhum pedido.</p>
+                        {% endif %}
+                        <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-primary mt-3">Ver todos os pedidos</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 4: Alterar Senha -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingPasswordChange">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePasswordChange" aria-expanded="false" aria-controls="collapsePasswordChange">
@@ -124,4 +259,84 @@
         </div>
     </div>
 </div>
+
+<!-- Modals de Cancelamento -->
+{% for pedido in pedidos %}
+<div class="modal fade" id="cancelarPedidoModal-{{ pedido.id }}" tabindex="-1" aria-labelledby="cancelarPedidoModalLabel-{{ pedido.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelarPedidoModalLabel-{{ pedido.id }}">Confirmar Cancelamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Tem certeza de que deseja cancelar o pedido de <strong>{{ pedido.item.nome }}</strong>?
+            </div>
+            <div class="modal-footer">
+                <form action="{% url 'aluno_pedido_cancelar' pedido.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Cancelamento</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Height conversion
+    const heightInput = document.getElementById('height');
+    const heightDisplay = document.getElementById('heightDisplay');
+
+    function updateHeightDisplay() {
+        const heightCm = heightInput.value;
+        if (heightCm) {
+            const heightM = (heightCm / 100).toFixed(2);
+            heightDisplay.textContent = `(${heightM}m)`;
+        } else {
+            heightDisplay.textContent = '';
+        }
+    }
+
+    heightInput.addEventListener('input', updateHeightDisplay);
+    updateHeightDisplay(); // Initial call
+
+    // Kimono table selection
+    const kimonoTable = document.getElementById('kimonoTable');
+    const kimonoSizeInput = document.getElementById('kimono_size');
+    const selectedKimonoSize = document.getElementById('selectedKimonoSize');
+    const kimonoRows = kimonoTable.querySelectorAll('tbody tr');
+
+    kimonoRows.forEach(row => {
+        row.addEventListener('click', () => {
+            kimonoRows.forEach(r => r.classList.remove('table-active'));
+            row.classList.add('table-active');
+            const size = row.dataset.size;
+            kimonoSizeInput.value = size;
+            selectedKimonoSize.textContent = size;
+        });
+    });
+
+    // Belt table selection
+    const beltTable = document.getElementById('beltTable');
+    const beltSizeInput = document.getElementById('belt_size');
+    const selectedBeltSize = document.getElementById('selectedBeltSize');
+    const beltRows = beltTable.querySelectorAll('tbody tr');
+
+    beltRows.forEach(row => {
+        row.addEventListener('click', () => {
+            beltRows.forEach(r => r.classList.remove('table-active'));
+            row.classList.add('table-active');
+            const size = row.dataset.size;
+            beltSizeInput.value = size;
+            selectedBeltSize.textContent = size;
+        });
+    });
+});
+</script>
 {% endblock %}

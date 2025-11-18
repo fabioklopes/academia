@@ -185,7 +185,52 @@ def dashboard(request):
 
 @login_required
 def perfil(request):
-    return render(request, 'academia/perfil.html', {'user': request.user})
+    graduacao = Graduacao.objects.filter(aluno=request.user).first()
+    pedidos = Pedido.objects.filter(aluno=request.user).order_by('-data_solicitacao')
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        user = request.user
+
+        if action == 'update_kimono':
+            height = request.POST.get('height')
+            weight = request.POST.get('weight')
+            user.height = int(height) if height and height.isdigit() else None
+            user.weight = int(weight) if weight and weight.isdigit() else None
+            
+            kimono_size = request.POST.get('kimono_size')
+            belt_size = request.POST.get('belt_size')
+            user.kimono_size = kimono_size if kimono_size else None
+            user.belt_size = belt_size if belt_size else None
+            
+            user.save()
+            messages.success(request, 'Informações do kimono atualizadas com sucesso!')
+            return redirect('perfil')
+
+        elif action == 'change_password':
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_new_password = request.POST.get('confirm_new_password')
+
+            if not user.check_password(current_password):
+                messages.error(request, 'Senha atual incorreta.')
+                return redirect('perfil')
+
+            if new_password != confirm_new_password:
+                messages.error(request, 'As novas senhas não coincidem.')
+                return redirect('perfil')
+
+            user.set_password(new_password)
+            user.save()
+            auth_login(request, user) # Re-authenticate
+            messages.success(request, 'Senha alterada com sucesso!')
+            return redirect('perfil')
+
+    context = {
+        'user': request.user,
+        'graduacao': graduacao,
+        'pedidos': pedidos
+    }
+    return render(request, 'academia/perfil.html', context)
 
 @login_required
 def perfil_editar(request):
@@ -270,19 +315,24 @@ def aluno_cancelar_presenca(request, presenca_id):
 
 @login_required
 def aluno_presencas(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+    
+    # Mark notifications as read
+    AttendanceRequest.objects.filter(student=request.user, status='APR', notified=False).update(notified=True)
+    
     attendance_requests = AttendanceRequest.objects.filter(student=request.user).select_related('turma').order_by('-attendance_date')
     return render(request, 'academia/aluno/presencas.html', {'attendance_requests': attendance_requests})
 
 @login_required
 def aluno_graduacoes(request):
-    if request.user.group_role != 'STD':
-        raise PermissionDenied("Apenas alunos podem visualizar suas graduações.")
+    if not request.user.is_student():
+        raise PermissionDenied
+    
+    # Mark notifications as read
+    Graduacao.objects.filter(aluno=request.user, notified=False).update(notified=True)
     
     graduacoes = Graduacao.objects.filter(aluno=request.user).order_by('-data_graduacao')
-    
-    # Mark new graduations as notified when the student views them
-    Graduacao.objects.filter(aluno=request.user, notified=False).update(notified=True)
-
     return render(request, 'academia/aluno/graduacoes.html', {'graduacoes': graduacoes})
 
 @login_required
@@ -330,6 +380,25 @@ def aluno_pedido_novo(request):
         'item_data_json': json.dumps(item_data)
     }
     return render(request, 'academia/aluno/pedido_form.html', context)
+
+@login_required
+def aluno_pedido_cancelar(request, pedido_id):
+    if request.method == 'POST':
+        pedido = get_object_or_404(Pedido, id=pedido_id, aluno=request.user)
+
+        if pedido.status == 'PEND':
+            # Devolver item ao estoque
+            item = pedido.item
+            item.quantidade += pedido.quantidade
+            item.save()
+
+            pedido.status = 'CANC'
+            pedido.save()
+            messages.success(request, 'Pedido cancelado com sucesso e item devolvido ao estoque.')
+        else:
+            messages.error(request, 'Apenas pedidos pendentes podem ser cancelados.')
+
+    return redirect('aluno_pedidos')
 
 @login_required
 def aluno_relatorios(request):
@@ -525,6 +594,30 @@ def professor_aluno_definir_tipo(request, aluno_id):
         'user_to_change': user_to_change
     }
     return render(request, 'academia/professor/change_user_type.html', context)
+
+@login_required
+def tamanhos_medidas(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+
+    students = User.objects.filter(group_role='STD').order_by('first_name', 'last_name')
+    
+    student_data = []
+    today = datetime.date.today()
+    for student in students:
+        age = None
+        if student.birthday:
+            age = today.year - student.birthday.year - ((today.month, today.day) < (student.birthday.month, student.birthday.day))
+        
+        student_data.append({
+            'user': student,
+            'age': age
+        })
+
+    context = {
+        'student_data': student_data
+    }
+    return render(request, 'academia/professor/tamanhos_medidas.html', context)
 
 @login_required
 def professor_presencas(request):

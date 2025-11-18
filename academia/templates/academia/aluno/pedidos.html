@@ -22,6 +22,7 @@
                                     <th>Status</th>
                                     <th>Data da Solicitação</th>
                                     <th>Observações</th>
+                                    <th>Ações</th> {# New column for actions #}
                                 </tr>
                             </thead>
                             <tbody>
@@ -53,6 +54,15 @@
                                                 <small class="text-muted">{{ pedido.cancellation_reason }}</small>
                                             {% else %}
                                                 -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {# Show "Cancelar" button only for Aluno (STD) profile and if the order is PENDING #}
+                                            {% if user.is_authenticated and user.group_role == 'STD' and pedido.status == 'PEND' %}
+                                                <form action="{% url 'aluno_pedido_cancelar' pedido.id %}" method="post" style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza que deseja cancelar este pedido?');">Cancelar</button>
+                                                </form>
                                             {% endif %}
                                         </td>
                                     </tr>

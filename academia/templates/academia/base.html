@@ -56,6 +56,7 @@
                             <li><a class="dropdown-item" href="{% url 'professor_presencas' %}"><i class="bi bi-check-circle me-2"></i>Aprovar Presenças</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'professor_alunos' %}"><i class="bi bi-people me-2"></i>Gerenciar Alunos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'tamanhos_medidas' %}"><i class="bi bi-rulers me-2"></i>Tamanhos e Medidas</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'professor_graduacoes' %}"><i class="bi bi-award me-2"></i>Controle de Graduações</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -127,54 +128,25 @@
     {% endif %}
 
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-        {% if user.is_student and has_pending_tasks %}
+        {% if has_pending_tasks %}
             <div id="pendingTasksToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
                 <div class="toast-header">
-                    <i class="bi bi-bell-fill me-2 text-info"></i>
-                    <strong class="me-auto">Notificações</strong>
-                    <small id="toast-timer">10 segundos atrás</small>
+                    {% if user.is_student %}
+                        <i class="bi bi-bell-fill me-2 text-info"></i>
+                        <strong class="me-auto">Notificações</strong>
+                    {% else %}
+                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
+                        <strong class="me-auto">Pendências</strong>
+                    {% endif %}
+                    <small id="toast-timer">agora</small>
                     <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
                 <div class="toast-body">
                     Você possui novas notificações:
                     <ul class="list-unstyled mb-0">
-                        {% if approved_attendance_count > 0 %}
-                            <li><a href="{% url 'aluno_presencas' %}">{{ approved_attendance_count }} solicitação(ões) de presença aprovada(s)</a></li>
-                        {% endif %}
-                        {% if new_graduations_count > 0 %}
-                            <li><a href="{% url 'aluno_graduacoes' %}">{{ new_graduations_count }} nova(s) graduação(ões)</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
-        {% elif user.is_professor_or_admin and has_pending_tasks %}
-            <div id="pendingTasksToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
-                <div class="toast-header">
-                    <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
-                    <strong class="me-auto">Pendências</strong>
-                    <small id="toast-timer">10 segundos atrás</small>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    Você possui tarefas pendentes.
-                    <ul class="list-unstyled mb-0">
-                        {% if pending_students_count > 1 %}
-                            <li><a href="{% url 'professor_alunos' %}">{{ pending_students_count }} novos alunos aguardando aprovação</a></li>
-                        {% elif pending_students_count == 1 %}
-                            <li><a href="{% url 'professor_alunos' %}">{{ pending_students_count }} aluno aguardando aprovação</a></li>
-                        {% endif %}
-
-                        {% if pending_attendance_count > 1 %}
-                            <li><a href="{% url 'professor_presencas' %}">{{ pending_attendance_count }} novas solicitações de presença</a></li>
-                        {%  elif pending_attendance_count == 1 %}
-                            <li><a href="{% url 'professor_presencas' %}">{{ pending_attendance_count }} solicitação de presença</a></li>
-                        {% endif %}
-
-                        {% if pending_pedidos_count > 1 %}
-                            <li><a href="{% url 'professor_pedidos' %}">{{ pending_pedidos_count }} novos pedidos</a></li>
-                        {%  elif pending_pedidos_count == 1 %}
-                            <li><a href="{% url 'professor_pedidos' %}">{{ pending_pedidos_count }} novo pedido</a></li>
-                        {% endif %}
+                        {% for notification in notifications %}
+                            <li><a href="{% url notification.url %}">{{ notification.text }}</a></li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>
@@ -200,21 +172,25 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var toastEl = document.getElementById('pendingTasksToast');
-            var toast = new bootstrap.Toast(toastEl, { autohide: false });
-            var timerEl = document.getElementById('toast-timer');
-            var countdown = 10;
+            if (toastEl) {
+                var toast = new bootstrap.Toast(toastEl, { autohide: false });
+                var timerEl = document.getElementById('toast-timer');
+                var countdown = 10;
 
-            function updateTimer() {
-                timerEl.textContent = countdown + ' segundo' + (countdown !== 1 ? 's' : '');
-                countdown--;
-                if (countdown < 0) {
-                    toast.hide();
-                    clearInterval(interval);
+                function updateTimer() {
+                    if (timerEl) {
+                        timerEl.textContent = countdown + ' segundo' + (countdown !== 1 ? 's' : '');
+                    }
+                    countdown--;
+                    if (countdown < 0) {
+                        toast.hide();
+                        clearInterval(interval);
+                    }
                 }
-            }
 
-            var interval = setInterval(updateTimer, 1000);
-            toast.show();
+                var interval = setInterval(updateTimer, 1000);
+                toast.show();
+            }
         });
     </script>
     {% endif %}

@@ -26,6 +26,12 @@ class User(AbstractUser):
         ('PRO', 'Professor'),
         ('ADM', 'Administrador'),
     ]
+    KIMONO_SIZE_CHOICES = [
+        ('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'),
+    ]
+    BELT_SIZE_CHOICES = [
+        ('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'),
+    ]
 
     birthday = models.DateField('Data de Nascimento', null=True, blank=True)
     group_role = models.CharField(
@@ -41,6 +47,10 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
+    height = models.IntegerField('Altura (cm)', null=True, blank=True)
+    weight = models.IntegerField('Peso (kg)', null=True, blank=True)
+    kimono_size = models.CharField('Tamanho do Kimono', max_length=2, choices=KIMONO_SIZE_CHOICES, null=True, blank=True)
+    belt_size = models.CharField('Tamanho da Faixa', max_length=2, choices=BELT_SIZE_CHOICES, null=True, blank=True)
     
     class Meta:
         verbose_name = 'Usuário'
@@ -158,6 +168,7 @@ class AttendanceRequest(models.Model):
         limit_choices_to={'group_role__in': ['PRO', 'ADM']},
         related_name='processed_requests'
     )
+    notified = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Solicitação de Presença'
@@ -262,6 +273,7 @@ class Graduacao(models.Model):
         default=0
     )
     data_graduacao = models.DateField('Data da Graduação', null=True, blank=True)
+    notified = models.BooleanField(default=False)
     
     class Meta:
         verbose_name = 'Graduação'
