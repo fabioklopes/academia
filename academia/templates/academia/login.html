@@ -14,6 +14,7 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
+                        <a href="{% url 'index' %}"><img class="d-block mx-auto mb-3" src="{% static 'img/logotipo_transparente.png' %}" alt="" width="50"></a>
                         <h3 class="card-title text-center mb-4">Login</h3>
                         {% if error %}
                             <div class="alert alert-danger">{{ error }}</div>

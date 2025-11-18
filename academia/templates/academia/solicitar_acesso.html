@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
-<body>
+<body data-is-staff="{{ user.is_staff }}" data-user-groups="{% for group in user.groups.all %}{{ group.name }},{% endfor %}">
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
@@ -18,18 +18,13 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                        
                         <p class="text-muted mb-4">
                             Preencha todos os campos abaixo para solicitar acesso ao sistema. 
                             Seu cadastro será analisado e você receberá uma notificação quando for aprovado.
+                        </p>
+
+                        <p class="alert alert-warning" role="alert">
+                            <strong>Atenção:</strong> não perca o seu nome de usuário. Seu acesso será a partir dele.
                         </p>
                         
                         <form method="post" enctype="multipart/form-data">
@@ -95,7 +90,7 @@
                             <div class="d-flex gap-2 justify-content-between">
                                 <a href="{% url 'index' %}" class="btn btn-outline-success">
                                     <i class="bi bi-house me-2"></i>Página Inicial
-                                </a>
+                                a>
 
                                 <a href="{% url 'login' %}" class="btn btn-outline-secondary">
                                     <i class="bi bi-key me-2"></i>Voltar ao Login
@@ -110,6 +105,24 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 start-0 end-0 p-3 start-md-auto">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong class="me-auto">Notificação</strong>
+                        <small class="text-muted countdown">5</small>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -135,6 +148,37 @@
                 e.preventDefault();
                 alert('As senhas não coincidem!');
                 return false;
+            }
+        });
+
+        // Toasts
+        document.addEventListener('DOMContentLoaded', function () {
+            const body = document.body;
+            const isStaff = body.dataset.isStaff === 'True';
+            const userGroups = body.dataset.userGroups.split(',').filter(g => g);
+            
+            const canViewToasts = isStaff || userGroups.includes('Administrador') || userGroups.includes('Professor');
+
+            if (canViewToasts) {
+                const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+                toastElList.forEach(function (toastEl) {
+                    const toast = new bootstrap.Toast(toastEl, {
+                        autohide: false
+                    });
+                    toast.show();
+
+                    let countdown = 5;
+                    const countdownEl = toastEl.querySelector('.countdown');
+                    
+                    const interval = setInterval(function () {
+                        countdown--;
+                        countdownEl.textContent = countdown;
+                        if (countdown === 0) {
+                            clearInterval(interval);
+                            toast.hide();
+                        }
+                    }, 1000);
+                });
             }
         });
     </script>
