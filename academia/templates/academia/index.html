@@ -118,23 +118,27 @@
         </div>
         
         {% if user.is_student %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center d-flex flex-column">
-                    <i class="bi bi-calendar-plus fs-1 text-primary mb-3"></i>
-                    <h5 class="card-title">Marcar Presença</h5>
-                    <p class="card-text text-muted">Solicite presença para uma ou mais datas.</p>
-                    <a href="{% url 'aluno_marcar_presenca' %}" class="btn btn-outline-primary mt-auto">Acessar</a>
+        <div class="col-md-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-x fs-1 text-warning mb-3"></i>
+                    <h5 class="card-title">Minhas Presenças</h5>
+                    <p class="card-text">Visualize e cancele suas solicitações</p>
+                    <p>
+                        <span class="text-success small">Aprovadas: {{ presencas_aprovadas }}</span>
+                        | <span class="text-warning small mb-3">Pendentes: {{ presencas_pendentes }}</span>
+                    </p>
+                        <a href="{% url 'aluno_presencas' %}" class="btn btn-primary">Acessar</a>
                 </div>
             </div>
         </div>
         <div class="col-md-4 mb-4">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body text-center d-flex flex-column">
-                    <i class="bi bi-list-check fs-1 text-success mb-3"></i>
-                    <h5 class="card-title">Minhas Presenças</h5>
-                    <p class="card-text text-muted">Visualize seu histórico de presenças.</p>
-                    <a href="{% url 'aluno_presencas' %}" class="btn btn-outline-success mt-auto">Acessar</a>
+                    <i class="bi bi-box-seam fs-1 text-primary mb-3"></i>
+                    <h5 class="card-title">Meus Pedidos</h5>
+                    <p class="card-text text-muted">Acompanhe seus pedidos de produtos.</p>
+                    <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-primary mt-auto">Acessar</a>
                 </div>
             </div>
         </div>

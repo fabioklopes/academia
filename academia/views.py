@@ -20,6 +20,10 @@ from io import BytesIO
 # --- VIEWS GERAIS ---
 
 def index(request):
+    if request.user.is_authenticated:
+        if request.user.is_student():
+            return redirect('dashboard')
+    
     context = {}
     if not request.user.is_authenticated:
         students = User.objects.filter(group_role='STD', active=True)
@@ -28,6 +32,12 @@ def index(request):
             'students': students,
             'professors': professors,
         })
+    else:
+        context.update({
+            'presencas_aprovadas': AttendanceRequest.objects.filter(student=request.user, status='APR').count(),
+            'presencas_pendentes': AttendanceRequest.objects.filter(student=request.user, status='PEN').count(),
+        })
+        
     return render(request, 'academia/index.html', context)
 
 def login_view(request):
@@ -324,6 +334,8 @@ def aluno_pedido_cancelar(request, pedido_id):
 
 @login_required
 def aluno_relatorios(request):
+    if not request.user.is_student():
+        raise PermissionDenied
     return render(request, 'academia/aluno/relatorios.html')
 
 @login_required
@@ -381,6 +393,203 @@ def gerar_relatorio_aluno(request):
         return redirect('perfil')
 
     return render(request, 'academia/aluno/relatorio_detalhe.html', context)
+
+@login_required
+def aluno_relatorio_presenca(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+
+    turmas = Turma.objects.filter(alunos=request.user)
+    turma_id = request.GET.get('turma')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    export_format = request.GET.get('export')
+
+    today = datetime.date.today()
+    if not start_date_str:
+        start_date = today.replace(day=1)
+    else:
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+
+    if not end_date_str:
+        end_date = today
+    else:
+        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+    report_data = []
+    
+    if turma_id and turma_id.isdigit():
+        turma_id_int = int(turma_id)
+        aulas_ministradas = AttendanceRequest.objects.filter(
+            turma_id=turma_id_int,
+            attendance_date__range=[start_date, end_date]
+        ).values('attendance_date').distinct().count()
+
+        graduacao = Graduacao.objects.filter(aluno=request.user).first()
+        
+        presencas = AttendanceRequest.objects.filter(
+            student=request.user,
+            turma_id=turma_id_int,
+            status='APR',
+            attendance_date__range=[start_date, end_date]
+        ).count()
+        
+        faltas = aulas_ministradas - presencas
+        assiduidade = (presencas / aulas_ministradas * 100) if aulas_ministradas > 0 else 0
+        
+        if assiduidade <= 25:
+            mensagem = "INSATISFATÓRIO"
+        elif 26 <= assiduidade <= 50:
+            mensagem = "REGULAR"
+        elif 51 <= assiduidade <= 75:
+            mensagem = "SATISFATÓRIO"
+        else:
+            mensagem = "EXCELENTE"
+        
+        if graduacao:
+            grau_text = f"{graduacao.grau} Grau"
+            if graduacao.grau != 1:
+                grau_text += 's'
+            faixa_grau_text = f"{graduacao.get_faixa_display()} - {grau_text}"
+        else:
+            faixa_grau_text = "Nenhuma graduação"
+
+        report_data.append({
+            'nome_completo': request.user.get_full_name(),
+            'faixa_grau': faixa_grau_text,
+            'aulas_ministradas': aulas_ministradas,
+            'presencas': presencas,
+            'faltas': faltas,
+            'assiduidade': f"{assiduidade:.2f}%",
+            'mensagem': mensagem,
+        })
+    else:
+        turma_id = None
+
+    if export_format == 'pdf':
+        template = get_template('academia/aluno/relatorio_presenca_pdf.html')
+        html = template.render({'report_data': report_data})
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_presenca.pdf"'
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse('We had some errors <pre>' + html + '</pre>')
+        return response
+
+    if export_format == 'xlsx':
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_presenca.xlsx"'
+        
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Relatório de Presença'
+        
+        headers = [
+            "Nome Completo", "Faixa e Grau", "Aulas Ministradas", 
+            "Presenças", "Faltas", "Assiduidade", "Mensagem"
+        ]
+        for col_num, header_title in enumerate(headers, 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header_title
+            worksheet.column_dimensions[get_column_letter(col_num)].width = 20
+
+        for row_num, data in enumerate(report_data, 2):
+            worksheet.cell(row=row_num, column=1, value=data['nome_completo'])
+            worksheet.cell(row=row_num, column=2, value=data['faixa_grau'])
+            worksheet.cell(row=row_num, column=3, value=data['aulas_ministradas'])
+            worksheet.cell(row=row_num, column=4, value=data['presencas'])
+            worksheet.cell(row=row_num, column=5, value=data['faltas'])
+            worksheet.cell(row=row_num, column=6, value=data['assiduidade'])
+            worksheet.cell(row=row_num, column=7, value=data['mensagem'])
+
+        workbook.save(response)
+        return response
+
+    context = {
+        'turmas': turmas,
+        'report_data': report_data,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'turma_id': int(turma_id) if turma_id else None,
+    }
+    return render(request, 'academia/aluno/relatorio_presenca.html', context)
+
+@login_required
+def aluno_relatorio_pedidos(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+    
+    pedidos = Pedido.objects.filter(aluno=request.user)
+    item_id = request.GET.get('item')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    export_format = request.GET.get('export')
+
+    today = datetime.date.today()
+    if not start_date_str:
+        start_date = today.replace(day=1)
+    else:
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+
+    if not end_date_str:
+        end_date = today
+    else:
+        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+    if item_id and item_id.isdigit():
+        pedidos = pedidos.filter(item_id=item_id)
+    else:
+        item_id = None
+    
+    pedidos = pedidos.filter(data_solicitacao__date__range=[start_date, end_date])
+
+    if export_format == 'pdf':
+        template = get_template('academia/aluno/relatorio_pedidos_pdf.html')
+        html = template.render({'pedidos': pedidos})
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_pedidos.pdf"'
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse('We had some errors <pre>' + html + '</pre>')
+        return response
+
+    if export_format == 'xlsx':
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_pedidos.xlsx"'
+        
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Relatório de Pedidos'
+        
+        headers = [
+            "Data do pedido", "Nome completo", "Descrição do Produto Solicitado (quantidade)",
+            "Valor Unitário", "Total", "Status", "Motivo do Status"
+        ]
+        for col_num, header_title in enumerate(headers, 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header_title
+            worksheet.column_dimensions[get_column_letter(col_num)].width = 25
+
+        for row_num, pedido in enumerate(pedidos, 2):
+            worksheet.cell(row=row_num, column=1, value=pedido.data_solicitacao.strftime('%d/%m/%Y %H:%M'))
+            worksheet.cell(row=row_num, column=2, value=pedido.aluno.get_full_name())
+            worksheet.cell(row=row_num, column=3, value=f"{pedido.item.nome} ({pedido.quantidade})")
+            worksheet.cell(row=row_num, column=4, value=pedido.item.valor)
+            worksheet.cell(row=row_num, column=5, value=pedido.final_value)
+            worksheet.cell(row=row_num, column=6, value=pedido.get_status_display())
+            worksheet.cell(row=row_num, column=7, value=pedido.rejection_reason or pedido.cancellation_reason or "-")
+
+        workbook.save(response)
+        return response
+
+    context = {
+        'pedidos': pedidos,
+        'itens': Item.objects.all(),
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'item_id': int(item_id) if item_id else None,
+    }
+    return render(request, 'academia/aluno/relatorio_pedidos.html', context)
 
 # --- PAINEL DO PROFESSOR ---
 

@@ -32,3 +32,13 @@ Essa lista vai conter as seguintes colunas:
 2.5 Total;
 2.6 Status;
 2.7 Motivo do Status caso seja REJEITADO ou CANCELADO;
+
+
+3. Página "index.html" para o perfil Aluno (STD)
+3.1 o card "Marcar Presença" deve ser substituído por um card "Meus Pedidos", que o levará para o endpoint "aluno/pedidos/";
+3.2 inverter os cards "Meus Pedidos" e "Minhas Presenças" de posição. Ou seja, um no lugar do outro, sem substituições;
+3.3 o endpoint "/dashboard/" possui um card "Minhas Presenças" já configurado. Faça uma cópia deste card e substitua o card da página "index.html" do mesmo título;
+3.4 no perfil Aluno (STD),troque o apontamento das URLs 'index' para 'dashboard';
+
+
+4. Verifique todos os botões do projeto e certifique-se de que estejam com a class "outline". Caso não, aplique esta classe nos botões que não estiverem de acordo.
