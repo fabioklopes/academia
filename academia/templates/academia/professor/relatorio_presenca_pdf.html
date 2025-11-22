@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Presenças e Faltas</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: "Helvetica", sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Relatório de Presenças e Faltas</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome Completo</th>
+                <th>Faixa e Grau</th>
+                <th>Aulas Ministradas</th>
+                <th>Presenças</th>
+                <th>Faltas</th>
+                <th>Assiduidade</th>
+                <th>Mensagem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in report_data %}
+                <tr>
+                    <td>{{ data.nome_completo }}</td>
+                    <td>{{ data.faixa_grau }}</td>
+                    <td>{{ data.aulas_ministradas }}</td>
+                    <td>{{ data.presencas }}</td>
+                    <td>{{ data.faltas }}</td>
+                    <td>{{ data.assiduidade }}</td>
+                    <td>{{ data.mensagem }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

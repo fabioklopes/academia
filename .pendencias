@@ -1,6 +1,34 @@
-1. Implementação de Relatórios
-    - Alunos
-    - Professores
+Vamos implementar um sistema de relatórios para Professores, agora. Essa implementação deve atender às seguintes orientações:
+
+Criar um SLECT DROPDOWN BOX para o professor ou administrador selecionar o tipo de relatório desejado.
+
+Todas as opções de relatório devem ser disponibilizadas no formato PDF ou em XLSX.
+
+1. Relatório de Presenças e Faltas
+Deverá apresentar uma lista completa dos alunos cadastrados em uma turma (permitir selecionar as turmas) dentro do mês atual ou dentro de um período selecionável.
+Essa lista vai conter as seguintes colunas:
+1.1 Nome Completo;
+1.2 Faixa e Grau (apresentar apenas como: Nenhum Grau, 1 Grau, 2 Graus, 3 Graus ou 4 Graus);
+1.3 Quantidade de aulas ministradas no período selecionado;
+1.4 Quantidade de presença (PRESENÇAS) no período selecionado;
+1.5 Quantidade de Faltas (FALTAS) no período selecionado;
+1.6 Porcentagem de assiduidade (exibir em %);
+1.7 Mensagem para a seguinte situação:
+1.7.1 Porcentagem <= 25% apresentar "INSATISFATÓRIO";
+1.7.2 Porcentagem entre 26 e 50% apresentar "REGULAR";
+1.7.3 Porcentagem entre 51 e 75% apresentar "SATISFATÓRIO";
+1.7.4 Porcentagem entre 76 e 100% apresentar "EXCELENTE";
 
 
-2.
+2. Relatório de Pedidos
+Deverá apresentar uma lista completa de todos os pedidos dentro do mês atual ou dentro de um período selecionável.
+O Professor/Administrador também poderá desejar escolher qual o produto ele deseja gerar relatório ou simplesmente todos.
+O Professor/Administrador também poderá desejar escolher qual o Aluno ele quer gerar relatório ou simplesmente todos.
+Essa lista vai conter as seguintes colunas:
+2.1 Data do pedido;
+2.2 Nome completo;
+2.3 Descrição do Produto Solicitado (quantidade);
+2.4 Valor Unitário;
+2.5 Total;
+2.6 Status;
+2.7 Motivo do Status caso seja REJEITADO ou CANCELADO;

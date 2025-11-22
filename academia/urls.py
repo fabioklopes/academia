@@ -1,7 +1,6 @@
 from django.urls import path
 from academia import views
 
-
 urlpatterns = [
     # Home/Index
     path('', views.index, name='index'),
@@ -20,14 +19,14 @@ urlpatterns = [
     
     # Painel do Aluno
     path('aluno/marcar-presenca/', views.aluno_marcar_presenca, name='aluno_marcar_presenca'),
-    path('aluno/cancelar-presenca/<int:presenca_id>/', views.aluno_cancelar_presenca, name='aluno_cancelar_presenca'),
+    path('aluno/cancelar-presenca/<int:request_id>/', views.aluno_cancelar_presenca, name='aluno_cancelar_presenca'),
     path('aluno/presencas/', views.aluno_presencas, name='aluno_presencas'),
     path('aluno/relatorios/', views.aluno_relatorios, name='aluno_relatorios'),
     path('aluno/graduacoes/', views.aluno_graduacoes, name='aluno_graduacoes'),
     path('aluno/pedidos/', views.aluno_pedidos, name='aluno_pedidos'),
     path('aluno/pedidos/novo/', views.aluno_pedido_novo, name='aluno_pedido_novo'),
     path('aluno/pedidos/<int:pedido_id>/cancelar/', views.aluno_pedido_cancelar, name='aluno_pedido_cancelar'),
-    path('aluno/gerar-relatorio/', views.gerar_relatorio_aluno, name='gerar_relatorio_aluno'), # New URL for student reports
+    path('aluno/gerar-relatorio/', views.gerar_relatorio_aluno, name='gerar_relatorio_aluno'),
     
     # Painel do Professor - Turmas
     path('professor/turmas/', views.professor_turmas, name='professor_turmas'),
@@ -46,8 +45,8 @@ urlpatterns = [
 
     # Painel do Professor - Presenças
     path('professor/presencas/', views.professor_presencas, name='professor_presencas'),
-    path('professor/presenca/<int:presenca_id>/aprovar/', views.professor_presenca_aprovar, name='professor_presenca_aprovar'),
-    path('professor/presenca/<int:presenca_id>/rejeitar/', views.professor_presenca_rejeitar, name='professor_presenca_rejeitar'),
+    path('professor/presenca/<int:request_id>/aprovar/', views.professor_presenca_aprovar, name='professor_presenca_aprovar'),
+    path('professor/presenca/<int:request_id>/rejeitar/', views.professor_presenca_rejeitar, name='professor_presenca_rejeitar'),
 
     # Painel do Professor - Graduacoes
     path('professor/graduacoes/', views.professor_graduacoes, name='professor_graduacoes'),
@@ -77,6 +76,7 @@ urlpatterns = [
     path('professor/rankings/novo/', views.professor_ranking_novo, name='professor_ranking_novo'),
 
     # Painel do Professor - Relatórios
-    path('professor/relatorios/', views.relatorio_pedidos, name='professor_relatorios'),
+    path('professor/relatorios/', views.professor_relatorios, name='professor_relatorios'),
     path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='relatorio_pedidos'),
+    path('professor/relatorios/presenca/', views.relatorio_presenca, name='relatorio_presenca'),
 ]

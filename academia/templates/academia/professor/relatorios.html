@@ -1,179 +1,47 @@
 {% extends 'academia/base.html' %}
 
-{% block title %}Relatórios - Academia de Jiu-Jitsu{% endblock %}
+{% block title %}Central de Relatórios{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h4>Relatórios</h4>
+                <h4>Central de Relatórios</h4>
             </div>
             <div class="card-body">
-                <form method="post" class="mb-4">
-                    {% csrf_token %}
+                <form method="GET" id="report-form">
                     <div class="row">
-                        <div class="col-md-3">
-                            <label class="form-label">Tipo de Relatório</label>
-                            <select name="assunto" class="form-select" id="assunto" required>
-                                <option value="turmas">Turmas</option>
-                                <option value="presencas">Presenças</option>
-                                <option value="alunos">Alunos</option>
-                                <option value="graduacoes">Graduações</option>
-                                <option value="rankings">Rankings</option>
-                                <option value="pedidos">Pedidos</option>
-                            </select>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="report-type">Tipo de Relatório</label>
+                                <select class="form-control" id="report-type" name="report_type">
+                                    <option value="">Selecione um tipo de relatório</option>
+                                    <option value="presenca">Relatório de Presenças e Faltas</option>
+                                    <option value="pedidos">Relatório de Pedidos</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Período</label>
-                            <select name="periodo" class="form-select" id="periodo" required>
-                                <option value="mes">Este Mês</option>
-                                <option value="custom">Datas Personalizadas</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-none" id="dataInicioDiv">
-                            <label class="form-label">Data Início</label>
-                            <input type="date" name="data_inicio" class="form-control" id="dataInicio">
-                        </div>
-                        <div class="col-md-3 d-none" id="dataFimDiv">
-                            <label class="form-label">Data Fim</label>
-                            <input type="date" name="data_fim" class="form-control" id="dataFim">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">&nbsp;</label>
-                            <button type="submit" class="btn btn-primary d-block">Gerar Relatório</button>
-                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Gerar Relatório</button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
                     </div>
                 </form>
-                
-                {% if stats %}
-                    <h5>Estatísticas de Presença</h5>
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card text-center bg-primary text-white">
-                                <div class="card-body">
-                                    <h5>Total</h5>
-                                    <h3>{{ stats.total_presencas }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card text-center bg-success text-white">
-                                <div class="card-body">
-                                    <h5>Aprovadas</h5>
-                                    <h3>{{ stats.aprovadas }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card text-center bg-danger text-white">
-                                <div class="card-body">
-                                    <h5>Rejeitadas</h5>
-                                    <h3>{{ stats.rejeitadas }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card text-center bg-warning text-white">
-                                <div class="card-body">
-                                    <h5>Pendentes</h5>
-                                    <h3>{{ stats.pendentes }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {% if alunos_por_turma %}
-                        <h5>Alunos por Turma</h5>
-                        <div class="d-flex justify-content-end mb-2 gap-2">
-                            <a href="?download=pdf&type=turmas" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-earmark-pdf me-1"></i>Download PDF</a>
-                            <a href="?download=xlsx&type=turmas" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel me-1"></i>Download XLSX</a>
-                        </div>
-                        <div class="table-responsive mb-4">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Turma</th>
-                                        <th>Quantidade de Alunos</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in alunos_por_turma %}
-                                        <tr>
-                                            <td>{{ item.turma }}</td>
-                                            <td>{{ item.count }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                    
-                    {% if presencas %}
-                        <h5>Detalhamento de Presenças</h5>
-                        <div class="d-flex justify-content-end mb-2 gap-2">
-                            <a href="?download=pdf&type=presencas" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-earmark-pdf me-1"></i>Download PDF</a>
-                            <a href="?download=xlsx&type=presencas" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel me-1"></i>Download XLSX</a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Aluno</th>
-                                        <th>Turma</th>
-                                        <th>Data</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for presenca in presencas %}
-                                        <tr>
-                                            <td>{{ presenca.aluno.first_name }} {{ presenca.aluno.last_name }}</td>
-                                            <td>{{ presenca.turma.nome }}</td>
-                                            <td>{{ presenca.data_presenca|date:"d/m/Y" }}</td>
-                                            <td>
-                                                {% if presenca.status == 'APRO' %}
-                                                    <span class="badge bg-success">Aprovado</span>
-                                                {% elif presenca.status == 'REJE' %}
-                                                    <span class="badge bg-danger">Rejeitado</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning">Pendente</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                {% endif %}
-                
-                <div class="mt-3">
-                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Voltar</a>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    document.getElementById('periodo').addEventListener('change', function() {
-        const custom = this.value === 'custom';
-        const inicioDiv = document.getElementById('dataInicioDiv');
-        const fimDiv = document.getElementById('dataFimDiv');
-        
-        if (custom) {
-            inicioDiv.classList.remove('d-none');
-            fimDiv.classList.remove('d-none');
-            document.getElementById('dataInicio').required = true;
-            document.getElementById('dataFim').required = true;
-        } else {
-            inicioDiv.classList.add('d-none');
-            fimDiv.classList.add('d-none');
-            document.getElementById('dataInicio').required = false;
-            document.getElementById('dataFim').required = false;
+    document.getElementById('report-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var reportType = document.getElementById('report-type').value;
+        if (reportType === 'presenca') {
+            window.location.href = "{% url 'relatorio_presenca' %}";
+        } else if (reportType === 'pedidos') {
+            window.location.href = "{% url 'relatorio_pedidos' %}";
         }
     });
 </script>
 {% endblock %}
-

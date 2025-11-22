@@ -1,33 +1,29 @@
 import datetime
-import time
-import os
-import hashlib
 import json
-from datetime import timedelta # Added this import
+from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
-from django.http import HttpResponse, JsonResponse
-from .models import User, Turma, AttendanceRequest, TurmaAluno, Presenca, Graduacao, PlanoAula, ItemPlanoAula, Ranking, PosicaoRanking, Pedido, Item
+from django.http import JsonResponse, HttpResponse
+from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item
 from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm
 import calendar
-
-# Imports para Relatórios (comentado temporariamente - instalar reportlab e openpyxl se necessário)
-# from reportlab.pdfgen import canvas
-# from reportlab.lib.pagesizes import letter
-# from openpyxl import Workbook
+import openpyxl
+from openpyxl.utils import get_column_letter
+from xhtml2pdf import pisa
+from django.template.loader import get_template
+from io import BytesIO
 
 # --- VIEWS GERAIS ---
 
 def index(request):
     context = {}
     if not request.user.is_authenticated:
-        # Lógica para usuários não autenticados
-        students = User.objects.all().filter(group_role='STD', active=True)
-        professors = User.objects.all().filter(group_role='PRO', active=True)
+        students = User.objects.filter(group_role='STD', active=True)
+        professors = User.objects.filter(group_role='PRO', active=True)
         context.update({
             'students': students,
             'professors': professors,
@@ -38,21 +34,15 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-
         user = authenticate(request, username=username, password=password)
-
         if user is not None:
             auth_login(request, user)
             next_url = request.GET.get('next')
-            if next_url:
-                return redirect(next_url)
-            return redirect('dashboard')
+            return redirect(next_url) if next_url else redirect('dashboard')
         else:
             context = {'error': 'Credenciais inválidas ou usuário não encontrado.'}
             return render(request, 'academia/login.html', context)
-    else:
-        return render(request, 'academia/login.html')
-
+    return render(request, 'academia/login.html')
 
 def logout_view(request):
     auth_logout(request)
@@ -67,7 +57,7 @@ def solicitar_acesso(request):
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
         birthday = request.POST.get('birthday')
-        uploaded_photo = request.FILES.get('photo') # Store the uploaded photo temporarily
+        uploaded_photo = request.FILES.get('photo')
 
         if password != password_confirm:
             messages.error(request, 'As senhas não coincidem.')
@@ -81,21 +71,15 @@ def solicitar_acesso(request):
             messages.error(request, 'Este email já está em uso.')
             return redirect('solicitar_acesso')
 
-        # Create the user without the photo first to get an ID
         user = User.objects.create_user(
-            username=username,
-            password=password,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            birthday=birthday,
-            is_active=False
+            username=username, password=password, email=email,
+            first_name=first_name, last_name=last_name,
+            birthday=birthday, is_active=False
         )
         
-        # If a photo was uploaded, assign it now that the user has an ID
         if uploaded_photo:
             user.photo = uploaded_photo
-            user.save() # Save again to save the photo with the correct filename
+            user.save()
 
         messages.success(request, 'Sua solicitação de acesso foi enviada com sucesso! Aguarde a aprovação de um administrador.')
         return redirect('login')
@@ -104,23 +88,17 @@ def solicitar_acesso(request):
 
 @login_required
 def dashboard(request):
-    # Lógica dos aniversariantes
     selected_month = request.GET.get('month')
-    if not selected_month:
-        selected_month = datetime.date.today().month
-    else:
-        try:
-            selected_month = int(selected_month)
-        except (ValueError, TypeError):
-            selected_month = datetime.date.today().month
+    today = datetime.date.today()
+    
+    try:
+        selected_month = int(selected_month) if selected_month else today.month
+    except (ValueError, TypeError):
+        selected_month = today.month
 
     aniversariantes = User.objects.filter(birthday__month=selected_month, active=True).order_by('birthday__day')
     
-    month_names = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ]
-    
+    month_names = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     months = [{'number': i + 1, 'name': name} for i, name in enumerate(month_names)]
 
     base_context = {
@@ -129,84 +107,55 @@ def dashboard(request):
         'months': months,
     }
 
-    if request.user.group_role == 'STD':
-        presencas_pendentes = AttendanceRequest.objects.filter(student=request.user, status='PEN').count()
-        presencas_aprovadas = AttendanceRequest.objects.filter(student=request.user, status='APR').count()
-        turmas = TurmaAluno.objects.filter(aluno=request.user)
+    if request.user.is_student():
         context = {
-            'presencas_pendentes': presencas_pendentes,
-            'presencas_aprovadas': presencas_aprovadas,
-            'turmas': turmas,
+            'presencas_pendentes': AttendanceRequest.objects.filter(student=request.user, status='PEN').count(),
+            'presencas_aprovadas': AttendanceRequest.objects.filter(student=request.user, status='APR').count(),
+            'turmas': TurmaAluno.objects.filter(aluno=request.user),
         }
         context.update(base_context)
         return render(request, 'academia/dashboard_aluno.html', context)
-    elif request.user.group_role == 'PRO':
-        turmas_count = Turma.objects.filter(professor=request.user, ativa=True).count()
-        solicitacoes_presenca = AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').count()
-        alunos_ativos = User.objects.filter(group_role='STD', turmas__professor=request.user, active=True).distinct().count()
-        alunos_pendentes = User.objects.filter(group_role='STD', is_active=False).distinct().count()
-        pedidos_pendentes = Pedido.objects.filter(status='PEND').count()
+    
+    elif request.user.is_professor():
         context = {
-            'turmas_count': turmas_count,
-            'solicitacoes_presenca': solicitacoes_presenca,
-            'alunos_ativos': alunos_ativos,
-            'alunos_pendentes': alunos_pendentes,
-            'pedidos_pendentes': pedidos_pendentes,
+            'turmas_count': Turma.objects.filter(professor=request.user, ativa=True).count(),
+            'solicitacoes_presenca': AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').count(),
+            'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, active=True).distinct().count(),
+            'alunos_pendentes': User.objects.filter(is_active=False).count(),
+            'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
         }
         context.update(base_context)
         return render(request, 'academia/dashboard_professor.html', context)
-    elif request.user.group_role == 'ADM':
-        total_students = User.objects.filter(group_role='STD', is_active=True).count()
-        total_professors = User.objects.filter(group_role='PRO', is_active=True).count()
-        total_active_turmas = Turma.objects.filter(ativa=True).count()
-        pending_attendance_requests = AttendanceRequest.objects.filter(status='PEN').order_by('-attendance_date')[:5]
-        pedidos_pendentes = Pedido.objects.filter(status='PEND').count()
-        
-        turmas_count = Turma.objects.filter(ativa=True).count()
-        solicitacoes_presenca = AttendanceRequest.objects.filter(status='PEN').count()
-        alunos_ativos = User.objects.filter(group_role='STD', is_active=True).count()
-        alunos_pendentes = User.objects.filter(group_role='STD', is_active=False).count()
 
+    elif request.user.is_admin():
         context = {
-            'total_students': total_students,
-            'total_professors': total_professors,
-            'total_active_turmas': total_active_turmas,
-            'pending_attendance_requests': pending_attendance_requests,
-            'pending_pedidos': pedidos_pendentes,
-            'turmas_count': turmas_count,
-            'solicitacoes_presenca': solicitacoes_presenca,
-            'alunos_ativos': alunos_ativos,
-            'alunos_pendentes': alunos_pendentes,
-            'pedidos_pendentes': pedidos_pendentes,
+            'total_students': User.objects.filter(group_role='STD', is_active=True).count(),
+            'total_professors': User.objects.filter(group_role='PRO', is_active=True).count(),
+            'total_active_turmas': Turma.objects.filter(ativa=True).count(),
+            'pending_attendance_requests': AttendanceRequest.objects.filter(status='PEN').order_by('-attendance_date')[:5],
+            'solicitacoes_presenca': AttendanceRequest.objects.filter(status='PEN').count(),
+            'alunos_pendentes': User.objects.filter(is_active=False).count(),
+            'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
         }
         context.update(base_context)
         return render(request, 'academia/dashboard_administrador.html', context)
-    else:
-        return redirect('index')
+        
+    return redirect('index')
 
 @login_required
 def perfil(request):
-    graduacao = Graduacao.objects.filter(aluno=request.user).first()
-    pedidos = Pedido.objects.filter(aluno=request.user).order_by('-data_solicitacao')
     if request.method == 'POST':
         action = request.POST.get('action')
         user = request.user
 
         if action == 'update_kimono':
-            height = request.POST.get('height')
-            weight = request.POST.get('weight')
-            user.height = int(height) if height and height.isdigit() else None
-            user.weight = int(weight) if weight and weight.isdigit() else None
-            
-            kimono_size = request.POST.get('kimono_size')
-            belt_size = request.POST.get('belt_size')
-            user.kimono_size = kimono_size if kimono_size else None
-            user.belt_size = belt_size if belt_size else None
-            
+            user.height = request.POST.get('height')
+            user.weight = request.POST.get('weight')
+            user.kimono_size = request.POST.get('kimono_size')
+            user.belt_size = request.POST.get('belt_size')
             user.save()
             messages.success(request, 'Informações do kimono atualizadas com sucesso!')
-            return redirect('perfil')
-
+        
         elif action == 'change_password':
             current_password = request.POST.get('current_password')
             new_password = request.POST.get('new_password')
@@ -214,22 +163,19 @@ def perfil(request):
 
             if not user.check_password(current_password):
                 messages.error(request, 'Senha atual incorreta.')
-                return redirect('perfil')
-
-            if new_password != confirm_new_password:
+            elif new_password != confirm_new_password:
                 messages.error(request, 'As novas senhas não coincidem.')
-                return redirect('perfil')
-
-            user.set_password(new_password)
-            user.save()
-            auth_login(request, user) # Re-authenticate
-            messages.success(request, 'Senha alterada com sucesso!')
-            return redirect('perfil')
+            else:
+                user.set_password(new_password)
+                user.save()
+                auth_login(request, user)
+                messages.success(request, 'Senha alterada com sucesso!')
+        
+        return redirect('perfil')
 
     context = {
-        'user': request.user,
-        'graduacao': graduacao,
-        'pedidos': pedidos
+        'graduacao': Graduacao.objects.filter(aluno=request.user).first(),
+        'pedidos': Pedido.objects.filter(aluno=request.user).order_by('-data_solicitacao')
     }
     return render(request, 'academia/perfil.html', context)
 
@@ -245,14 +191,14 @@ def perfil_editar(request):
             user.photo = request.FILES.get('photo')
         user.save()
         return redirect('perfil')
-    return render(request, 'academia/perfil_editar.html', {'user': request.user})
+    return render(request, 'academia/perfil_editar.html')
 
 # --- PAINEL DO ALUNO ---
 
 @login_required
 def aluno_marcar_presenca(request):
-    if request.user.group_role != 'STD':
-        raise PermissionDenied("Apenas alunos podem marcar presença.")
+    if not request.user.is_student():
+        raise PermissionDenied
 
     if request.method == 'POST':
         turma_id = request.POST.get('turma_id')
@@ -271,43 +217,34 @@ def aluno_marcar_presenca(request):
         for date_str in dates:
             try:
                 attendance_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                if not AttendanceRequest.objects.filter(student=request.user, turma=turma, attendance_date=attendance_date).exists():
+                    AttendanceRequest.objects.create(
+                        student=request.user, turma=turma,
+                        attendance_date=attendance_date,
+                        reason="Solicitação de presença pelo aluno."
+                    )
             except ValueError:
                 continue
-
-            if not AttendanceRequest.objects.filter(student=request.user, turma=turma, attendance_date=attendance_date).exists():
-                AttendanceRequest.objects.create(
-                    student=request.user,
-                    turma=turma,
-                    attendance_date=attendance_date,
-                    reason="Solicitação de presença pelo aluno."
-                )
 
         messages.success(request, 'Presenças solicitadas com sucesso!')
         return redirect('aluno_presencas')
 
-    turmas_aluno = TurmaAluno.objects.filter(aluno=request.user, status='APRO').select_related('turma')
-    
-    context = {
-        'turmas_aluno': turmas_aluno,
-    }
+    context = {'turmas_aluno': TurmaAluno.objects.filter(aluno=request.user, status='APRO').select_related('turma')}
     return render(request, 'academia/aluno/marcar_presenca.html', context)
 
 @login_required
-def aluno_cancelar_presenca(request, presenca_id):
-    if request.user.group_role != 'STD':
-        raise PermissionDenied("Apenas alunos podem cancelar presenças.")
+def aluno_cancelar_presenca(request, request_id):
+    if not request.user.is_student():
+        raise PermissionDenied
 
-    attendance_request = get_object_or_404(AttendanceRequest, id=presenca_id, student=request.user)
+    attendance_request = get_object_or_404(AttendanceRequest, id=request_id, student=request.user)
 
-    # Só pode cancelar se estiver pendente
     if attendance_request.status != 'PEN':
         messages.error(request, 'Só é possível cancelar solicitações pendentes.')
-        return redirect('aluno_presencas')
-
-    attendance_request.status = 'CAN'
-    attendance_request.save()
-
-    messages.success(request, 'Solicitação de presença cancelada com sucesso.')
+    else:
+        attendance_request.status = 'CAN'
+        attendance_request.save()
+        messages.success(request, 'Solicitação de presença cancelada com sucesso.')
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'success': True, 'message': 'Cancelado com sucesso.'})
@@ -319,7 +256,6 @@ def aluno_presencas(request):
     if not request.user.is_student():
         raise PermissionDenied
     
-    # Mark notifications as read
     AttendanceRequest.objects.filter(student=request.user, status='APR', notified=False).update(notified=True)
     
     attendance_requests = AttendanceRequest.objects.filter(student=request.user).select_related('turma').order_by('-attendance_date')
@@ -330,7 +266,6 @@ def aluno_graduacoes(request):
     if not request.user.is_student():
         raise PermissionDenied
     
-    # Mark notifications as read
     Graduacao.objects.filter(aluno=request.user, notified=False).update(notified=True)
     
     graduacoes = Graduacao.objects.filter(aluno=request.user).order_by('-data_graduacao')
@@ -354,10 +289,6 @@ def aluno_pedido_novo(request):
             pedido = form.save(commit=False)
             item = pedido.item
             
-            # Lógica de reserva de estoque
-            item.quantidade -= pedido.quantidade
-            item.save()
-
             pedido.aluno = request.user
             pedido.final_value = item.valor * pedido.quantidade if item.valor else None
             pedido.save()
@@ -367,19 +298,10 @@ def aluno_pedido_novo(request):
     else:
         form = PedidoForm()
 
-    # Prepara os dados dos itens para o JavaScript
     itens = Item.objects.filter(quantidade__gt=0)
-    item_data = {
-        str(item.id): {
-            'valor': str(item.valor),
-            'quantidade': item.quantidade
-        } for item in itens
-    }
+    item_data = {str(item.id): {'valor': str(item.valor), 'quantidade': item.quantidade} for item in itens}
     
-    context = {
-        'form': form,
-        'item_data_json': json.dumps(item_data)
-    }
+    context = {'form': form, 'item_data_json': json.dumps(item_data)}
     return render(request, 'academia/aluno/pedido_form.html', context)
 
 @login_required
@@ -388,7 +310,6 @@ def aluno_pedido_cancelar(request, pedido_id):
         pedido = get_object_or_404(Pedido, id=pedido_id, aluno=request.user)
 
         if pedido.status == 'PEND':
-            # Devolver item ao estoque
             item = pedido.item
             item.quantidade += pedido.quantidade
             item.save()
@@ -403,14 +324,12 @@ def aluno_pedido_cancelar(request, pedido_id):
 
 @login_required
 def aluno_relatorios(request):
-    # Lógica para gerar relatórios do aluno
     return render(request, 'academia/aluno/relatorios.html')
 
 @login_required
 def gerar_relatorio_aluno(request):
-    print("gerar_relatorio_aluno view hit!") # Added print statement
     if not request.user.is_student():
-        raise PermissionDenied("Apenas alunos podem gerar relatórios.")
+        raise PermissionDenied
 
     report_type = request.GET.get('report_type')
     date_range = request.GET.get('date_range')
@@ -418,8 +337,7 @@ def gerar_relatorio_aluno(request):
     end_date_str = request.GET.get('end_date')
 
     today = datetime.date.today()
-    start_date = None
-    end_date = None
+    start_date, end_date = None, None
 
     if date_range == 'current_month':
         start_date = today.replace(day=1)
@@ -432,46 +350,31 @@ def gerar_relatorio_aluno(request):
                 end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
         except ValueError:
             messages.error(request, "Formato de data inválido. Use AAAA-MM-DD.")
-            return redirect('perfil') # Redirect back to profile with error
+            return redirect('perfil')
 
     context = {
-        'user': request.user, # Added user to context
-        'report_type': report_type,
-        'start_date': start_date,
-        'end_date': end_date,
-        'report_data': [],
-        'report_title': '',
+        'report_type': report_type, 'start_date': start_date, 'end_date': end_date,
+        'report_data': [], 'report_title': '',
         'no_data_message': 'Nenhum dado encontrado para o período selecionado.'
     }
 
     if report_type == 'frequencia':
         context['report_title'] = 'Relatório de Frequência de Aulas'
-        attendance_records = AttendanceRequest.objects.filter(student=request.user, status='APR')
-        if start_date:
-            attendance_records = attendance_records.filter(attendance_date__gte=start_date)
-        if end_date:
-            attendance_records = attendance_records.filter(attendance_date__lte=end_date)
-        context['report_data'] = attendance_records.order_by('attendance_date').select_related('turma')
+        query = AttendanceRequest.objects.filter(student=request.user, status='APR')
+        if start_date: query = query.filter(attendance_date__gte=start_date)
+        if end_date: query = query.filter(attendance_date__lte=end_date)
+        context['report_data'] = query.order_by('attendance_date').select_related('turma')
         if not context['report_data'].exists():
-            context['no_data_message'] = 'Nenhuma presença aprovada encontrada para o período selecionado.'
-
-    elif report_type == 'pagamentos':
-        context['report_title'] = 'Relatório de Histórico de Pagamentos'
-        # Assuming a Payment model exists or will exist
-        # For now, just a placeholder
-        context['report_data'] = [] # No payment model yet
-        context['no_data_message'] = 'Funcionalidade de pagamentos ainda não implementada.'
+            context['no_data_message'] = 'Nenhuma presença aprovada encontrada.'
 
     elif report_type == 'graduacao':
         context['report_title'] = 'Relatório de Progresso de Graduação'
-        graduation_records = Graduacao.objects.filter(aluno=request.user)
-        if start_date:
-            graduation_records = graduation_records.filter(data_graduacao__gte=start_date)
-        if end_date:
-            graduation_records = graduation_records.filter(data_graduacao__lte=end_date)
-        context['report_data'] = graduation_records.order_by('data_graduacao')
+        query = Graduacao.objects.filter(aluno=request.user)
+        if start_date: query = query.filter(data_graduacao__gte=start_date)
+        if end_date: query = query.filter(data_graduacao__lte=end_date)
+        context['report_data'] = query.order_by('data_graduacao')
         if not context['report_data'].exists():
-            context['no_data_message'] = 'Nenhum registro de graduação encontrado para o período selecionado.'
+            context['no_data_message'] = 'Nenhum registro de graduação encontrado.'
 
     else:
         messages.error(request, "Tipo de relatório inválido.")
@@ -479,15 +382,11 @@ def gerar_relatorio_aluno(request):
 
     return render(request, 'academia/aluno/relatorio_detalhe.html', context)
 
-
 # --- PAINEL DO PROFESSOR ---
 
 @login_required
 def professor_turmas(request):
-    if request.user.group_role == 'ADM':
-        turmas = Turma.objects.all()
-    else:
-        turmas = Turma.objects.filter(professor=request.user)
+    turmas = Turma.objects.all() if request.user.is_admin() else Turma.objects.filter(professor=request.user)
     return render(request, 'academia/professor/turmas.html', {'turmas': turmas})
 
 @login_required
@@ -496,16 +395,15 @@ def professor_turma_nova(request):
         raise PermissionDenied
     
     if request.method == 'POST':
-        form = TurmaForm(request.POST) # Removed user=request.user from here
+        form = TurmaForm(request.POST)
         if form.is_valid():
             turma = form.save(commit=False)
-            # Assign the current user as the professor
             turma.professor = request.user
             turma.save()
             messages.success(request, f'Turma "{turma.nome}" criada com sucesso!')
             return redirect('professor_turmas')
     else:
-        form = TurmaForm() # Removed user=request.user from here
+        form = TurmaForm()
     
     return render(request, 'academia/professor/turma_form.html', {'form': form})
 
@@ -514,162 +412,132 @@ def professor_turma_editar(request, turma_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    if request.user.group_role == 'ADM':
-        turma = get_object_or_404(Turma, pk=turma_id)
-    else:
-        turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
-    
+    turma = get_object_or_404(Turma, pk=turma_id)
+    if not request.user.is_admin() and turma.professor != request.user:
+        raise PermissionDenied
+
     if request.method == 'POST':
-        form = TurmaForm(request.POST, instance=turma) # Removed user=request.user from here
+        form = TurmaForm(request.POST, instance=turma)
         if form.is_valid():
-            turma = form.save(commit=False)
-            # The professor field is not in the form, so it won't be overwritten.
-            # We explicitly ensure it remains the current user if they are a PRO.
-            # For ADM, the professor remains as it was.
-            if request.user.group_role == 'PRO':
-                turma.professor = request.user
-            turma.save()
+            form.save()
             messages.success(request, f'Turma "{turma.nome}" atualizada com sucesso!')
             return redirect('professor_turmas')
     else:
-        form = TurmaForm(instance=turma) # Removed user=request.user from here
+        form = TurmaForm(instance=turma)
     
     return render(request, 'academia/professor/turma_form.html', {'form': form, 'turma': turma})
 
 @login_required
 def professor_turma_alunos(request, turma_id):
-    """View para gerenciar alunos de uma turma específica"""
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    if request.user.group_role == 'ADM':
-        turma = get_object_or_404(Turma, pk=turma_id)
-    else:
-        turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
+    turma = get_object_or_404(Turma, pk=turma_id)
+    if not request.user.is_admin() and turma.professor != request.user:
+        raise PermissionDenied
     
-    # Alunos já na turma
-    alunos_turma = TurmaAluno.objects.filter(turma=turma, status='APRO').select_related('aluno')
-    
-    # Alunos disponíveis para adicionar (ativos e não estão na turma)
-    alunos_ids_na_turma = alunos_turma.values_list('aluno_id', flat=True)
-    alunos_disponiveis = User.objects.filter(
-        group_role='STD', 
-        is_active=True
-    ).exclude(id__in=alunos_ids_na_turma).order_by('first_name', 'last_name')
+    alunos_na_turma_ids = TurmaAluno.objects.filter(turma=turma, status='APRO').values_list('aluno_id', flat=True)
     
     context = {
         'turma': turma,
-        'alunos_turma': alunos_turma,
-        'alunos_disponiveis': alunos_disponiveis,
+        'alunos_turma': TurmaAluno.objects.filter(id__in=alunos_na_turma_ids).select_related('aluno'),
+        'alunos_disponiveis': User.objects.filter(group_role='STD', is_active=True).exclude(id__in=alunos_na_turma_ids).order_by('first_name', 'last_name'),
     }
     return render(request, 'academia/professor/turma_alunos.html', context)
 
 @login_required
 def professor_turma_adicionar_aluno(request, turma_id):
-    """View para adicionar um ou mais alunos à turma"""
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    if request.user.group_role == 'ADM':
-        turma = get_object_or_404(Turma, pk=turma_id)
-    else:
-        turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
+    turma = get_object_or_404(Turma, pk=turma_id)
+    if not request.user.is_admin() and turma.professor != request.user:
+        raise PermissionDenied
     
     if request.method == 'POST':
         alunos_ids = request.POST.getlist('alunos')
         if not alunos_ids:
             messages.error(request, 'Selecione pelo menos um aluno.')
-            return redirect('professor_turma_alunos', turma_id=turma_id)
-        
-        count = 0
-        for aluno_id in alunos_ids:
-            aluno = get_object_or_404(User, pk=aluno_id, group_role='STD')
-            # Verificar se já não está na turma
-            if not TurmaAluno.objects.filter(turma=turma, aluno=aluno).exists():
-                TurmaAluno.objects.create(
-                    turma=turma,
-                    aluno=aluno,
-                    status='APRO',
-                    data_aprovacao=timezone.now()
-                )
-                count += 1
-        
-        if count > 0:
-            messages.success(request, f'{count} aluno(s) adicionado(s) à turma "{turma.nome}" com sucesso!')
         else:
-            messages.warning(request, 'Nenhum aluno foi adicionado. Eles já podem estar na turma.')
+            count = 0
+            for aluno_id in alunos_ids:
+                aluno = get_object_or_404(User, pk=aluno_id, group_role='STD')
+                if not TurmaAluno.objects.filter(turma=turma, aluno=aluno).exists():
+                    TurmaAluno.objects.create(turma=turma, aluno=aluno, status='APRO', data_aprovacao=timezone.now())
+                    count += 1
+            
+            if count > 0:
+                messages.success(request, f'{count} aluno(s) adicionado(s) à turma "{turma.nome}".')
+            else:
+                messages.warning(request, 'Nenhum aluno novo adicionado.')
         
-        return redirect('professor_turma_alunos', turma_id=turma_id)
-    
     return redirect('professor_turma_alunos', turma_id=turma_id)
 
 @login_required
 def professor_turma_remover_aluno(request, turma_id, aluno_id):
-    """View para remover um aluno da turma"""
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    if request.user.group_role == 'ADM':
-        turma = get_object_or_404(Turma, pk=turma_id)
-    else:
-        turma = get_object_or_404(Turma, pk=turma_id, professor=request.user)
+    turma = get_object_or_404(Turma, pk=turma_id)
+    if not request.user.is_admin() and turma.professor != request.user:
+        raise PermissionDenied
     
     turma_aluno = get_object_or_404(TurmaAluno, turma=turma, aluno_id=aluno_id)
     aluno_nome = turma_aluno.aluno.get_full_name()
     turma_aluno.delete()
     
-    messages.success(request, f'Aluno "{aluno_nome}" removido da turma "{turma.nome}" com sucesso!')
+    messages.success(request, f'Aluno "{aluno_nome}" removido da turma "{turma.nome}".')
     return redirect('professor_turma_alunos', turma_id=turma_id)
 
 @login_required
 def professor_alunos(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
     alunos = User.objects.filter(group_role='STD').order_by('first_name')
     return render(request, 'academia/professor/alunos.html', {'alunos': alunos})
 
 @login_required
 def professor_aluno_desativar(request, aluno_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
     aluno = get_object_or_404(User, pk=aluno_id, group_role='STD')
     aluno.is_active = False
-    aluno.active = False
     aluno.save()
-    messages.success(request, f'O usuário {aluno.get_full_name()} foi desativado com sucesso.')
+    messages.success(request, f'O usuário {aluno.get_full_name()} foi desativado.')
     return redirect('professor_alunos')
 
 @login_required
 def professor_aluno_ativar(request, aluno_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
     aluno = get_object_or_404(User, pk=aluno_id)
     aluno.is_active = True
-    aluno.active = True
     aluno.save()
-    messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado com sucesso.')
+    messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado.')
     return redirect('professor_alunos')
 
 @login_required
 def professor_aluno_definir_tipo(request, aluno_id):
-    if not request.user.is_professor_or_admin():
+    if not request.user.is_admin():
         raise PermissionDenied
 
-    user_to_change = get_object_or_404(User, pk=aluno_id, group_role='STD')
+    user_to_change = get_object_or_404(User, pk=aluno_id)
 
     if request.method == 'POST':
         password = request.POST.get('password')
         user_type = request.POST.get('user_type')
 
-        if request.user.check_password(password):
-            if user_type == 'PRO':
-                user_to_change.group_role = 'PRO'
-                user_to_change.save()
-                messages.success(request, f'O usuário {user_to_change.get_full_name()} foi promovido a professor.')
-                return redirect('professor_alunos')
-            else:
-                messages.error(request, 'Ação inválida.')
+        if not request.user.check_password(password):
+            messages.error(request, 'Senha incorreta.')
+        elif user_type not in ['STD', 'PRO', 'ADM']:
+            messages.error(request, 'Tipo de usuário inválido.')
         else:
-            messages.error(request, 'Senha incorreta. A alteração não foi realizada.')
+            user_to_change.group_role = user_type
+            user_to_change.save()
+            messages.success(request, f'O tipo de usuário de {user_to_change.get_full_name()} foi alterado.')
+            return redirect('professor_alunos')
 
-    context = {
-        'user_to_change': user_to_change
-    }
-    return render(request, 'academia/professor/change_user_type.html', context)
+    return render(request, 'academia/professor/change_user_type.html', {'user_to_change': user_to_change})
 
 @login_required
 def tamanhos_medidas(request):
@@ -677,47 +545,34 @@ def tamanhos_medidas(request):
         raise PermissionDenied
 
     students = User.objects.filter(group_role='STD').order_by('first_name', 'last_name')
-    
-    student_data = []
     today = datetime.date.today()
-    for student in students:
-        age = None
-        if student.birthday:
-            age = today.year - student.birthday.year - ((today.month, today.day) < (student.birthday.month, student.birthday.day))
-        
-        student_data.append({
-            'user': student,
-            'age': age
-        })
+    student_data = [{
+        'user': student,
+        'age': today.year - student.birthday.year - ((today.month, today.day) < (student.birthday.month, student.birthday.day)) if student.birthday else None
+    } for student in students]
 
-    context = {
-        'student_data': student_data
-    }
-    return render(request, 'academia/professor/tamanhos_medidas.html', context)
+    return render(request, 'academia/professor/tamanhos_medidas.html', {'student_data': student_data})
 
 @login_required
 def professor_presencas(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
-    if request.user.group_role == 'ADM':
-        pending_requests = AttendanceRequest.objects.filter(status='PEN').select_related('student', 'turma').order_by('-attendance_date')
-    else:
-        pending_requests = AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').select_related('student', 'turma').order_by('-attendance_date')
+    query = AttendanceRequest.objects.filter(status='PEN')
+    if request.user.is_professor():
+        query = query.filter(turma__professor=request.user)
     
-    context = {
-        'pending_requests': pending_requests
-    }
-    return render(request, 'academia/professor/presencas.html', context)
+    pending_requests = query.select_related('student', 'turma').order_by('-attendance_date')
+    return render(request, 'academia/professor/presencas.html', {'pending_requests': pending_requests})
 
 @login_required
-def professor_presenca_aprovar(request, presenca_id):
+def professor_presenca_aprovar(request, request_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
-    attendance_request = get_object_or_404(AttendanceRequest, id=presenca_id)
+    attendance_request = get_object_or_404(AttendanceRequest, id=request_id)
     
-    if request.user.group_role == 'PRO' and attendance_request.turma.professor != request.user:
+    if request.user.is_professor() and attendance_request.turma.professor != request.user:
         raise PermissionDenied
 
     attendance_request.status = 'APR'
@@ -729,13 +584,13 @@ def professor_presenca_aprovar(request, presenca_id):
     return redirect('professor_presencas')
 
 @login_required
-def professor_presenca_rejeitar(request, presenca_id):
+def professor_presenca_rejeitar(request, request_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
-    attendance_request = get_object_or_404(AttendanceRequest, id=presenca_id)
+    attendance_request = get_object_or_404(AttendanceRequest, id=request_id)
 
-    if request.user.group_role == 'PRO' and attendance_request.turma.professor != request.user:
+    if request.user.is_professor() and attendance_request.turma.professor != request.user:
         raise PermissionDenied
 
     if request.method == 'POST':
@@ -746,66 +601,20 @@ def professor_presenca_rejeitar(request, presenca_id):
         attendance_request.processed_at = timezone.now()
         attendance_request.save()
         messages.success(request, 'Solicitação de presença rejeitada.')
-        return redirect('professor_presencas')
-
-    return redirect('professor_presencas')
-
-@login_required
-def professor_attendance_aprovar(request, request_id):
-    """Aprova uma solicitação de presença (AttendanceRequest)"""
-    if request.method == 'POST':
-        attendance_req = get_object_or_404(AttendanceRequest, id=request_id)
-
-        # Verificar permissão
-        if request.user.group_role not in ['PRO', 'ADM']:
-            raise PermissionDenied
-        if request.user.group_role == 'PRO' and attendance_req.turma.professor != request.user:
-            raise PermissionDenied
-
-        attendance_req.status = 'APR'
-        attendance_req.processed_at = timezone.now()
-        attendance_req.processed_by = request.user
-        attendance_req.save()
-
-        messages.success(request, f'Solicitação de presença do aluno {attendance_req.student.first_name} aprovada.')
-        return redirect('professor_presencas')
-
-    return redirect('professor_presencas')
-
-@login_required
-def professor_attendance_rejeitar(request, request_id):
-    """Rejeita uma solicitação de presença com motivo"""
-    if request.method == 'POST':
-        attendance_req = get_object_or_404(AttendanceRequest, id=request_id)
-
-        # Verificar permissão
-        if request.user.group_role not in ['PRO', 'ADM']:
-            raise PermissionDenied
-        if request.user.group_role == 'PRO' and attendance_req.turma.professor != request.user:
-            raise PermissionDenied
-
-        rejection_reason = request.POST.get('rejection_reason', '')
-
-        attendance_req.status = 'REJ'
-        attendance_req.rejection_reason = rejection_reason
-        attendance_req.processed_at = timezone.now()
-        attendance_req.processed_by = request.user
-        attendance_req.save()
-
-        messages.success(request, f'Solicitação de presença do aluno {attendance_req.student.first_name} rejeitada.')
-        return redirect('professor_presencas')
-
+    
     return redirect('professor_presencas')
 
 @login_required
 def professor_graduacoes(request):
-    if request.user.group_role == 'ADM':
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+
+    if request.user.is_admin():
         alunos = User.objects.filter(group_role='STD')
-        graduacoes = Graduacao.objects.all()
     else:
         alunos = User.objects.filter(group_role='STD', turmas__professor=request.user).distinct()
-        graduacoes = Graduacao.objects.filter(aluno__in=alunos).distinct()
     
+    graduacoes = Graduacao.objects.filter(aluno__in=alunos).distinct()
     context = {
         'alunos': alunos,
         'graduacoes': {grad.aluno.id: grad for grad in graduacoes}
@@ -814,6 +623,9 @@ def professor_graduacoes(request):
 
 @login_required
 def professor_graduacao_editar(request, aluno_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+        
     aluno = get_object_or_404(User, id=aluno_id)
     graduacao, created = Graduacao.objects.get_or_create(aluno=aluno)
 
@@ -829,44 +641,38 @@ def professor_graduacao_editar(request, aluno_id):
     return render(request, 'academia/professor/graduacao_form.html', {'form': form, 'aluno': aluno})
 
 @login_required
-def aluno_graduacoes(request):
-    if request.user.group_role != 'STD':
-        raise PermissionDenied("Apenas alunos podem visualizar suas graduações.")
-    
-    graduacoes = Graduacao.objects.filter(aluno=request.user).order_by('-data_graduacao')
-    
-    # Mark new graduations as notified when the student views them
-    Graduacao.objects.filter(aluno=request.user, notified=False).update(notified=True)
-
-    return render(request, 'academia/aluno/graduacoes.html', {'graduacoes': graduacoes})
-
-@login_required
 def professor_planos_aula(request):
-    if request.user.group_role == 'ADM':
-        planos_aula = PlanoAula.objects.all()
-    else:
-        planos_aula = PlanoAula.objects.filter(professor=request.user)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    planos_aula = PlanoAula.objects.all() if request.user.is_admin() else PlanoAula.objects.filter(professor=request.user)
     return render(request, 'academia/professor/planos_aula.html', {'planos_aula': planos_aula})
 
 @login_required
 def professor_plano_aula_novo(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
     return render(request, 'academia/professor/plano_aula_form.html')
 
 @login_required
 def professor_plano_aula_editar(request, plano_id):
-    if request.user.group_role == 'ADM':
-        plano_aula = get_object_or_404(PlanoAula, pk=plano_id)
-    else:
-        plano_aula = get_object_or_404(PlanoAula, pk=plano_id, professor=request.user)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    plano_aula = get_object_or_404(PlanoAula, pk=plano_id)
+    if not request.user.is_admin() and plano_aula.professor != request.user:
+        raise PermissionDenied
     return render(request, 'academia/professor/plano_aula_form.html', {'plano_aula': plano_aula})
 
 @login_required
 def professor_rankings(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
     rankings = Ranking.objects.all()
     return render(request, 'academia/professor/rankings.html', {'rankings': rankings})
 
 @login_required
 def professor_ranking_novo(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
     return render(request, 'academia/professor/ranking_form.html')
 
 @login_required
@@ -874,7 +680,7 @@ def professor_pedidos(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    if request.user.is_admin:
+    if request.user.is_admin():
         pedidos = Pedido.objects.all()
     else:
         pedidos = Pedido.objects.filter(item__isnull=False, aluno__turmas__professor=request.user).distinct()
@@ -883,65 +689,59 @@ def professor_pedidos(request):
 
 @login_required
 def professor_pedido_aprovar(request, pedido_id):
-    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if request.method == 'POST':
-        # Mudar status para APRO (Aprovado/Atendido)
         pedido.status = 'APRO'
         pedido.aprovado_por = request.user
         pedido.data_aprovacao = timezone.now()
         pedido.save()
         messages.success(request, 'Pedido atendido com sucesso!')
-        return redirect('professor_pedidos')
     
     return redirect('professor_pedidos')
 
 @login_required
 def professor_pedido_rejeitar(request, pedido_id):
-    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if request.method == 'POST':
-        # Apenas devolve ao estoque se o pedido estava PENDENTE
         if pedido.status == 'PEND':
             item = pedido.item
             item.quantidade += pedido.quantidade
             item.save()
 
-        reason = request.POST.get('rejection_reason', 'Sem motivo especificado.')
         pedido.status = 'REJE'
-        pedido.rejection_reason = reason
+        pedido.rejection_reason = request.POST.get('rejection_reason', 'Sem motivo especificado.')
         pedido.save()
-        messages.success(request, 'Pedido rejeitado com sucesso! O estoque foi atualizado.')
-        return redirect('professor_pedidos')
+        messages.success(request, 'Pedido rejeitado e estoque atualizado.')
+
     return redirect('professor_pedidos')
 
 @login_required
 def professor_pedido_cancelar(request, pedido_id):
-    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if request.method == 'POST':
-        reason = request.POST.get('cancellation_reason', 'Sem motivo especificado.')
         pedido.status = 'CANC'
-        pedido.cancellation_reason = reason
+        pedido.cancellation_reason = request.POST.get('cancellation_reason', 'Sem motivo especificado.')
         pedido.save()
         messages.success(request, 'Pedido cancelado com sucesso!')
-        return redirect('professor_pedidos')
+
     return redirect('professor_pedidos')
 
 @login_required
 def professor_pedido_entregar(request, pedido_id):
-    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if request.method == 'POST':
-        # Verificar e descontar estoque apenas ao entregar
         if pedido.item.quantidade is not None:
             if pedido.quantidade > pedido.item.quantidade:
                 messages.error(request, 'Não há estoque suficiente para entregar este pedido.')
@@ -949,35 +749,33 @@ def professor_pedido_entregar(request, pedido_id):
             pedido.item.quantidade -= pedido.quantidade
             pedido.item.save()
         
-        final_value = request.POST.get('final_value')
-        if final_value:
+        if final_value := request.POST.get('final_value'):
             pedido.final_value = final_value
         
         pedido.status = 'ENTR'
         pedido.save()
         messages.success(request, 'Pedido marcado como entregue!')
-        return redirect('professor_pedidos')
+
     return redirect('professor_pedidos')
 
 @login_required
 def professor_pedido_finalizar(request, pedido_id):
-    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
     if request.method == 'POST':
         pedido.status = 'FINA'
         pedido.save()
         messages.success(request, 'Pedido finalizado com sucesso!')
-        return redirect('professor_pedidos')
+
     return redirect('professor_pedidos')
 
 @login_required
 def professor_itens(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    itens = Item.objects.all()
-    return render(request, 'academia/professor/itens.html', {'itens': itens})
+    return render(request, 'academia/professor/itens.html', {'itens': Item.objects.all()})
 
 @login_required
 def professor_item_novo(request):
@@ -1020,50 +818,10 @@ def professor_item_deletar(request, item_id):
     return render(request, 'academia/professor/item_confirm_delete.html', {'item': item})
 
 @login_required
-def aluno_pedidos(request):
-    if not request.user.is_student():
+def professor_relatorios(request):
+    if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    pedidos = Pedido.objects.filter(aluno=request.user)
-    return render(request, 'academia/aluno/pedidos.html', {'pedidos': pedidos})
-
-@login_required
-def aluno_pedido_novo(request):
-    if not request.user.is_student():
-        raise PermissionDenied
-    
-    if request.method == 'POST':
-        form = PedidoForm(request.POST)
-        if form.is_valid():
-            pedido = form.save(commit=False)
-            item = pedido.item
-            
-            # Lógica de reserva de estoque
-            item.quantidade -= pedido.quantidade
-            item.save()
-
-            pedido.aluno = request.user
-            pedido.final_value = item.valor * pedido.quantidade if item.valor else None
-            pedido.save()
-            
-            messages.success(request, f'Pedido de "{item.nome}" realizado com sucesso! O item está reservado para você por 15 dias.')
-            return redirect('aluno_pedidos')
-    else:
-        form = PedidoForm()
-
-    # Prepara os dados dos itens para o JavaScript
-    itens = Item.objects.filter(quantidade__gt=0)
-    item_data = {
-        str(item.id): {
-            'valor': str(item.valor),
-            'quantidade': item.quantidade
-        } for item in itens
-    }
-    
-    context = {
-        'form': form,
-        'item_data_json': json.dumps(item_data)
-    }
-    return render(request, 'academia/aluno/pedido_form.html', context)
+    return render(request, 'academia/professor/relatorios.html')
 
 @login_required
 def relatorio_pedidos(request):
@@ -1071,39 +829,204 @@ def relatorio_pedidos(request):
         raise PermissionDenied
     
     pedidos = Pedido.objects.all()
-    
-    # Filtering logic
     aluno_id = request.GET.get('aluno')
     item_id = request.GET.get('item')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    export_format = request.GET.get('export')
 
-    if aluno_id:
+    today = datetime.date.today()
+    if not start_date_str:
+        start_date = today.replace(day=1)
+    else:
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+
+    if not end_date_str:
+        end_date = today
+    else:
+        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+    if aluno_id and aluno_id.isdigit():
         pedidos = pedidos.filter(aluno_id=aluno_id)
-    if item_id:
+    else:
+        aluno_id = None
+
+    if item_id and item_id.isdigit():
         pedidos = pedidos.filter(item_id=item_id)
-    if start_date:
-        pedidos = pedidos.filter(data_solicitacao__gte=start_date)
-    if end_date:
-        pedidos = pedidos.filter(data_solicitacao__lte=end_date)
+    else:
+        item_id = None
+    
+    pedidos = pedidos.filter(data_solicitacao__date__range=[start_date, end_date])
+
+    if export_format == 'pdf':
+        template = get_template('academia/professor/relatorio_pedidos_pdf.html')
+        html = template.render({'pedidos': pedidos})
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_pedidos.pdf"'
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse('We had some errors <pre>' + html + '</pre>')
+        return response
+
+    if export_format == 'xlsx':
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_pedidos.xlsx"'
         
-    alunos = User.objects.filter(group_role='STD')
-    itens = Item.objects.all()
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Relatório de Pedidos'
+        
+        headers = [
+            "Data do pedido", "Nome completo", "Descrição do Produto Solicitado (quantidade)",
+            "Valor Unitário", "Total", "Status", "Motivo do Status"
+        ]
+        for col_num, header_title in enumerate(headers, 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header_title
+            worksheet.column_dimensions[get_column_letter(col_num)].width = 25
+
+        for row_num, pedido in enumerate(pedidos, 2):
+            worksheet.cell(row=row_num, column=1, value=pedido.data_solicitacao.strftime('%d/%m/%Y %H:%M'))
+            worksheet.cell(row=row_num, column=2, value=pedido.aluno.get_full_name())
+            worksheet.cell(row=row_num, column=3, value=f"{pedido.item.nome} ({pedido.quantidade})")
+            worksheet.cell(row=row_num, column=4, value=pedido.item.valor)
+            worksheet.cell(row=row_num, column=5, value=pedido.final_value)
+            worksheet.cell(row=row_num, column=6, value=pedido.get_status_display())
+            worksheet.cell(row=row_num, column=7, value=pedido.rejection_reason or pedido.cancellation_reason or "-")
+
+        workbook.save(response)
+        return response
 
     context = {
         'pedidos': pedidos,
-        'alunos': alunos,
-        'itens': itens,
+        'alunos': User.objects.filter(group_role='STD'),
+        'itens': Item.objects.all(),
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'aluno_id': int(aluno_id) if aluno_id else None,
+        'item_id': int(item_id) if item_id else None,
     }
     return render(request, 'academia/professor/relatorio_pedidos.html', context)
 
+@login_required
+def relatorio_presenca(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
 
-# --- FUNÇÕES DE VERIFICAÇÃO DE GRUPO ---
-def is_student(user):
-    return user.is_authenticated and user.group_role == 'STD'
+    turmas = Turma.objects.all() if request.user.is_admin() else Turma.objects.filter(professor=request.user)
+    turma_id = request.GET.get('turma')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    export_format = request.GET.get('export')
 
-def is_teacher(user):
-    return user.is_authenticated and user.group_role == 'PRO'
+    today = datetime.date.today()
+    if not start_date_str:
+        start_date = today.replace(day=1)
+    else:
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
 
-def is_administrator(user):
-    return user.is_authenticated and user.group_role == 'ADM'
+    if not end_date_str:
+        end_date = today
+    else:
+        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+    report_data = []
+    
+    if turma_id and turma_id.isdigit():
+        turma_id_int = int(turma_id)
+        alunos = User.objects.filter(group_role='STD', is_active=True, turmas__id=turma_id_int)
+
+        aulas_ministradas = AttendanceRequest.objects.filter(
+            turma_id=turma_id_int,
+            attendance_date__range=[start_date, end_date]
+        ).values('attendance_date').distinct().count()
+
+        for aluno in alunos:
+            graduacao = Graduacao.objects.filter(aluno=aluno).first()
+            
+            presencas = AttendanceRequest.objects.filter(
+                student=aluno,
+                turma_id=turma_id_int,
+                status='APR',
+                attendance_date__range=[start_date, end_date]
+            ).count()
+            
+            faltas = aulas_ministradas - presencas
+            assiduidade = (presencas / aulas_ministradas * 100) if aulas_ministradas > 0 else 0
+            
+            if assiduidade <= 25:
+                mensagem = "INSATISFATÓRIO"
+            elif 26 <= assiduidade <= 50:
+                mensagem = "REGULAR"
+            elif 51 <= assiduidade <= 75:
+                mensagem = "SATISFATÓRIO"
+            else:
+                mensagem = "EXCELENTE"
+            
+            if graduacao:
+                grau_text = f"{graduacao.grau} Grau"
+                if graduacao.grau != 1:
+                    grau_text += 's'
+                faixa_grau_text = f"{graduacao.get_faixa_display()} - {grau_text}"
+            else:
+                faixa_grau_text = "Nenhuma graduação"
+
+            report_data.append({
+                'nome_completo': aluno.get_full_name(),
+                'faixa_grau': faixa_grau_text,
+                'aulas_ministradas': aulas_ministradas,
+                'presencas': presencas,
+                'faltas': faltas,
+                'assiduidade': f"{assiduidade:.2f}%",
+                'mensagem': mensagem,
+            })
+    else:
+        turma_id = None
+
+    if export_format == 'pdf':
+        template = get_template('academia/professor/relatorio_presenca_pdf.html')
+        html = template.render({'report_data': report_data})
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_presenca.pdf"'
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse('We had some errors <pre>' + html + '</pre>')
+        return response
+
+    if export_format == 'xlsx':
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_presenca.xlsx"'
+        
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Relatório de Presença'
+        
+        headers = [
+            "Nome Completo", "Faixa e Grau", "Aulas Ministradas", 
+            "Presenças", "Faltas", "Assiduidade", "Mensagem"
+        ]
+        for col_num, header_title in enumerate(headers, 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header_title
+            worksheet.column_dimensions[get_column_letter(col_num)].width = 20
+
+        for row_num, data in enumerate(report_data, 2):
+            worksheet.cell(row=row_num, column=1, value=data['nome_completo'])
+            worksheet.cell(row=row_num, column=2, value=data['faixa_grau'])
+            worksheet.cell(row=row_num, column=3, value=data['aulas_ministradas'])
+            worksheet.cell(row=row_num, column=4, value=data['presencas'])
+            worksheet.cell(row=row_num, column=5, value=data['faltas'])
+            worksheet.cell(row=row_num, column=6, value=data['assiduidade'])
+            worksheet.cell(row=row_num, column=7, value=data['mensagem'])
+
+        workbook.save(response)
+        return response
+
+    context = {
+        'turmas': turmas,
+        'report_data': report_data,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'turma_id': int(turma_id) if turma_id else None,
+    }
+    return render(request, 'academia/professor/relatorio_presenca.html', context)
