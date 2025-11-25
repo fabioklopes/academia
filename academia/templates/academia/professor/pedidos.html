@@ -52,13 +52,13 @@
                                         <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
                                         <td>
                                             {% if pedido.status == 'PEND' %}
-                                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#approveModal{{ pedido.id }}">Atender</button>
-                                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ pedido.id }}">Rejeitar</button>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#approveModal{{ pedido.id }}">Atender</button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ pedido.id }}">Rejeitar</button>
                                             {% elif pedido.status == 'APRO' %}
-                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#deliverModal{{ pedido.id }}">Entregar</button>
-                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#cancelModal{{ pedido.id }}">Cancelar</button>
+                                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#deliverModal{{ pedido.id }}">Entregar</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cancelModal{{ pedido.id }}">Cancelar</button>
                                             {% elif pedido.status == 'ENTR' %}
-                                                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#finalizeModal{{ pedido.id }}">Finalizar</button>
+                                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#finalizeModal{{ pedido.id }}">Finalizar</button>
                                             {% else %}
                                                 -
                                             {% endif %}
@@ -100,8 +100,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Rejeitar</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-outline-danger">Rejeitar</button>
                     </div>
                 </form>
             </div>
@@ -127,8 +127,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
-                        <button type="submit" class="btn btn-secondary">Confirmar Cancelamento</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button>
+                        <button type="submit" class="btn btn-outline-secondary">Confirmar Cancelamento</button>
                     </div>
                 </form>
             </div>
@@ -150,8 +150,8 @@
                         <p class="text-muted">Após atender, o pedido ficará aguardando para ser entregue.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Atender</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-outline-primary">Atender</button>
                     </div>
                 </form>
             </div>
@@ -177,8 +177,8 @@
                         <p class="text-muted small">O estoque será descontado após a entrega.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-info">Confirmar Entrega</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-outline-info">Confirmar Entrega</button>
                     </div>
                 </form>
             </div>
@@ -200,8 +200,8 @@
                         <p class="text-muted">O pedido será marcado como finalizado.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success">Finalizar</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-outline-success">Finalizar</button>
                     </div>
                 </form>
             </div>

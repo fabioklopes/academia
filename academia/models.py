@@ -2,15 +2,20 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 import time
+import os
 
 def photo_upload_to(instance, filename):
     timestamp = str(int(time.time()))
-    return f'photos/{instance.pk}_{timestamp}.png' if instance.pk else f'photos/temp_{timestamp}.png'
+    if instance.pk:
+        return f'photos/{instance.pk}_{timestamp}.png'
+    
+    # Generate a temporary filename if the instance is not yet saved
+    return f'photos/temp/{timestamp}_{filename}'
 
 class User(AbstractUser):
     GROUP_ROLE_CHOICES = [('STD', 'Aluno'), ('PRO', 'Professor'), ('ADM', 'Administrador')]
     KIMONO_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4')]
-    BELT_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4')]
+    BELT_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'), ('A5', 'A5'), ('A6', 'A6')]
 
     birthday = models.DateField('Data de Nascimento', null=True, blank=True)
     group_role = models.CharField('Perfil', max_length=3, choices=GROUP_ROLE_CHOICES, default='STD')
@@ -20,6 +25,7 @@ class User(AbstractUser):
     weight = models.IntegerField('Peso (kg)', null=True, blank=True)
     kimono_size = models.CharField('Tamanho do Kimono', max_length=2, choices=KIMONO_SIZE_CHOICES, null=True, blank=True)
     belt_size = models.CharField('Tamanho da Faixa', max_length=2, choices=BELT_SIZE_CHOICES, null=True, blank=True)
+    whatsapp = models.CharField('WhatsApp', max_length=20, null=True, blank=True)
     
     class Meta:
         verbose_name, verbose_name_plural = 'Usuário', 'Usuários'

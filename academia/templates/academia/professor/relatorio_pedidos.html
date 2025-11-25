@@ -48,10 +48,10 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
                         <a href="{% url 'professor_relatorios' %}" class="btn btn-outline-secondary">Voltar</a>
-                        <a href="?aluno={{ aluno_id|default_if_none:'' }}&item={{ item_id|default_if_none:'' }}&start_date={{ start_date }}&end_date={{ end_date }}&export=pdf" class="btn btn-danger">Exportar para PDF</a>
-                        <a href="?aluno={{ aluno_id|default_if_none:'' }}&item={{ item_id|default_if_none:'' }}&start_date={{ start_date }}&end_date={{ end_date }}&export=xlsx" class="btn btn-success">Exportar para XLSX</a>
+                        <a href="?aluno={{ aluno_id|default_if_none:'' }}&item={{ item_id|default_if_none:'' }}&start_date={{ start_date }}&end_date={{ end_date }}&export=pdf" class="btn btn-outline-danger">Exportar para PDF</a>
+                        <a href="?aluno={{ aluno_id|default_if_none:'' }}&item={{ item_id|default_if_none:'' }}&start_date={{ start_date }}&end_date={{ end_date }}&export=xlsx" class="btn btn-outline-success">Exportar para XLSX</a>
                     </div>
                 </form>
 

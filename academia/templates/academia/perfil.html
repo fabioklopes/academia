@@ -323,8 +323,8 @@
             <div class="modal-footer">
                 <form action="{% url 'aluno_pedido_cancelar' pedido.id %}" method="post">
                     {% csrf_token %}
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="submit" class="btn btn-danger">Confirmar Cancelamento</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-outline-danger">Confirmar Cancelamento</button>
                 </form>
             </div>
         </div>

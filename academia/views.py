@@ -42,9 +42,9 @@ def index(request):
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
+        email = request.POST.get('email')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, username=email, password=password)
         if user is not None:
             auth_login(request, user)
             next_url = request.GET.get('next')
@@ -62,7 +62,7 @@ def solicitar_acesso(request):
     if request.method == 'POST':
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
-        username = request.POST.get('username')
+        whatsapp = request.POST.get('whatsapp')
         email = request.POST.get('email')
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
@@ -73,19 +73,17 @@ def solicitar_acesso(request):
             messages.error(request, 'As senhas não coincidem.')
             return redirect('solicitar_acesso')
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Este nome de usuário já está em uso.')
-            return redirect('solicitar_acesso')
-
         if User.objects.filter(email=email).exists():
             messages.error(request, 'Este email já está em uso.')
             return redirect('solicitar_acesso')
 
-        user = User.objects.create_user(
-            username=username, password=password, email=email,
+        user = User(
+            username=email, email=email,
             first_name=first_name, last_name=last_name,
-            birthday=birthday, is_active=False
+            whatsapp=whatsapp, birthday=birthday, is_active=False
         )
+        user.set_password(password)
+        user.save()
         
         if uploaded_photo:
             user.photo = uploaded_photo

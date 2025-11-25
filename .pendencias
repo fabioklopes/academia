@@ -42,3 +42,8 @@ Essa lista vai conter as seguintes colunas:
 
 
 4. Verifique todos os botões do projeto e certifique-se de que estejam com a class "outline". Caso não, aplique esta classe nos botões que não estiverem de acordo.
+
+
+5. No perfil Aluno (STD), acesse a NAVBAR, menu Acadêmico, remova o NAVITEM "Marcar Presença"
+
+

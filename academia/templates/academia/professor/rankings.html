@@ -8,7 +8,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>Rankings</h4>
-                <a href="{% url 'professor_ranking_novo' %}" class="btn btn-primary">Novo Ranking</a>
+                <a href="{% url 'professor_ranking_novo' %}" class="btn btn-outline-primary">Novo Ranking</a>
             </div>
             <div class="card-body">
                 {% if rankings %}
@@ -39,7 +39,7 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <a href="#" class="btn btn-sm btn-info">Ver Detalhes</a>
+                                            <a href="#" class="btn btn-sm btn-outline-info">Ver Detalhes</a>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -51,7 +51,7 @@
                 {% endif %}
                 
                 <div class="mt-3">
-                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Voltar</a>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
                 </div>
             </div>
         </div>

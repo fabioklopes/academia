@@ -37,7 +37,6 @@
                             <!-- Menu do Aluno -->
                             {% if user.is_student %}
                             <li><h6 class="dropdown-header">Área do Aluno</h6></li>
-                            <li><a class="dropdown-item" href="{% url 'aluno_marcar_presenca' %}"><i class="bi bi-calendar-plus me-2"></i>Marcar Presença</a></li>
                             <li><a class="dropdown-item" href="{% url 'aluno_presencas' %}"><i class="bi bi-list-ul me-2"></i>Minhas Presenças</a></li>
                             <li><a class="dropdown-item" href="{% url 'aluno_pedidos' %}"><i class="bi bi-cart me-2"></i>Meus Pedidos</a></li>
                             <li><a class="dropdown-item" href="{% url 'aluno_relatorios' %}"><i class="bi bi-graph-up me-2"></i>Relatórios</a></li>

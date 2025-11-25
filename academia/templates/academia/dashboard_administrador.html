@@ -43,7 +43,7 @@
                 <i class="bi bi-people fs-1 text-primary mb-3"></i>
                 <h5 class="card-title">Turmas</h5>
                 <p class="card-text">{{ turmas_count }} turma(s) ativa(s)</p>
-                <a href="{% url 'professor_turmas' %}" class="btn btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_turmas' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -54,7 +54,7 @@
                 <i class="bi bi-calendar-check fs-1 text-warning mb-3"></i>
                 <h5 class="card-title">Presenças</h5>
                 <p class="card-text">{{ solicitacoes_presenca }} pendente(s)</p>
-                <a href="{% url 'professor_presencas' %}" class="btn btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_presencas' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -69,7 +69,7 @@
                     <span class="mx-1">|</span>
                     <span class="text-warning">{{ alunos_pendentes }} pendente{% if alunos_pendentes != 1 %}s{% endif %}</span>
                 </p>
-                <a href="{% url 'professor_alunos' %}" class="btn btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_alunos' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -80,7 +80,7 @@
                 <i class="bi bi-award fs-1 text-danger mb-3"></i>
                 <h5 class="card-title">Graduações</h5>
                 <p class="card-text">Gerenciar faixas e graus</p>
-                <a href="{% url 'professor_graduacoes' %}" class="btn btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -91,7 +91,7 @@
                 <i class="bi bi-book fs-1 text-secondary mb-3"></i>
                 <h5 class="card-title">Planos de Aula</h5>
                 <p class="card-text">Criar e editar planos</p>
-                <a href="{% url 'professor_planos_aula' %}" class="btn btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_planos_aula' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -102,7 +102,7 @@
                 <i class="bi bi-trophy fs-1 text-warning mb-3"></i>
                 <h5 class="card-title">Rankings</h5>
                 <p class="card-text">Criar rankings internos</p>
-                <a href="{% url 'professor_rankings' %}" class="btn btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_rankings' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -119,7 +119,7 @@
                         Nenhuma pendência
                     {% endif %}
                 </p>
-                <a href="{% url 'professor_pedidos' %}" class="btn btn-primary">Gerenciar</a>
+                <a href="{% url 'professor_pedidos' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
@@ -130,7 +130,7 @@
                 <i class="bi bi-file-earmark-bar-graph fs-1 text-primary mb-3"></i>
                 <h5 class="card-title">Relatórios</h5>
                 <p class="card-text">Visualizar relatórios</p>
-                <a href="{% url 'professor_relatorios' %}" class="btn btn-primary">Acessar</a>
+                <a href="{% url 'professor_relatorios' %}" class="btn btn-outline-primary">Acessar</a>
             </div>
         </div>
     </div>

@@ -22,10 +22,6 @@
                             Preencha todos os campos abaixo para solicitar acesso ao sistema. 
                             Seu cadastro será analisado e você receberá uma notificação quando for aprovado.
                         </p>
-
-                        <p class="alert alert-warning" role="alert">
-                            <strong>Atenção:</strong> não perca o seu nome de usuário. Seu acesso será a partir dele.
-                        </p>
                         
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
@@ -44,14 +40,15 @@
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="username" class="form-label">Nome de Usuário <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="username" name="username" required>
-                                    <small class="form-text text-muted">Este será usado para fazer login</small>
+                                    <label for="whatsapp" class="form-label">WhatsApp <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="whatsapp" name="whatsapp" required placeholder="(xx) xxxxx-xxxx">
+                                    <small class="form-text text-muted">Use o formato (xx) xxxxx-xxxx</small>
                                 </div>
                                 
                                 <div class="col-md-6 mb-3">
                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                                     <input type="email" class="form-control" id="email" name="email" required>
+                                    <small class="form-text text-muted">Este será usado para fazer login. O e-mail deve ser único.</small>
                                 </div>
                             </div>
                             
@@ -76,8 +73,13 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label for="photo" class="form-label">Foto</label>
-                                    <input type="file" class="form-control" id="photo" name="photo" accept="image/*" capture="camera">
-                                    <small class="form-text text-muted">Procure uma foto do dispositivo ou use a câmera</small>
+                                    <div class="input-group">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#photo-modal">
+                                            <i class="bi bi-camera-fill me-2"></i> Adicionar Foto
+                                        </button>
+                                    </div>
+                                    <input type="file" class="form-control d-none" id="photo" name="photo" accept="image/*">
+                                    <img id="photo-preview" src="" alt="Pré-visualização da foto" class="img-fluid mt-2" style="display: none; max-height: 150px;">
                                 </div>
                             </div>
                             
@@ -97,6 +99,29 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Seleção de Foto -->
+    <div class="modal fade" id="photo-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="photo-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="photo-modal-label">Selecionar Foto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Escolha uma opção para adicionar sua foto:</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" id="select-gallery-btn">
+                            <i class="bi bi-images me-2"></i>Selecionar da Galeria
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="open-camera-btn">
+                            <i class="bi bi-camera-video me-2"></i>Usar a Câmera
+                        </button>
                     </div>
                 </div>
             </div>
@@ -123,6 +148,12 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Máscara do WhatsApp
+        document.getElementById('whatsapp').addEventListener('input', function (e) {
+            var x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+
         // Validação de confirmação de senha
         document.getElementById('password_confirm').addEventListener('input', function() {
             const password = document.getElementById('password').value;
@@ -175,6 +206,34 @@
                         }
                     }, 1000);
                 });
+            }
+        });
+
+        // Lógica do Modal e da Foto
+        const photoInput = document.getElementById('photo');
+        const photoPreview = document.getElementById('photo-preview');
+        const photoModal = new bootstrap.Modal(document.getElementById('photo-modal'));
+
+        document.getElementById('select-gallery-btn').addEventListener('click', () => {
+            photoInput.removeAttribute('capture');
+            photoInput.click();
+        });
+
+        document.getElementById('open-camera-btn').addEventListener('click', () => {
+            photoInput.setAttribute('capture', 'camera');
+            photoInput.click();
+        });
+
+        photoInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                photoModal.hide();
             }
         });
     </script>
