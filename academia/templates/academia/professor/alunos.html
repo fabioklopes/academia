@@ -40,11 +40,7 @@
                                             {% if aluno.is_active %}
                                                 <span class="badge bg-success">Ativo</span>
                                             {% else %}
-                                                {% if aluno.active %}
-                                                    <span class="badge bg-danger">Inativo</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning">Pendente</span>
-                                                {% endif %}
+                                                <span class="badge bg-warning">Pendente</span>
                                             {% endif %}
                                         </td>
                                         <td>

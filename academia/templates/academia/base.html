@@ -106,13 +106,38 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             {% if user.group_role == "STD" %}
-                                <li><a class="dropdown-item" href=""><i class="bi bi-star-fill"></i> Nível de Acesso: Aluno</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-star-fill"></i> Nível de Acesso: Aluno</a></li>
                             {% elif user.group_role == "PRO" %}
-                                <li><a class="dropdown-item" href=""><i class="bi bi-star-fill"></i> Nível de Acesso: Professor</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-star-fill"></i> Nível de Acesso: Professor</a></li>
                             {% else %}
-                                <li><a class="dropdown-item" href=""><i class="bi bi-star-fill"></i> Nível de Acesso: Administrador</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-star-fill"></i> Nível de Acesso: Administrador</a></li>
                             {% endif %}
+                            
+                            <!-- Account Switching Logic -->
+                            {% if original_user_id or dependents_list %}
                                 <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Gerenciar Contas</h6></li>
+                                
+                                {% if original_user_id %}
+                                    {# User is logged in as a dependent, show the link to go back #}
+                                    <li>
+                                        <a class="dropdown-item text-warning" href="{% url 'switch_account_back' %}">
+                                            <i class="bi bi-arrow-left-circle me-2"></i>Voltar para minha conta
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    {# User is the main account holder, show links to dependents #}
+                                    {% for dependent in dependents_list %}
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'switch_account' dependent.id %}">
+                                                <i class="bi bi-person-check me-2"></i>{{ dependent.get_full_name }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endif %}
+
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'perfil' %}"><i class="bi bi-person-circle me-2"></i>Meu Perfil</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">

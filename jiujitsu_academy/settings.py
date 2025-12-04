@@ -66,7 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'academia.context_processors.pending_tasks_processor',
+                'academia.context_processors.account_management_context',
             ],
         },
     },

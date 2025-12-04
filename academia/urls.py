@@ -10,6 +10,8 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('solicitar-acesso/', views.solicitar_acesso, name='solicitar_acesso'),
+    path('switch-account/<int:user_id>/', views.switch_account, name='switch_account'),
+    path('switch-account-back/', views.switch_account_back, name='switch_account_back'),
     
     # Password Reset
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='academia/password_reset.html'), name='password_reset'),

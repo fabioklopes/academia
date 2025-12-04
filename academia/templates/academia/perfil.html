@@ -6,24 +6,15 @@
     <div class="col-md-8 offset-md-2">
         <h4 class="mb-4">Meu Perfil</h4>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-
         <div class="accordion" id="accordionPerfil">
             <!-- Item 1: Dados do Perfil -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingPerfil">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePerfil" aria-expanded="false" aria-controls="collapsePerfil">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePerfil" aria-expanded="true" aria-controls="collapsePerfil">
                         Dados do Perfil
                     </button>
                 </h2>
-                <div id="collapsePerfil" class="accordion-collapse collapse" aria-labelledby="headingPerfil" data-bs-parent="#accordionPerfil">
+                <div id="collapsePerfil" class="accordion-collapse collapse show" aria-labelledby="headingPerfil" data-bs-parent="#accordionPerfil">
                     <div class="accordion-body">
                         <div class="text-center mb-4">
                             {% if user.photo %}
@@ -62,7 +53,7 @@
                             </div>
                             <div class="col-md-6">
                                 <strong>Status:</strong> 
-                                {% if user.active %}
+                                {% if user.is_active %}
                                     <span class="badge bg-success">Ativo</span>
                                 {% else %}
                                     <span class="badge bg-danger">Inativo</span>
@@ -71,7 +62,6 @@
                         </div>
                         
                         {% if graduacao %}
-                        <hr>
                         <h5>Graduação</h5>
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -82,7 +72,8 @@
                             </div>
                         </div>
                         {% endif %}
-                        
+
+                        <hr>
                         <div class="mt-4">
                             <a href="{% url 'perfil_editar' %}" class="btn btn-outline-primary">Editar Perfil</a>
                             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
@@ -171,11 +162,11 @@
             <!-- Item 3: Meus Pedidos -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingPedidos">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePedidos" aria-expanded="true" aria-controls="collapsePedidos">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePedidos" aria-expanded="false" aria-controls="collapsePedidos">
                         Meus Pedidos
                     </button>
                 </h2>
-                <div id="collapsePedidos" class="accordion-collapse collapse show" aria-labelledby="headingPedidos" data-bs-parent="#accordionPerfil">
+                <div id="collapsePedidos" class="accordion-collapse collapse" aria-labelledby="headingPedidos" data-bs-parent="#accordionPerfil">
                     <div class="accordion-body">
                         {% if pedidos %}
                             <div class="table-responsive">
@@ -236,7 +227,7 @@
                 </h2>
                 <div id="collapseRelatorios" class="accordion-collapse collapse" aria-labelledby="headingRelatorios" data-bs-parent="#accordionPerfil">
                     <div class="accordion-body">
-                        <form method="get" action="{% url 'gerar_relatorio_aluno' %}"> {# Assuming a URL named 'gerar_relatorio_aluno' #}
+                        <form method="get" action="{% url 'gerar_relatorio_aluno' %}">
                             <div class="mb-3">
                                 <label for="report_type" class="form-label">Tipo de Relatório</label>
                                 <select class="form-select" id="report_type" name="report_type" required>
@@ -244,7 +235,6 @@
                                     <option value="frequencia">Frequência de Aulas</option>
                                     <option value="pagamentos">Histórico de Pagamentos</option>
                                     <option value="graduacao">Progresso de Graduação</option>
-                                    {# Add more report types as needed #}
                                 </select>
                             </div>
 

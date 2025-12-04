@@ -9,13 +9,14 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item
-from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm
+from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm
 import calendar
 import openpyxl
 from openpyxl.utils import get_column_letter
 from xhtml2pdf import pisa
 from django.template.loader import get_template
 from io import BytesIO
+import uuid
 
 # --- VIEWS GERAIS ---
 
@@ -26,8 +27,8 @@ def index(request):
     
     context = {}
     if not request.user.is_authenticated:
-        students = User.objects.filter(group_role='STD', active=True)
-        professors = User.objects.filter(group_role='PRO', active=True)
+        students = User.objects.filter(group_role='STD', is_active=True)
+        professors = User.objects.filter(group_role='PRO', is_active=True)
         context.update({
             'students': students,
             'professors': professors,
@@ -60,39 +61,78 @@ def logout_view(request):
 
 def solicitar_acesso(request):
     if request.method == 'POST':
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        whatsapp = request.POST.get('whatsapp')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        password_confirm = request.POST.get('password_confirm')
-        birthday = request.POST.get('birthday')
-        uploaded_photo = request.FILES.get('photo')
+        form = SolicitacaoAcessoForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = form.cleaned_data
+            email = data['email']
+            responsible_email = data.get('responsible_email')
+            has_responsible = data.get('has_responsible')
 
-        if password != password_confirm:
-            messages.error(request, 'As senhas não coincidem.')
-            return redirect('solicitar_acesso')
+            username = email
+            if has_responsible and responsible_email == email:
+                # Create a unique username for the dependent
+                username = f"{email.split('@')[0]}+{uuid.uuid4().hex[:4]}@{email.split('@')[1]}"
 
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Este email já está em uso.')
-            return redirect('solicitar_acesso')
+            if User.objects.filter(username=username).exists():
+                messages.warning(request, 'Este e-mail já está sendo usado por outro usuário.')
+                return render(request, 'academia/solicitar_acesso.html', {'form': form})
 
-        user = User(
-            username=email, email=email,
-            first_name=first_name, last_name=last_name,
-            whatsapp=whatsapp, birthday=birthday, is_active=False
-        )
-        user.set_password(password)
-        user.save()
-        
-        if uploaded_photo:
-            user.photo = uploaded_photo
+            user = User(
+                username=username, email=email,
+                first_name=data['first_name'], last_name=data['last_name'],
+                birthday=data['birthday'], is_active=False
+            )
+            user.set_password(data['password'])
+
+            if data.get('photo'):
+                user.photo = data['photo']
+
+            if has_responsible:
+                try:
+                    responsible_user = User.objects.get(email=responsible_email, group_role='STD', is_active=True)
+                    user.responsible = responsible_user
+                except User.DoesNotExist:
+                    messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
+                    return render(request, 'academia/solicitar_acesso.html', {'form': form})
+            
             user.save()
+            messages.success(request, 'Sua solicitação de acesso foi enviada com sucesso! Aguarde a aprovação de um administrador.')
+            return redirect('login')
+    else:
+        form = SolicitacaoAcessoForm()
 
-        messages.success(request, 'Sua solicitação de acesso foi enviada com sucesso! Aguarde a aprovação de um administrador.')
-        return redirect('login')
+    return render(request, 'academia/solicitar_acesso.html', {'form': form})
 
-    return render(request, 'academia/solicitar_acesso.html')
+@login_required
+def switch_account(request, user_id):
+    # Store the original user's ID, whether it's the first switch or a subsequent one.
+    original_user_id = request.session.get('original_user_id', request.user.id)
+
+    # The user to switch to must be a dependent of the main account holder.
+    dependent_user = get_object_or_404(User, id=user_id, responsible_id=original_user_id)
+    
+    # Log in as the dependent user. This clears the session.
+    auth_login(request, dependent_user, backend='django.contrib.auth.backends.ModelBackend')
+    
+    # Restore the original user's ID in the new session.
+    request.session['original_user_id'] = original_user_id
+    
+    messages.info(request, f"Você agora está gerenciando a conta de {dependent_user.get_full_name()}.")
+    return redirect('perfil')
+
+@login_required
+def switch_account_back(request):
+    original_user_id = request.session.get('original_user_id')
+    if original_user_id:
+        original_user = get_object_or_404(User, id=original_user_id)
+        
+        # Log in as the original user. This clears the session, removing 'original_user_id'.
+        auth_login(request, original_user, backend='django.contrib.auth.backends.ModelBackend')
+        messages.success(request, "Você voltou para a sua conta.")
+    else:
+        messages.warning(request, "Nenhuma conta original encontrada para retornar.")
+
+    return redirect('perfil')
 
 @login_required
 def dashboard(request):
@@ -104,7 +144,7 @@ def dashboard(request):
     except (ValueError, TypeError):
         selected_month = today.month
 
-    aniversariantes = User.objects.filter(birthday__month=selected_month, active=True).order_by('birthday__day')
+    aniversariantes = User.objects.filter(birthday__month=selected_month, is_active=True).order_by('birthday__day')
     
     month_names = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     months = [{'number': i + 1, 'name': name} for i, name in enumerate(month_names)]
@@ -128,7 +168,7 @@ def dashboard(request):
         context = {
             'turmas_count': Turma.objects.filter(professor=request.user, ativa=True).count(),
             'solicitacoes_presenca': AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').count(),
-            'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, active=True).distinct().count(),
+            'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, is_active=True).distinct().count(),
             'alunos_pendentes': User.objects.filter(is_active=False).count(),
             'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
         }
@@ -418,49 +458,52 @@ def aluno_relatorio_presenca(request):
     
     if turma_id and turma_id.isdigit():
         turma_id_int = int(turma_id)
+        alunos = User.objects.filter(group_role='STD', is_active=True, turmas__id=turma_id_int)
+
         aulas_ministradas = AttendanceRequest.objects.filter(
             turma_id=turma_id_int,
             attendance_date__range=[start_date, end_date]
         ).values('attendance_date').distinct().count()
 
-        graduacao = Graduacao.objects.filter(aluno=request.user).first()
-        
-        presencas = AttendanceRequest.objects.filter(
-            student=request.user,
-            turma_id=turma_id_int,
-            status='APR',
-            attendance_date__range=[start_date, end_date]
-        ).count()
-        
-        faltas = aulas_ministradas - presencas
-        assiduidade = (presencas / aulas_ministradas * 100) if aulas_ministradas > 0 else 0
-        
-        if assiduidade <= 25:
-            mensagem = "INSATISFATÓRIO"
-        elif 26 <= assiduidade <= 50:
-            mensagem = "REGULAR"
-        elif 51 <= assiduidade <= 75:
-            mensagem = "SATISFATÓRIO"
-        else:
-            mensagem = "EXCELENTE"
-        
-        if graduacao:
-            grau_text = f"{graduacao.grau} Grau"
-            if graduacao.grau != 1:
-                grau_text += 's'
-            faixa_grau_text = f"{graduacao.get_faixa_display()} - {grau_text}"
-        else:
-            faixa_grau_text = "Nenhuma graduação"
+        for aluno in alunos:
+            graduacao = Graduacao.objects.filter(aluno=aluno).first()
+            
+            presencas = AttendanceRequest.objects.filter(
+                student=aluno,
+                turma_id=turma_id_int,
+                status='APR',
+                attendance_date__range=[start_date, end_date]
+            ).count()
+            
+            faltas = aulas_ministradas - presencas
+            assiduidade = (presencas / aulas_ministradas * 100) if aulas_ministradas > 0 else 0
+            
+            if assiduidade <= 25:
+                mensagem = "INSATISFATÓRIO"
+            elif 26 <= assiduidade <= 50:
+                mensagem = "REGULAR"
+            elif 51 <= assiduidade <= 75:
+                mensagem = "SATISFATÓRIO"
+            else:
+                mensagem = "EXCELENTE"
+            
+            if graduacao:
+                grau_text = f"{graduacao.grau} Grau"
+                if graduacao.grau != 1:
+                    grau_text += 's'
+                faixa_grau_text = f"{graduacao.get_faixa_display()} - {grau_text}"
+            else:
+                faixa_grau_text = "Nenhuma graduação"
 
-        report_data.append({
-            'nome_completo': request.user.get_full_name(),
-            'faixa_grau': faixa_grau_text,
-            'aulas_ministradas': aulas_ministradas,
-            'presencas': presencas,
-            'faltas': faltas,
-            'assiduidade': f"{assiduidade:.2f}%",
-            'mensagem': mensagem,
-        })
+            report_data.append({
+                'nome_completo': aluno.get_full_name(),
+                'faixa_grau': faixa_grau_text,
+                'aulas_ministradas': aulas_ministradas,
+                'presencas': presencas,
+                'faltas': faltas,
+                'assiduidade': f"{assiduidade:.2f}%",
+                'mensagem': mensagem,
+            })
     else:
         turma_id = None
 

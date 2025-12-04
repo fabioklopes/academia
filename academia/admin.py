@@ -8,16 +8,16 @@ from .models import (
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ['username', 'first_name', 'last_name', 'email', 'group_role', 'active']
-    list_filter = ['group_role', 'active']
+    list_display = ['username', 'first_name', 'last_name', 'email', 'group_role', 'is_active']
+    list_filter = ['group_role', 'is_active']
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Informações Adicionais', {
-            'fields': ('birthday', 'group_role', 'active', 'photo')
+            'fields': ('birthday', 'group_role', 'photo')
         }),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         ('Informações Adicionais', {
-            'fields': ('birthday', 'group_role', 'active', 'photo')
+            'fields': ('birthday', 'group_role', 'photo')
         }),
     )
 

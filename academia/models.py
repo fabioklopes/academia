@@ -14,18 +14,18 @@ def photo_upload_to(instance, filename):
 
 class User(AbstractUser):
     GROUP_ROLE_CHOICES = [('STD', 'Aluno'), ('PRO', 'Professor'), ('ADM', 'Administrador')]
-    KIMONO_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4')]
+    KIMONO_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'), ('A5', 'A5'), ('A6', 'A6')]
     BELT_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'), ('A5', 'A5'), ('A6', 'A6')]
 
     birthday = models.DateField('Data de Nascimento', null=True, blank=True)
     group_role = models.CharField('Perfil', max_length=3, choices=GROUP_ROLE_CHOICES, default='STD')
-    active = models.BooleanField('Ativo', default=True)
     photo = models.ImageField('Foto', upload_to=photo_upload_to, null=True, blank=True)
     height = models.IntegerField('Altura (cm)', null=True, blank=True)
     weight = models.IntegerField('Peso (kg)', null=True, blank=True)
     kimono_size = models.CharField('Tamanho do Kimono', max_length=2, choices=KIMONO_SIZE_CHOICES, null=True, blank=True)
     belt_size = models.CharField('Tamanho da Faixa', max_length=2, choices=BELT_SIZE_CHOICES, null=True, blank=True)
     whatsapp = models.CharField('WhatsApp', max_length=20, null=True, blank=True)
+    responsible = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='dependents')
     
     class Meta:
         verbose_name, verbose_name_plural = 'Usuário', 'Usuários'
@@ -175,7 +175,7 @@ class PosicaoRanking(models.Model):
         return f"{self.ranking} - {self.aluno} - {self.posicao}º lugar"
 
 class Item(models.Model):
-    TIPO_CHOICES = [('KIMONO', 'Kimono'), ('FAIXA', 'Faixa'), ('RASHGUARD', 'Rashguard'), ('TAXA', 'Taxa')]
+    TIPO_CHOICES = [('KIMONO', 'Kimono'), ('FAIXA', 'Faixa'), ('HASHGUARD', 'Hashguard'), ('TAXA', 'Taxa')]
     nome = models.CharField(max_length=100)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     valor = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
