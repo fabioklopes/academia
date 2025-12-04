@@ -8,6 +8,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout, auth
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q # Importar Q para consultas complexas
 from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item
 from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm
 import calendar
@@ -631,6 +633,7 @@ def aluno_relatorio_pedidos(request):
 
     context = {
         'pedidos': pedidos,
+        'alunos': User.objects.filter(group_role='STD'),
         'itens': Item.objects.all(),
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
@@ -749,8 +752,30 @@ def professor_turma_remover_aluno(request, turma_id, aluno_id):
 def professor_alunos(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    alunos = User.objects.filter(group_role='STD').order_by('first_name')
-    return render(request, 'academia/professor/alunos.html', {'alunos': alunos})
+    
+    alunos_list = User.objects.filter(group_role='STD').order_by('first_name')
+    
+    query = request.GET.get('q')
+    if query:
+        alunos_list = alunos_list.filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query)
+        )
+    
+    paginator = Paginator(alunos_list, 10) # Mostrar 10 alunos por página
+    page = request.GET.get('page')
+    
+    try:
+        alunos = paginator.page(page)
+    except PageNotAnInteger:
+        # Se a página não for um inteiro, entregar a primeira página.
+        alunos = paginator.page(1)
+    except EmptyPage:
+        # Se a página estiver fora do intervalo (ex: 9999), entregar a última página de resultados.
+        alunos = paginator.page(paginator.num_pages)
+        
+    return render(request, 'academia/professor/alunos.html', {'alunos': alunos, 'query': query})
 
 @login_required
 def professor_aluno_desativar(request, aluno_id):
@@ -1166,7 +1191,6 @@ def relatorio_pedidos(request):
         'itens': Item.objects.all(),
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
-        'aluno_id': int(aluno_id) if aluno_id else None,
         'item_id': int(item_id) if item_id else None,
     }
     return render(request, 'academia/professor/relatorio_pedidos.html', context)
