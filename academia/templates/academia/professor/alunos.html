@@ -37,14 +37,18 @@
                                         <td>{{ aluno.first_name }} {{ aluno.last_name }}</td>
                                         <td>{{ aluno.email }}</td>
                                         <td>
-                                            {% if aluno.is_active %}
+                                            {% if aluno.status == 'ATIVO' %}
                                                 <span class="badge bg-success">Ativo</span>
-                                            {% else %}
+                                            {% elif aluno.status == 'PENDENTE' %}
                                                 <span class="badge bg-warning">Pendente</span>
+                                            {% elif aluno.status == 'INATIVO' %}
+                                                <span class="badge bg-danger light-text">Inativo</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ aluno.get_status_display }}</span>
                                             {% endif %}
                                         </td>
                                         <td>
-                                            {% if not aluno.is_active %}
+                                            {% if aluno.status == 'INATIVO' %}
                                                 <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-outline-success">Ativar</a>
                                             {% else %}
                                                 <a href="{% url 'professor_aluno_desativar' aluno.id %}" class="btn btn-sm btn-outline-danger">Desativar</a>

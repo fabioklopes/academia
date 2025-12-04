@@ -13,12 +13,14 @@ def photo_upload_to(instance, filename):
     return f'photos/temp/{timestamp}_{filename}'
 
 class User(AbstractUser):
+    STATUS_CHOICES = [('ATIVO', 'Ativo'), ('INATIVO', 'Inativo'), ('PENDENTE', 'Pendente')]
     GROUP_ROLE_CHOICES = [('STD', 'Aluno'), ('PRO', 'Professor'), ('ADM', 'Administrador')]
     KIMONO_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'), ('A5', 'A5'), ('A6', 'A6')]
     BELT_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'), ('A5', 'A5'), ('A6', 'A6')]
 
     birthday = models.DateField('Data de Nascimento', null=True, blank=True)
     group_role = models.CharField('Perfil', max_length=3, choices=GROUP_ROLE_CHOICES, default='STD')
+    status = models.CharField('Status', max_length=8, choices=STATUS_CHOICES, default='PENDENTE')
     photo = models.ImageField('Foto', upload_to=photo_upload_to, null=True, blank=True)
     height = models.IntegerField('Altura (cm)', null=True, blank=True)
     weight = models.IntegerField('Peso (kg)', null=True, blank=True)
@@ -31,6 +33,10 @@ class User(AbstractUser):
         verbose_name, verbose_name_plural = 'Usuário', 'Usuários'
         ordering = ['first_name', 'last_name']
     
+    def save(self, *args, **kwargs):
+        self.is_active = self.status == 'ATIVO'
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return self.get_full_name()
     

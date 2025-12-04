@@ -27,8 +27,8 @@ def index(request):
     
     context = {}
     if not request.user.is_authenticated:
-        students = User.objects.filter(group_role='STD', is_active=True)
-        professors = User.objects.filter(group_role='PRO', is_active=True)
+        students = User.objects.filter(group_role='STD', status='ATIVO')
+        professors = User.objects.filter(group_role='PRO', status='ATIVO')
         context.update({
             'students': students,
             'professors': professors,
@@ -47,12 +47,15 @@ def login_view(request):
         password = request.POST.get('password')
         user = authenticate(request, username=email, password=password)
         if user is not None:
-            auth_login(request, user)
-            next_url = request.GET.get('next')
-            return redirect(next_url) if next_url else redirect('dashboard')
-        else:
-            context = {'error': 'Credenciais inválidas ou usuário não encontrado.'}
-            return render(request, 'academia/login.html', context)
+            if user.status == 'ATIVO':
+                auth_login(request, user)
+                next_url = request.GET.get('next')
+                return redirect(next_url) if next_url else redirect('dashboard')
+            elif user.status == 'PENDENTE':
+                context = {'error': 'Seu cadastro está pendente de aprovação.'}
+            else:
+                context = {'error': 'Usuário inativo. Contate o administrador.'}
+        return render(request, 'academia/login.html', context)
     return render(request, 'academia/login.html')
 
 def logout_view(request):
@@ -80,7 +83,7 @@ def solicitar_acesso(request):
             user = User(
                 username=username, email=email,
                 first_name=data['first_name'], last_name=data['last_name'],
-                birthday=data['birthday'], is_active=False
+                birthday=data['birthday'], whatsapp=data.get('whatsapp'), status='PENDENTE'
             )
             user.set_password(data['password'])
 
@@ -89,7 +92,7 @@ def solicitar_acesso(request):
 
             if has_responsible:
                 try:
-                    responsible_user = User.objects.get(email=responsible_email, group_role='STD', is_active=True)
+                    responsible_user = User.objects.get(email=responsible_email, group_role='STD', status='ATIVO')
                     user.responsible = responsible_user
                 except User.DoesNotExist:
                     messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
@@ -144,7 +147,7 @@ def dashboard(request):
     except (ValueError, TypeError):
         selected_month = today.month
 
-    aniversariantes = User.objects.filter(birthday__month=selected_month, is_active=True).order_by('birthday__day')
+    aniversariantes = User.objects.filter(birthday__month=selected_month, status='ATIVO').order_by('birthday__day')
     
     month_names = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     months = [{'number': i + 1, 'name': name} for i, name in enumerate(month_names)]
@@ -168,8 +171,8 @@ def dashboard(request):
         context = {
             'turmas_count': Turma.objects.filter(professor=request.user, ativa=True).count(),
             'solicitacoes_presenca': AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').count(),
-            'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, is_active=True).distinct().count(),
-            'alunos_pendentes': User.objects.filter(is_active=False).count(),
+            'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, status='ATIVO').distinct().count(),
+            'alunos_pendentes': User.objects.filter(status='PENDENTE').count(),
             'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
         }
         context.update(base_context)
@@ -177,12 +180,12 @@ def dashboard(request):
 
     elif request.user.is_admin():
         context = {
-            'total_students': User.objects.filter(group_role='STD', is_active=True).count(),
-            'total_professors': User.objects.filter(group_role='PRO', is_active=True).count(),
+            'total_students': User.objects.filter(group_role='STD', status='ATIVO').count(),
+            'total_professors': User.objects.filter(group_role='PRO', status='ATIVO').count(),
             'total_active_turmas': Turma.objects.filter(ativa=True).count(),
             'pending_attendance_requests': AttendanceRequest.objects.filter(status='PEN').order_by('-attendance_date')[:5],
             'solicitacoes_presenca': AttendanceRequest.objects.filter(status='PEN').count(),
-            'alunos_pendentes': User.objects.filter(is_active=False).count(),
+            'alunos_pendentes': User.objects.filter(status='PENDENTE').count(),
             'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
         }
         context.update(base_context)
@@ -197,8 +200,11 @@ def perfil(request):
         user = request.user
 
         if action == 'update_kimono':
-            user.height = request.POST.get('height')
-            user.weight = request.POST.get('weight')
+            height_str = request.POST.get('height')
+            weight_str = request.POST.get('weight')
+
+            user.height = int(height_str) if height_str else None
+            user.weight = float(weight_str) if weight_str else None
             user.kimono_size = request.POST.get('kimono_size')
             user.belt_size = request.POST.get('belt_size')
             user.save()
@@ -458,7 +464,7 @@ def aluno_relatorio_presenca(request):
     
     if turma_id and turma_id.isdigit():
         turma_id_int = int(turma_id)
-        alunos = User.objects.filter(group_role='STD', is_active=True, turmas__id=turma_id_int)
+        alunos = User.objects.filter(group_role='STD', status='ATIVO', turmas__id=turma_id_int)
 
         aulas_ministradas = AttendanceRequest.objects.filter(
             turma_id=turma_id_int,
@@ -691,7 +697,7 @@ def professor_turma_alunos(request, turma_id):
     context = {
         'turma': turma,
         'alunos_turma': TurmaAluno.objects.filter(id__in=alunos_na_turma_ids).select_related('aluno'),
-        'alunos_disponiveis': User.objects.filter(group_role='STD', is_active=True).exclude(id__in=alunos_na_turma_ids).order_by('first_name', 'last_name'),
+        'alunos_disponiveis': User.objects.filter(group_role='STD', status='ATIVO').exclude(id__in=alunos_na_turma_ids).order_by('first_name', 'last_name'),
     }
     return render(request, 'academia/professor/turma_alunos.html', context)
 
@@ -751,7 +757,7 @@ def professor_aluno_desativar(request, aluno_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     aluno = get_object_or_404(User, pk=aluno_id, group_role='STD')
-    aluno.is_active = False
+    aluno.status = 'INATIVO'
     aluno.save()
     messages.success(request, f'O usuário {aluno.get_full_name()} foi desativado.')
     return redirect('professor_alunos')
@@ -761,7 +767,7 @@ def professor_aluno_ativar(request, aluno_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     aluno = get_object_or_404(User, pk=aluno_id)
-    aluno.is_active = True
+    aluno.status = 'ATIVO'
     aluno.save()
     messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado.')
     return redirect('professor_alunos')
@@ -825,9 +831,14 @@ def professor_presenca_aprovar(request, request_id):
     if request.user.is_professor() and attendance_request.turma.professor != request.user:
         raise PermissionDenied
 
+    if not attendance_request.student.status == 'ATIVO':
+        messages.error(request, f'Não é possível aprovar a presença de um aluno desativado ({attendance_request.student.get_full_name()}).')
+        return redirect('professor_presencas')
+
     attendance_request.status = 'APR'
     attendance_request.processed_by = request.user
     attendance_request.processed_at = timezone.now()
+    attendance_request.notified = False
     attendance_request.save()
 
     messages.success(request, 'Solicitação de presença aprovada.')
@@ -882,7 +893,9 @@ def professor_graduacao_editar(request, aluno_id):
     if request.method == 'POST':
         form = GraduacaoForm(request.POST, instance=graduacao)
         if form.is_valid():
-            form.save()
+            graduacao = form.save(commit=False)
+            graduacao.notified = False
+            graduacao.save()
             messages.success(request, 'Graduação salva com sucesso!')
             return redirect('professor_graduacoes')
     else:
@@ -916,8 +929,8 @@ def professor_plano_aula_editar(request, plano_id):
 def professor_rankings(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    rankings = Ranking.objects.all()
-    return render(request, 'academia/professor/rankings.html', {'rankings': rankings})
+    # rankings = Ranking.objects.all() # Ranking não está definido
+    return render(request, 'academia/professor/rankings.html', {'rankings': []}) # Retornando lista vazia para evitar erro
 
 @login_required
 def professor_ranking_novo(request):
@@ -1184,7 +1197,7 @@ def relatorio_presenca(request):
     
     if turma_id and turma_id.isdigit():
         turma_id_int = int(turma_id)
-        alunos = User.objects.filter(group_role='STD', is_active=True, turmas__id=turma_id_int)
+        alunos = User.objects.filter(group_role='STD', status='ATIVO', turmas__id=turma_id_int)
 
         aulas_ministradas = AttendanceRequest.objects.filter(
             turma_id=turma_id_int,
