@@ -1,6 +1,6 @@
 <div class="card">
     <div class="card-header">
-        <h4>Gerenciar Alunos</h4>
+        <h4>Promover Aluno</h4>
     </div>
     <div class="card-body">
         {% if alunos.object_list %}
@@ -41,15 +41,9 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if aluno.status == 'PENDENTE' %}
-                                        <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-outline-success">Aprovar</a>
-                                        <a href="{% url 'professor_aluno_excluir' aluno.id %}" class="btn btn-sm btn-outline-danger">Excluir</a>
-                                    {% elif aluno.status == 'ATIVO' %}
-                                        <a href="{% url 'professor_aluno_desativar' aluno.id %}" class="btn btn-sm btn-outline-danger">Desativar</a>
-                                    {% elif aluno.status == 'INATIVO' %}
-                                        <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-outline-success">Ativar</a>
-                                    {% endif %}
-                                    <a href="{% url 'professor_aluno_definir_tipo' aluno.id %}" class="btn btn-sm btn-outline-info">Gerenciar aluno</a>
+                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-action-url="{% url 'professor_aluno_definir_tipo' aluno.id %}">
+                                        Promover
+                                    </button>
                                 </td>
                             </tr>
                         {% endfor %}

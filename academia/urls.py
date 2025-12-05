@@ -49,6 +49,7 @@ urlpatterns = [
 
     # Painel do Professor - Alunos
     path('professor/alunos/', views.professor_alunos, name='professor_alunos'),
+    path('professor/promover-aluno/', views.promover_aluno, name='promover_aluno'),
     path('professor/aluno/<int:aluno_id>/desativar/', views.professor_aluno_desativar, name='professor_aluno_desativar'),
     path('professor/aluno/<int:aluno_id>/ativar/', views.professor_aluno_ativar, name='professor_aluno_ativar'),
     path('professor/aluno/<int:aluno_id>/excluir/', views.professor_aluno_excluir, name='professor_aluno_excluir'),

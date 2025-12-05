@@ -788,6 +788,45 @@ def professor_alunos(request):
     return render(request, 'academia/professor/alunos.html', context)
 
 @login_required
+def promover_aluno(request):
+    if not request.user.is_admin():
+        raise PermissionDenied
+
+    status_order = Case(
+        When(status='PENDENTE', then=1),
+        When(status='ATIVO', then=2),
+        When(status='INATIVO', then=3),
+        default=4
+    )
+    
+    alunos_list = User.objects.filter(group_role='STD').order_by(status_order, 'first_name')
+    
+    query = request.GET.get('q')
+    if query:
+        alunos_list = alunos_list.filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query)
+        )
+    
+    paginator = Paginator(alunos_list, 10)
+    page = request.GET.get('page')
+    
+    try:
+        alunos = paginator.page(page)
+    except PageNotAnInteger:
+        alunos = paginator.page(1)
+    except EmptyPage:
+        alunos = paginator.page(paginator.num_pages)
+        
+    context = {'alunos': alunos, 'query': query}
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'academia/professor/partials/promover_aluno_list.html', context)
+        
+    return render(request, 'academia/professor/promover_aluno.html', context)
+
+@login_required
 def professor_aluno_desativar(request, aluno_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
@@ -832,19 +871,16 @@ def professor_aluno_definir_tipo(request, aluno_id):
 
     if request.method == 'POST':
         password = request.POST.get('password')
-        user_type = request.POST.get('user_type')
-
         if not request.user.check_password(password):
             messages.error(request, 'Senha incorreta.')
-        elif user_type not in ['STD', 'PRO', 'ADM']:
-            messages.error(request, 'Tipo de usuário inválido.')
-        else:
-            user_to_change.group_role = user_type
-            user_to_change.save()
-            messages.success(request, f'O tipo de usuário de {user_to_change.get_full_name()} foi alterado.')
-            return redirect('professor_alunos')
+            return redirect('promover_aluno')
 
-    return render(request, 'academia/professor/change_user_type.html', {'user_to_change': user_to_change})
+        user_to_change.group_role = 'PRO'
+        user_to_change.save()
+        messages.success(request, f'O tipo de usuário de {user_to_change.get_full_name()} foi alterado para Professor.')
+        return redirect('promover_aluno')
+
+    return redirect('promover_aluno')
 
 @login_required
 def tamanhos_medidas(request):
