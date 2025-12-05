@@ -51,6 +51,7 @@ urlpatterns = [
     path('professor/alunos/', views.professor_alunos, name='professor_alunos'),
     path('professor/aluno/<int:aluno_id>/desativar/', views.professor_aluno_desativar, name='professor_aluno_desativar'),
     path('professor/aluno/<int:aluno_id>/ativar/', views.professor_aluno_ativar, name='professor_aluno_ativar'),
+    path('professor/aluno/<int:aluno_id>/excluir/', views.professor_aluno_excluir, name='professor_aluno_excluir'),
     path('professor/aluno/<int:aluno_id>/definir-tipo/', views.professor_aluno_definir_tipo, name='professor_aluno_definir_tipo'),
     path('professor/tamanhos-medidas/', views.tamanhos_medidas, name='tamanhos_medidas'),
 

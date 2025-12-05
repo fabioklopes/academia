@@ -9,7 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q # Importar Q para consultas complexas
+from django.db.models import Q, Case, When
 from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item
 from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm
 import calendar
@@ -753,7 +753,14 @@ def professor_alunos(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    alunos_list = User.objects.filter(group_role='STD').order_by('first_name')
+    status_order = Case(
+        When(status='PENDENTE', then=1),
+        When(status='ATIVO', then=2),
+        When(status='INATIVO', then=3),
+        default=4
+    )
+    
+    alunos_list = User.objects.filter(group_role='STD').order_by(status_order, 'first_name')
     
     query = request.GET.get('q')
     if query:
@@ -763,19 +770,22 @@ def professor_alunos(request):
             Q(email__icontains=query)
         )
     
-    paginator = Paginator(alunos_list, 10) # Mostrar 10 alunos por página
+    paginator = Paginator(alunos_list, 10)
     page = request.GET.get('page')
     
     try:
         alunos = paginator.page(page)
     except PageNotAnInteger:
-        # Se a página não for um inteiro, entregar a primeira página.
         alunos = paginator.page(1)
     except EmptyPage:
-        # Se a página estiver fora do intervalo (ex: 9999), entregar a última página de resultados.
         alunos = paginator.page(paginator.num_pages)
         
-    return render(request, 'academia/professor/alunos.html', {'alunos': alunos, 'query': query})
+    context = {'alunos': alunos, 'query': query}
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'academia/professor/partials/aluno_list.html', context)
+        
+    return render(request, 'academia/professor/alunos.html', context)
 
 @login_required
 def professor_aluno_desativar(request, aluno_id):
@@ -788,13 +798,29 @@ def professor_aluno_desativar(request, aluno_id):
     return redirect('professor_alunos')
 
 @login_required
+def professor_aluno_excluir(request, aluno_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    aluno = get_object_or_404(User, pk=aluno_id)
+    if aluno.status == 'PENDENTE':
+        aluno.delete()
+        messages.success(request, f'A solicitação de {aluno.get_full_name()} foi excluída.')
+    else:
+        messages.error(request, 'Apenas solicitações pendentes podem ser excluídas.')
+    return redirect('professor_alunos')
+
+@login_required
 def professor_aluno_ativar(request, aluno_id):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     aluno = get_object_or_404(User, pk=aluno_id)
+    previous_status = aluno.status
     aluno.status = 'ATIVO'
     aluno.save()
-    messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado.')
+    if previous_status == 'PENDENTE':
+        messages.success(request, f'O cadastro de {aluno.get_full_name()} foi aprovado.')
+    else:
+        messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado.')
     return redirect('professor_alunos')
 
 @login_required
