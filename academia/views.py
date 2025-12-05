@@ -57,6 +57,8 @@ def login_view(request):
                 context = {'error': 'Seu cadastro está pendente de aprovação.'}
             else:
                 context = {'error': 'Usuário inativo. Contate o administrador.'}
+        else:
+            context = {'error': 'E-mail ou senha inválidos.'}
         return render(request, 'academia/login.html', context)
     return render(request, 'academia/login.html')
 

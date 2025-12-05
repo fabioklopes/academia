@@ -194,6 +194,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const messages = new Set();
+            const alerts = document.querySelectorAll('.alert');
+            
+            alerts.forEach(alert => {
+                const message = alert.textContent.trim();
+                if (messages.has(message)) {
+                    alert.remove();
+                } else {
+                    messages.add(message);
+                }
+            });
+        });
+    </script>
     {% if has_pending_tasks %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
