@@ -9,8 +9,15 @@ class SolicitacaoAcessoForm(forms.Form):
     birthday = forms.DateField(required=True, widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
     password_confirm = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
+    photo = forms.ImageField(required=False)
     has_responsible = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     responsible_email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+
+    def clean_whatsapp(self):
+        whatsapp = self.cleaned_data.get('whatsapp')
+        if whatsapp:
+            return ''.join(filter(str.isdigit, whatsapp))
+        return whatsapp
 
     def clean(self):
         cleaned_data = super().clean()

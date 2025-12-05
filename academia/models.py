@@ -35,6 +35,19 @@ class User(AbstractUser):
     
     def save(self, *args, **kwargs):
         self.is_active = self.status == 'ATIVO'
+        
+        # Check if the instance has a temporary photo path
+        if self.photo and 'temp' in self.photo.name:
+            # Save the instance to get a primary key
+            if not self.pk:
+                super().save(*args, **kwargs)
+
+            # Rename the file
+            old_path = self.photo.path
+            new_path = photo_upload_to(self, os.path.basename(self.photo.name))
+            os.rename(old_path, os.path.join(os.path.dirname(old_path), os.path.basename(new_path)))
+            self.photo.name = new_path
+
         super().save(*args, **kwargs)
         
     def __str__(self):
@@ -99,7 +112,8 @@ class AttendanceRequest(models.Model):
 
 class Graduacao(models.Model):
     FAIXA_CHOICES = [
-        ('BRANCA', 'Branca'), ('CINZA_BRANCA', 'Cinza e Branca'), ('CINZA', 'Cinza'), ('CINZA_PRETA', 'Cinza e Preta'),
+        ('BRANCA', 'Branca'),
+        ('CINZA_BRANCA', 'Cinza e Branca'), ('CINZA', 'Cinza'), ('CINZA_PRETA', 'Cinza e Preta'),
         ('AMARELA_BRANCA', 'Amarela e Branca'), ('AMARELA', 'Amarela'), ('AMARELA_PRETA', 'Amarela e Preta'),
         ('LARANJA_BRANCA', 'Laranja e Branca'), ('LARANJA', 'Laranja'), ('LARANJA_PRETA', 'Laranja e Preta'),
         ('VERDE_BRANCA', 'Verde e Branca'), ('VERDE', 'Verde'), ('VERDE_PRETA', 'Verde e Preta'),

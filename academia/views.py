@@ -76,18 +76,22 @@ def solicitar_acesso(request):
             has_responsible = data.get('has_responsible')
 
             username = email
-            if has_responsible and responsible_email == email:
-                # Create a unique username for the dependent
-                username = f"{email.split('@')[0]}+{uuid.uuid4().hex[:4]}@{email.split('@')[1]}"
+            if has_responsible and responsible_email:
+                if responsible_email == email:
+                    username = f"{email.split('@')[0]}+{uuid.uuid4().hex[:4]}@{email.split('@')[1]}"
+                
+                if User.objects.filter(username=username).exists():
+                    messages.warning(request, 'Este e-mail já está sendo usado por outro usuário.')
+                    return render(request, 'academia/solicitar_acesso.html', {'form': form})
 
-            if User.objects.filter(username=username).exists():
-                messages.warning(request, 'Este e-mail já está sendo usado por outro usuário.')
-                return render(request, 'academia/solicitar_acesso.html', {'form': form})
+            whatsapp_number = data.get('whatsapp')
+            if whatsapp_number:
+                whatsapp_number = '({}) {}-{}'.format(whatsapp_number[:2], whatsapp_number[2:7], whatsapp_number[7:])
 
             user = User(
                 username=username, email=email,
                 first_name=data['first_name'], last_name=data['last_name'],
-                birthday=data['birthday'], whatsapp=data.get('whatsapp'), status='PENDENTE'
+                birthday=data['birthday'], whatsapp=whatsapp_number, status='PENDENTE'
             )
             user.set_password(data['password'])
 
@@ -95,13 +99,22 @@ def solicitar_acesso(request):
                 user.photo = data['photo']
 
             if has_responsible:
-                try:
-                    responsible_user = User.objects.get(email=responsible_email, group_role='STD', status='ATIVO')
-                    user.responsible = responsible_user
-                except User.DoesNotExist:
-                    messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
-                    return render(request, 'academia/solicitar_acesso.html', {'form': form})
-            
+                if responsible_email:
+                    responsible_user = User.objects.filter(email=responsible_email, group_role='STD', status='ATIVO').first()
+                    if responsible_user:
+                        user.responsible = responsible_user
+                    else:
+                        messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
+                        return render(request, 'academia/solicitar_acesso.html', {'form': form})
+                else:
+                    # If no responsible email is provided, the user is their own responsible
+                    user.save()
+                    user.responsible = user
+            else:
+                # If has_responsible is false, the user is their own responsible
+                user.save()
+                user.responsible = user
+
             user.save()
             messages.success(request, 'Sua solicitação de acesso foi enviada com sucesso! Aguarde a aprovação de um administrador.')
             return redirect('login')
