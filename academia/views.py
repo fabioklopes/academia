@@ -9,9 +9,9 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q, Case, When
+from django.db.models import Q, Case, When, Count
 from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item
-from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm
+from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm
 import calendar
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -60,8 +60,6 @@ def login_view(request):
                 context = {'error': 'Seu cadastro está pendente de aprovação.'}
             else:
                 context = {'error': 'Usuário inativo. Contate o administrador.'}
-        else:
-            context = {'error': 'E-mail ou senha inválidos.'}
         return render(request, 'academia/login.html', context)
     return render(request, 'academia/login.html')
 
@@ -125,7 +123,7 @@ def solicitar_acesso(request):
             user.save()
             
             messages.success(request, 'Sua solicitação de acesso foi enviada com sucesso! Aguarde a aprovação de um administrador.')
-            return redirect('login')
+            return redirect('solicitar_acesso') # Redireciona para a própria página de solicitação de acesso
     else:
         form = SolicitacaoAcessoForm()
 
@@ -261,16 +259,23 @@ def perfil(request):
 @login_required
 def perfil_editar(request):
     if request.method == 'POST':
-        user = request.user
-        user.first_name = request.POST.get('first_name')
-        user.last_name = request.POST.get('last_name')
-        user.email = request.POST.get('email')
-        user.birthday = request.POST.get('birthday')
-        if request.FILES.get('photo'):
-            user.photo = request.FILES.get('photo')
-        user.save()
-        return redirect('perfil')
-    return render(request, 'academia/perfil_editar.html')
+        # Get the old photo from the user instance before it's updated
+        old_photo = request.user.photo
+
+        form = PerfilEditForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            # If a new photo is uploaded, and an old one exists, delete the old one.
+            if 'photo' in request.FILES and old_photo and hasattr(old_photo, 'path'):
+                if os.path.exists(old_photo.path):
+                    os.remove(old_photo.path)
+            
+            form.save()
+            messages.success(request, 'Perfil atualizado com sucesso!')
+            return redirect('perfil')
+    else:
+        form = PerfilEditForm(instance=request.user)
+        
+    return render(request, 'academia/perfil_editar.html', {'form': form})
 
 # --- PAINEL DO ALUNO ---
 
@@ -296,20 +301,103 @@ def aluno_marcar_presenca(request):
         for date_str in dates:
             try:
                 attendance_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-                if not AttendanceRequest.objects.filter(student=request.user, turma=turma, attendance_date=attendance_date).exists():
+                
+                # Try to get an existing request for this student, turma, and date
+                existing_request = AttendanceRequest.objects.filter(
+                    student=request.user,
+                    turma=turma,
+                    attendance_date=attendance_date
+                ).first()
+
+                if existing_request:
+                    if existing_request.status == 'CAN':
+                        # If cancelled, re-activate it (change status to Pending)
+                        existing_request.status = 'PEN'
+                        existing_request.reason = "Solicitação de presença pelo aluno (re-solicitada)."
+                        existing_request.processed_by = None
+                        existing_request.processed_at = None
+                        existing_request.rejection_reason = ""
+                        existing_request.notified = False
+                        existing_request.save()
+                        messages.success(request, f'Solicitação de presença para {attendance_date.strftime("%d/%m/%Y")} re-enviada com sucesso!')
+                    else:
+                        # If already Pending, Approved, or Rejected, inform the user
+                        messages.warning(request, f'Já existe uma solicitação de presença ({existing_request.get_status_display()}) para {attendance_date.strftime("%d/%m/%Y")} nesta turma.')
+                else:
+                    # No existing request, create a new one
                     AttendanceRequest.objects.create(
                         student=request.user, turma=turma,
                         attendance_date=attendance_date,
                         reason="Solicitação de presença pelo aluno."
                     )
+                    messages.success(request, f'Presença para {attendance_date.strftime("%d/%m/%Y")} solicitada com sucesso!')
             except ValueError:
+                messages.error(request, f'Formato de data inválido para {date_str}.')
                 continue
 
-        messages.success(request, 'Presenças solicitadas com sucesso!')
         return redirect('aluno_presencas')
 
-    context = {'turmas_aluno': TurmaAluno.objects.filter(aluno=request.user, status='APRO').select_related('turma')}
+    today = timezone.localdate()
+    year = today.year
+    month = today.month
+
+    # Get all attendance requests for the current student
+    all_attendance_requests = AttendanceRequest.objects.filter(student=request.user)
+    
+    # Prepare attendance data for the calendar
+    attendance_data = {}
+    for req in all_attendance_requests:
+        date_str = req.attendance_date.strftime('%Y-%m-%d')
+        if date_str not in attendance_data:
+            attendance_data[date_str] = []
+        attendance_data[date_str].append({
+            'status': req.status,
+            'turma': req.turma.nome,
+            'reason': req.reason,
+            'processed_by': req.processed_by.get_full_name() if req.processed_by else None,
+            'processed_at': req.processed_at.strftime('%Y-%m-%d %H:%M') if req.processed_at else None,
+            'rejection_reason': req.rejection_reason,
+        })
+
+    context = {
+        'turmas_aluno': TurmaAluno.objects.filter(aluno=request.user, status='APRO').select_related('turma'),
+        'current_year': year,
+        'current_month': month,
+        'attendance_data_json': json.dumps(attendance_data),
+    }
     return render(request, 'academia/aluno/marcar_presenca.html', context)
+
+@login_required
+def get_attendance_details(request):
+    if not request.user.is_student():
+        return JsonResponse({'error': 'Permissão negada'}, status=403)
+
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'error': 'Data não fornecida'}, status=400)
+
+    try:
+        selected_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Formato de data inválido'}, status=400)
+
+    attendance_requests = AttendanceRequest.objects.filter(
+        student=request.user,
+        attendance_date=selected_date
+    ).select_related('turma', 'processed_by').order_by('turma__nome')
+
+    details = []
+    for req in attendance_requests:
+        details.append({
+            'turma': req.turma.nome,
+            'status': req.get_status_display(),
+            'reason': req.reason,
+            'processed_by': req.processed_by.get_full_name() if req.processed_by else 'N/A',
+            'processed_at': req.processed_at.strftime('%d/%m/%Y %H:%M') if req.processed_at else 'N/A',
+            'rejection_reason': req.rejection_reason if req.rejection_reason else 'N/A',
+        })
+    
+    return JsonResponse({'date': date_str, 'details': details})
 
 @login_required
 def aluno_cancelar_presenca(request, request_id):
@@ -321,6 +409,7 @@ def aluno_cancelar_presenca(request, request_id):
     if attendance_request.status != 'PEN':
         messages.error(request, 'Só é possível cancelar solicitações pendentes.')
     else:
+        # Change status to Cancelled instead of deleting
         attendance_request.status = 'CAN'
         attendance_request.save()
         messages.success(request, 'Solicitação de presença cancelada com sucesso.')
@@ -337,7 +426,8 @@ def aluno_presencas(request):
     
     AttendanceRequest.objects.filter(student=request.user, status='APR', notified=False).update(notified=True)
     
-    attendance_requests = AttendanceRequest.objects.filter(student=request.user).select_related('turma').order_by('-attendance_date')
+    # Filter out cancelled requests from the student's view
+    attendance_requests = AttendanceRequest.objects.filter(student=request.user).exclude(status='CAN').select_related('turma').order_by('-attendance_date')
     return render(request, 'academia/aluno/presencas.html', {'attendance_requests': attendance_requests})
 
 @login_required
@@ -584,7 +674,7 @@ def aluno_relatorio_presenca(request):
         'end_date': end_date.strftime('%Y-%m-%d'),
         'turma_id': int(turma_id) if turma_id else None,
     }
-    return render(request, 'academia/aluno/relatorio_presenca.html', context)
+    return render(request, 'academia/professor/relatorio_presenca.html', context)
 
 @login_required
 def aluno_relatorio_pedidos(request):
@@ -953,17 +1043,19 @@ def professor_presenca_aprovar(request, request_id):
     if request.user.is_professor() and attendance_request.turma.professor != request.user:
         raise PermissionDenied
 
-    if not attendance_request.student.status == 'ATIVO':
-        messages.error(request, f'Não é possível aprovar a presença de um aluno desativado ({attendance_request.student.get_full_name()}).')
-        return redirect('professor_presencas')
+    if request.method == 'POST':
+        if not attendance_request.student.status == 'ATIVO':
+            messages.error(request, f'Não é possível aprovar a presença de um aluno desativado ({attendance_request.student.get_full_name()}).')
+            return redirect('professor_presencas')
 
-    attendance_request.status = 'APR'
-    attendance_request.processed_by = request.user
-    attendance_request.processed_at = timezone.now()
-    attendance_request.notified = False
-    attendance_request.save()
+        attendance_request.status = 'APR'
+        attendance_request.processed_by = request.user
+        attendance_request.processed_at = timezone.now()
+        attendance_request.notified = False
+        attendance_request.save()
 
-    messages.success(request, 'Solicitação de presença aprovada.')
+        messages.success(request, 'Solicitação de presença aprovada.')
+    
     return redirect('professor_presencas')
 
 @login_required

@@ -123,18 +123,28 @@
                                 {% if original_user_id %}
                                     {# User is logged in as a dependent, show the link to go back #}
                                     <li>
-                                        <a class="dropdown-item text-warning" href="{% url 'switch_account_back' %}">
+                                        <a class="dropdown-item" href="{% url 'switch_account_back' %}">
                                             <i class="bi bi-arrow-left-circle me-2"></i>Voltar para minha conta
                                         </a>
                                     </li>
                                 {% else %}
                                     {# User is the main account holder, show links to dependents #}
                                     {% for dependent in dependents_list %}
-                                        <li>
-                                            <a class="dropdown-item" href="{% url 'switch_account' dependent.id %}">
-                                                <i class="bi bi-person-check me-2"></i>{{ dependent.get_full_name }}
-                                            </a>
-                                        </li>
+                                        {% if user.group_role == "STD" %}
+                                            {% if dependent.status != 'PENDENTE' and dependent.status != 'INATIVO' %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'switch_account' dependent.id %}">
+                                                        <i class="bi bi-person-check me-2"></i>{{ dependent.get_full_name }}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        {% else %}
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'switch_account' dependent.id %}">
+                                                    <i class="bi bi-person-check me-2"></i>{{ dependent.get_full_name }}
+                                                </a>
+                                            </li>
+                                        {% endif %}
                                     {% endfor %}
                                 {% endif %}
                             {% endif %}

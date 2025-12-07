@@ -5,11 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/8ee69be0-bf0d-4399-a40a-66e9d05a7b89.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/8ee69be0-bf0d-4399-a40a-66e9d05a7b89.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/turma_alunos.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/turma_alunos.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/forms.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/marcar_presenca.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/marcar_presenca.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/perfil_editar.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/perfil_editar.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academia/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/database.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/photos/temp/65_1764958691.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/photos/2_1763489684.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,7 +168,8 @@
       <workItem from="1764166664299" duration="3985000" />
       <workItem from="1764878123776" duration="9413000" />
       <workItem from="1764930143838" duration="10069000" />
-      <workItem from="1765041547842" duration="5415000" />
+      <workItem from="1765041547842" duration="7832000" />
+      <workItem from="1765129341655" duration="7964000" />
     </task>
     <servers />
   </component>

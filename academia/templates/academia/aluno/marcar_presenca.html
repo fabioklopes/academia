@@ -10,7 +10,7 @@
                 <h4>Marcar Presença</h4>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" id="attendance-form">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="turma_id" class="form-label">Turma</label>
@@ -21,17 +21,19 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-8">
-                            <label for="date-input" class="form-label">Data da Presença</label>
-                            <input type="date" id="date-input" class="form-control">
+
+                    <div class="mb-3">
+                        <h6>Selecione as datas no calendário:</h6>
+                        <div class="calendar-navigation d-flex justify-content-between align-items-center mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="prevMonth"><i class="bi bi-chevron-left"></i></button>
+                            <h5 id="currentMonthYear" class="mb-0"></h5>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="nextMonth"><i class="bi bi-chevron-right"></i></button>
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button type="button" id="add-date" class="btn btn-sm btn-outline-primary w-100">Adicionar</button>
-                        </div>
+                        <div id="calendar" class="calendar-grid"></div>
                     </div>
+
                     <div id="selected-dates-list" class="mb-3">
-                        <h6>Datas Selecionadas:</h6>
+                        <h6>Datas Solicitadas:</h6>
                         <ul class="list-group"></ul>
                     </div>
                     <div id="selected-dates-inputs"></div>
@@ -42,54 +44,290 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para detalhes da presença -->
+<div class="modal fade" id="attendanceDetailModal" tabindex="-1" aria-labelledby="attendanceDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attendanceDetailModalLabel">Detalhes da Presença em <span id="modalDate"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="attendanceDetailsContent">
+                    <!-- Detalhes serão carregados aqui via AJAX -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        text-align: center;
+    }
+    .calendar-day {
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        cursor: pointer;
+        position: relative;
+        background-color: #f8f9fa;
+    }
+    .calendar-day.current-month {
+        background-color: #fff;
+    }
+    .calendar-day.selected {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+    .calendar-day.disabled {
+        background-color: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+    .calendar-day .day-number {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .calendar-day .status-icon {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 0.8em;
+    }
+    .calendar-header {
+        font-weight: bold;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+    }
+    .list-group-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
+    const today = new Date();
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
     const selectedDates = new Set();
-    const dateInput = document.getElementById('date-input');
-    const addDateBtn = document.getElementById('add-date');
-    const selectedDatesList = document.querySelector('#selected-dates-list ul');
-    const selectedDatesInputs = document.getElementById('selected-dates-inputs');
+    const attendanceData = {{ attendance_data_json|safe }}; // Data de presenças do Django
 
-    addDateBtn.addEventListener('click', () => {
-        const date = dateInput.value;
-        if (date && !selectedDates.has(date)) {
-            selectedDates.add(date);
-            updateSelectedDates();
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+    function renderCalendar() {
+        const calendarEl = $('#calendar');
+        calendarEl.empty();
+        $('#currentMonthYear').text(`${monthNames[currentMonth]} ${currentYear}`);
+
+        // Add day headers
+        dayNames.forEach(day => {
+            calendarEl.append(`<div class="calendar-header">${day}</div>`);
+        });
+
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+        const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+        const daysInMonth = lastDayOfMonth.getDate();
+        const startDay = firstDayOfMonth.getDay(); // 0 for Sunday, 1 for Monday, etc.
+
+        // Fill leading empty days
+        for (let i = 0; i < startDay; i++) {
+            calendarEl.append('<div class="calendar-day disabled"></div>');
         }
-    });
 
-    function updateSelectedDates() {
-        selectedDatesList.innerHTML = '';
-        selectedDatesInputs.innerHTML = '';
+        // Fill days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentYear, currentMonth, day);
+            const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            let dayClass = 'calendar-day current-month';
+            let isDisabled = false;
+            let iconHtml = '';
+
+            // Disable future dates
+            if (date > today) {
+                dayClass += ' disabled';
+                isDisabled = true;
+            }
+
+            // Check for attendance data
+            if (attendanceData[dateString]) {
+                const dayAttendance = attendanceData[dateString];
+                const statuses = dayAttendance.map(a => a.status);
+                
+                if (statuses.includes('REJ')) {
+                    iconHtml = '<i class="bi bi-x-circle-fill text-danger status-icon"></i>';
+                } else if (statuses.includes('APR')) {
+                    iconHtml = '<i class="bi bi-check-circle-fill text-success status-icon"></i>';
+                } else if (statuses.includes('PEN')) {
+                    iconHtml = '<i class="bi bi-info-circle-fill text-warning status-icon"></i>';
+                }
+
+                // If there's more than one entry for the day, show warning
+                if (dayAttendance.length > 1) {
+                    iconHtml = '<i class="bi bi-info-circle-fill text-warning status-icon"></i>';
+                }
+            }
+
+            if (selectedDates.has(dateString)) {
+                dayClass += ' selected';
+            }
+
+            const dayEl = $(`<div class="${dayClass}" data-date="${dateString}"><span class="day-number"></span>${iconHtml}</div>`);
+            dayEl.find('.day-number').text(day);
+
+            if (!isDisabled) {
+                dayEl.on('click', function() {
+                    if ($(this).find('.status-icon').length > 0) {
+                        // If there's an icon, show details modal
+                        showAttendanceDetails(dateString);
+                    } else {
+                        // Otherwise, select/deselect date for attendance request
+                        toggleDateSelection(dateString, dayEl);
+                    }
+                });
+            } else {
+                dayEl.css('cursor', 'not-allowed');
+            }
+            calendarEl.append(dayEl);
+        }
+    }
+
+    function toggleDateSelection(dateString, dayEl) {
+        if (selectedDates.has(dateString)) {
+            selectedDates.delete(dateString);
+            dayEl.removeClass('selected');
+        } else {
+            selectedDates.add(dateString);
+            dayEl.addClass('selected');
+        }
+        updateSelectedDatesList();
+    }
+
+    function updateSelectedDatesList() {
+        const selectedDatesListEl = $('#selected-dates-list ul');
+        const selectedDatesInputsEl = $('#selected-dates-inputs');
+        selectedDatesListEl.empty();
+        selectedDatesInputsEl.empty();
+
         const sortedDates = Array.from(selectedDates).sort();
         
-        sortedDates.forEach(date => {
-            const listItem = document.createElement('li');
-            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-            listItem.textContent = new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'btn btn-outline-danger btn-sm';
-            removeBtn.textContent = 'Remover';
-            removeBtn.addEventListener('click', () => {
-                selectedDates.delete(date);
-                updateSelectedDates();
-            });
-            
-            listItem.appendChild(removeBtn);
-            selectedDatesList.appendChild(listItem);
+        if (sortedDates.length === 0) {
+            selectedDatesListEl.append('<li class="list-group-item text-muted">Nenhuma data selecionada.</li>');
+        } else {
+            sortedDates.forEach(date => {
+                const displayDate = new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
+                const listItem = $(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${displayDate}
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-date" data-date="${date}">Remover</button>
+                    </li>
+                `);
+                selectedDatesListEl.append(listItem);
 
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'dates';
-            input.value = date;
-            selectedDatesInputs.appendChild(input);
+                const input = $(`<input type="hidden" name="dates" value="${date}">`);
+                selectedDatesInputsEl.append(input);
+            });
+        }
+    }
+
+    // Handle remove button click for selected dates
+    $(document).on('click', '.remove-date', function() {
+        const dateToRemove = $(this).data('date');
+        selectedDates.delete(dateToRemove);
+        renderCalendar(); // Re-render to update selection visual
+        updateSelectedDatesList();
+    });
+
+    function showAttendanceDetails(dateString) {
+        $.ajax({
+            url: '{% url "get_attendance_details" %}',
+            data: { 'date': dateString },
+            dataType: 'json',
+            success: function(data) {
+                $('#modalDate').text(new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }));
+                const detailsContent = $('#attendanceDetailsContent');
+                detailsContent.empty();
+
+                if (data.details && data.details.length > 0) {
+                    data.details.forEach(detail => {
+                        let statusClass = '';
+                        let statusIcon = '';
+                        if (detail.status === 'Aprovado') {
+                            statusClass = 'text-success';
+                            statusIcon = '<i class="bi bi-check-circle-fill"></i>';
+                        } else if (detail.status === 'Rejeitado') {
+                            statusClass = 'text-danger';
+                            statusIcon = '<i class="bi bi-x-circle-fill"></i>';
+                        } else { // Pendente ou Cancelado
+                            statusClass = 'text-warning';
+                            statusIcon = '<i class="bi bi-info-circle-fill"></i>';
+                        }
+
+                        detailsContent.append(`
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    <h6 class="card-title">${statusIcon} <span class="${statusClass}">${detail.status}</span> - Turma: ${detail.turma}</h6>
+                                    <p class="card-text"><strong>Motivo:</strong> ${detail.reason}</p>
+                                    <p class="card-text"><strong>Processado por:</strong> ${detail.processed_by}</p>
+                                    <p class="card-text"><strong>Processado em:</strong> ${detail.processed_at}</p>
+                                    ${detail.rejection_reason !== 'N/A' ? `<p class="card-text"><strong>Motivo da Rejeição:</strong> ${detail.rejection_reason}</p>` : ''}
+                                </div>
+                            </div>
+                        `);
+                    });
+                } else {
+                    detailsContent.append('<p>Nenhum detalhe de presença encontrado para esta data.</p>');
+                }
+                $('#attendanceDetailModal').modal('show');
+            },
+            error: function(xhr, status, error) {
+                console.error("Erro ao buscar detalhes da presença:", error);
+                alert("Erro ao carregar detalhes da presença.");
+            }
         });
     }
+
+    // Navigation buttons
+    $('#prevMonth').on('click', function() {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar();
+    });
+
+    $('#nextMonth').on('click', function() {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar();
+    });
+
+    // Initial render
+    renderCalendar();
+    updateSelectedDatesList(); // Initialize the selected dates list
 });
 </script>
 {% endblock %}

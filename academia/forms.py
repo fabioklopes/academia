@@ -1,5 +1,5 @@
 from django import forms
-from .models import Graduacao, Item, Pedido, Turma
+from .models import Graduacao, Item, Pedido, Turma, User
 
 class SolicitacaoAcessoForm(forms.Form):
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -28,6 +28,18 @@ class SolicitacaoAcessoForm(forms.Form):
             raise forms.ValidationError("As senhas não coincidem.")
 
         return cleaned_data
+
+class PerfilEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'birthday', 'photo']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'birthday': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'photo': forms.FileInput(attrs={'class': 'form-control'}),
+        }
 
 class GraduacaoForm(forms.ModelForm):
     class Meta:

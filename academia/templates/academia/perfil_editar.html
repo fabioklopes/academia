@@ -2,25 +2,6 @@
 
 {% block title %}Editar Perfil - Academia de Jiu-Jitsu{% endblock %}
 
-{% block extra_css %}
-<style>
-    .profile-photo-container img {
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    .profile-photo-container img:hover {
-        transform: scale(1.05);
-    }
-    #photoModal .modal-dialog {
-        max-width: 800px;
-    }
-    #photoModal .modal-body img {
-        max-width: 100%;
-        height: auto;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="row">
     <div class="col-md-8 offset-md-2">
@@ -54,13 +35,13 @@
                     
                     <div class="mb-3">
                         <label for="photo" class="form-label">Foto</label>
-                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*" capture="camera">
-                        <small class="form-text text-muted">Você pode selecionar uma foto do dispositivo ou usar a câmera.</small>
-                        {% if user.photo %}
-                            <div class="mt-2 profile-photo-container">
-                                <img src="{{ user.photo.url }}" alt="Foto atual" width="100" class="rounded-2" data-bs-toggle="modal" data-bs-target="#photoModal">
-                            </div>
-                        {% endif %}
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#photo-modal">
+                                <i class="bi bi-camera-fill me-2"></i> Adicionar/Alterar Foto
+                            </button>
+                        </div>
+                        <input type="file" class="form-control d-none" id="photo" name="photo" accept="image/*">
+                        <img id="photo-preview" src="{% if user.photo %}{{ user.photo.url }}{% endif %}" alt="Pré-visualização da foto" class="img-fluid mt-2" style="{% if user.photo %}display: block;{% else %}display: none;{% endif %} max-height: 150px;">
                     </div>
                     
                     <div class="mt-4">
@@ -73,20 +54,60 @@
     </div>
 </div>
 
-<!-- Modal da Foto -->
-{% if user.photo %}
-<div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="photoModalLabel">{{ user.get_full_name }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img src="{{ user.photo.url }}" alt="Foto atual ampliada">
-      </div>
+<!-- Modal de Seleção de Foto -->
+<div class="modal fade" id="photo-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="photo-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photo-modal-label">Selecionar Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Escolha uma opção para adicionar sua foto:</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary" id="select-gallery-btn">
+                        <i class="bi bi-images me-2"></i>Selecionar da Galeria
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="open-camera-btn">
+                        <i class="bi bi-camera-video me-2"></i>Usar a Câmera
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
-{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica do Modal e da Foto
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photo-preview');
+    const photoModal = new bootstrap.Modal(document.getElementById('photo-modal'));
+
+    document.getElementById('select-gallery-btn').addEventListener('click', () => {
+        photoInput.removeAttribute('capture');
+        photoInput.click();
+    });
+
+    document.getElementById('open-camera-btn').addEventListener('click', () => {
+        photoInput.setAttribute('capture', 'camera');
+        photoInput.click();
+    });
+
+    photoInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                photoPreview.src = e.target.result;
+                photoPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            photoModal.hide();
+        }
+    });
+});
+</script>
 {% endblock %}

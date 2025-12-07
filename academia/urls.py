@@ -28,6 +28,7 @@ urlpatterns = [
     
     # Painel do Aluno
     path('aluno/marcar-presenca/', views.aluno_marcar_presenca, name='aluno_marcar_presenca'),
+    path('aluno/get-attendance-details/', views.get_attendance_details, name='get_attendance_details'),
     path('aluno/cancelar-presenca/<int:request_id>/', views.aluno_cancelar_presenca, name='aluno_cancelar_presenca'),
     path('aluno/presencas/', views.aluno_presencas, name='aluno_presencas'),
     path('aluno/relatorios/', views.aluno_relatorios, name='aluno_relatorios'),
