@@ -19,6 +19,9 @@ from xhtml2pdf import pisa
 from django.template.loader import get_template
 from io import BytesIO
 import uuid
+import os
+import time
+from django.conf import settings
 
 # --- VIEWS GERAIS ---
 
@@ -94,28 +97,33 @@ def solicitar_acesso(request):
                 birthday=data['birthday'], whatsapp=whatsapp_number, status='PENDENTE'
             )
             user.set_password(data['password'])
+            user.save()
 
             if data.get('photo'):
-                user.photo = data['photo']
+                photo = data['photo']
+                ext = os.path.splitext(photo.name)[1]
+                filename = f"{user.id}_{int(time.time())}{ext}"
+                filepath = os.path.join(settings.MEDIA_ROOT, 'photos', filename)
+                
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                
+                with open(filepath, 'wb+') as destination:
+                    for chunk in photo.chunks():
+                        destination.write(chunk)
+                
+                user.photo = os.path.join('photos', filename)
 
-            if has_responsible:
-                if responsible_email:
-                    responsible_user = User.objects.filter(email=responsible_email, group_role='STD', status='ATIVO').first()
-                    if responsible_user:
-                        user.responsible = responsible_user
-                    else:
-                        messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
-                        return render(request, 'academia/solicitar_acesso.html', {'form': form})
-                else:
-                    # If no responsible email is provided, the user is their own responsible
-                    user.save()
-                    user.responsible = user
-            else:
-                # If has_responsible is false, the user is their own responsible
-                user.save()
-                user.responsible = user
-
+            responsible_user = None
+            if has_responsible and responsible_email:
+                responsible_user = User.objects.filter(email=responsible_email, group_role='STD', status='ATIVO').first()
+                if not responsible_user:
+                    messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
+                    user.delete()
+                    return render(request, 'academia/solicitar_acesso.html', {'form': form})
+            
+            user.responsible = responsible_user
             user.save()
+            
             messages.success(request, 'Sua solicitação de acesso foi enviada com sucesso! Aguarde a aprovação de um administrador.')
             return redirect('login')
     else:
@@ -710,11 +718,23 @@ def professor_turma_alunos(request, turma_id):
     if not request.user.is_admin() and turma.professor != request.user:
         raise PermissionDenied
     
+    alunos_na_turma_list = TurmaAluno.objects.filter(turma=turma, status='APRO').select_related('aluno').order_by('aluno__first_name', 'aluno__last_name')
+    
+    paginator = Paginator(alunos_na_turma_list, 10)
+    page = request.GET.get('page')
+    
+    try:
+        alunos_turma = paginator.page(page)
+    except PageNotAnInteger:
+        alunos_turma = paginator.page(1)
+    except EmptyPage:
+        alunos_turma = paginator.page(paginator.num_pages)
+        
     alunos_na_turma_ids = TurmaAluno.objects.filter(turma=turma, status='APRO').values_list('aluno_id', flat=True)
     
     context = {
         'turma': turma,
-        'alunos_turma': TurmaAluno.objects.filter(id__in=alunos_na_turma_ids).select_related('aluno'),
+        'alunos_turma': alunos_turma,
         'alunos_disponiveis': User.objects.filter(group_role='STD', status='ATIVO').exclude(id__in=alunos_na_turma_ids).order_by('first_name', 'last_name'),
     }
     return render(request, 'academia/professor/turma_alunos.html', context)
