@@ -67,7 +67,7 @@
                 <p class="card-text">
                     <span class="text-success">{{ alunos_ativos }} ativos</span>
                     <span class="mx-1">|</span>
-                    <span class="text-warning">{{ alunos_pendentes }} pendente{% if alunos_pendentes != 1 %}s{% endif %}</span>
+                    <span class="card-text">{{ alunos_pendentes }} pendente{% if alunos_pendentes != 1 %}s{% endif %}</span>
                 </p>
                 <a href="{% url 'professor_alunos' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>

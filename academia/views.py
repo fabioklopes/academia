@@ -60,6 +60,8 @@ def login_view(request):
                 context = {'error': 'Seu cadastro está pendente de aprovação.'}
             else:
                 context = {'error': 'Usuário inativo. Contate o administrador.'}
+        else:
+            context = {'error': 'E-mail ou senha inválidos.'}
         return render(request, 'academia/login.html', context)
     return render(request, 'academia/login.html')
 
@@ -218,9 +220,18 @@ def dashboard(request):
 
 @login_required
 def perfil(request):
+    # Determine which user's profile to display
+    user_to_display = request.user
+    original_user_id = request.session.get('original_user_id')
+    
+    # If we are in a switched session, the user_to_display is the current logged-in user (the dependent)
+    # request.user already reflects the switched user due to auth_login in switch_account view
+    
     if request.method == 'POST':
         action = request.POST.get('action')
-        user = request.user
+        
+        # The user performing the action is always the one whose profile is being displayed
+        user = user_to_display
 
         if action == 'update_kimono':
             height_str = request.POST.get('height')
@@ -238,6 +249,7 @@ def perfil(request):
             new_password = request.POST.get('new_password')
             confirm_new_password = request.POST.get('confirm_new_password')
 
+            # Password check should be against the logged-in user
             if not user.check_password(current_password):
                 messages.error(request, 'Senha atual incorreta.')
             elif new_password != confirm_new_password:
@@ -245,15 +257,27 @@ def perfil(request):
             else:
                 user.set_password(new_password)
                 user.save()
+                # Re-login to keep the session active with the new password
                 auth_login(request, user)
                 messages.success(request, 'Senha alterada com sucesso!')
         
         return redirect('perfil')
 
+    # Data for the template should be fetched for the user being displayed
     context = {
-        'graduacao': Graduacao.objects.filter(aluno=request.user).first(),
-        'pedidos': Pedido.objects.filter(aluno=request.user).order_by('-data_solicitacao')
+        'graduacao': Graduacao.objects.filter(aluno=user_to_display).first(),
+        'pedidos': Pedido.objects.filter(aluno=user_to_display).order_by('-data_solicitacao'),
+        'user': user_to_display, # Explicitly pass the user to the template
+        'is_switched_account': original_user_id is not None,
+        'original_user_id': original_user_id,
     }
+    
+    # If it's a switched account, add dependents of the original user for the switch-back functionality
+    if original_user_id:
+        original_user = User.objects.get(id=original_user_id)
+        context['dependents'] = User.objects.filter(responsible=original_user)
+        context['original_user'] = original_user
+
     return render(request, 'academia/perfil.html', context)
 
 @login_required

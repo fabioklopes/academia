@@ -112,12 +112,12 @@ class AttendanceRequest(models.Model):
 
 class Graduacao(models.Model):
     FAIXA_CHOICES = [
-        ('BRANCA', 'Branca'),
-        ('CINZA_BRANCA', 'Cinza e Branca'), ('CINZA', 'Cinza'), ('CINZA_PRETA', 'Cinza e Preta'),
-        ('AMARELA_BRANCA', 'Amarela e Branca'), ('AMARELA', 'Amarela'), ('AMARELA_PRETA', 'Amarela e Preta'),
-        ('LARANJA_BRANCA', 'Laranja e Branca'), ('LARANJA', 'Laranja'), ('LARANJA_PRETA', 'Laranja e Preta'),
-        ('VERDE_BRANCA', 'Verde e Branca'), ('VERDE', 'Verde'), ('VERDE_PRETA', 'Verde e Preta'),
-        ('AZUL', 'Azul'), ('ROXA', 'Roxa'), ('MARROM', 'Marrom'), ('PRETA', 'Preta'),
+        ('WHITE', 'Branca'),
+        ('GRAY_WHITE', 'Cinza e Branca'), ('GRAY', 'Cinza'), ('GRAY_BLACK', 'Cinza e Preta'),
+        ('YELLOW_WHITE', 'Amarela e Branca'), ('YELLOW', 'Amarela'), ('YELLOW_BLACK', 'Amarela e Preta'),
+        ('ORANGE_WHITE', 'Laranja e Branca'), ('ORANGE', 'Laranja'), ('ORANGE_BLACK', 'Laranja e Preta'),
+        ('GREEN_WHITE', 'Verde e Branca'), ('GREEN', 'Verde'), ('GREEN_BLACK', 'Verde e Preta'),
+        ('BLUE', 'Azul'), ('PURPLE', 'Roxa'), ('BROWN', 'Marrom'), ('BLACK', 'Preta'),
     ]
     
     aluno = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'group_role': 'STD'}, related_name='graduacao')

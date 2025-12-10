@@ -26,6 +26,7 @@
                             {% endif %}
                             <h5>{{ user.first_name }} {{ user.last_name }}</h5>
                             <p class="text-muted">{{ user.email }}</p>
+
                         </div>
                         
                         <div class="row mb-3">
@@ -42,36 +43,20 @@
                                 <strong>Email:</strong> {{ user.email }}
                             </div>
                             <div class="col-md-6">
-                                <strong>Data de Nascimento:</strong> {{ user.birthday|default:"Não informado" }}
+                                <strong>Data de Nascimento:</strong> {{ user.birthday|date:"d/m/Y"|default:"Não informado" }}
                             </div>
                         </div>
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <strong>Perfil:</strong> 
-                                {% if user.group_role == 'STD' %}Aluno{% elif user.group_role == 'PRO' %}Professor{% elif user.group_role == 'ADM' %}Administrador{% else %}{{ user.group_role }}{% endif %}
+                                {{ user.get_group_role_display }}
                             </div>
                             <div class="col-md-6">
                                 <strong>Status:</strong> 
-                                {% if user.is_active %}
-                                    <span class="badge bg-success">Ativo</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Inativo</span>
-                                {% endif %}
+                                <span class="badge bg-{{ user.status|lower }}">{{ user.get_status_display }}</span>
                             </div>
                         </div>
-                        
-                        {% if graduacao %}
-                        <h5>Graduação</h5>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Faixa:</strong> {{ graduacao.get_faixa_display }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Grau:</strong> {{ graduacao.grau }}º grau
-                            </div>
-                        </div>
-                        {% endif %}
 
                         <hr>
                         <div class="mt-4">
@@ -91,6 +76,53 @@
                 </h2>
                 <div id="collapseKimono" class="accordion-collapse collapse" aria-labelledby="headingKimono" data-bs-parent="#accordionPerfil">
                     <div class="accordion-body">
+                        {% if graduacao %}
+                        <div class="mb-4 text-center">
+                            <h5>Minha Graduação</h5>
+                            {% with faixa_display=graduacao.get_faixa_display %}
+                            <p class="mb-2"><strong>Faixa {{ faixa_display }}</strong> ({{ graduacao.grau }}º grau)</p>
+
+                            {% comment %} Logic to set belt colors based on display name {% endcomment %}
+                            {% if faixa_display == 'WHITE' %}
+                                {% with belt_color='#f8f9fa' belt_border='1px solid #dee2e6' tip_color='#212529' degree_color='white' %}
+                                <div class="belt-representation" style="height: 35px; background-color: {{ belt_color }}; border: {{ belt_border }}; border-radius: 4px; position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
+                                    <div class="belt-tip" style="position: absolute; right: 0; top: 0; bottom: 0; width: 25%; background-color: {{ tip_color }}; border-top-right-radius: 3px; border-bottom-right-radius: 3px; display: flex; align-items: center; justify-content: center; padding: 0 5px;">
+                                        {% for i in "x"|ljust:graduacao.grau %}
+                                            <div class="degree-stripe" style="height: 25px; width: 8px; background-color: {{ degree_color }}; margin: 0 2px; border: 1px solid #6c757d;"></div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endwith %}
+                            {% elif faixa_display == 'BLACK' %}
+                                {% with belt_color='#212529' tip_color='#dc3545' degree_color='white' %}
+                                <div class="belt-representation" style="height: 35px; background-color: {{ belt_color }}; border-radius: 4px; position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
+                                    <div class="belt-tip" style="position: absolute; right: 0; top: 0; bottom: 0; width: 25%; background-color: {{ tip_color }}; border-top-right-radius: 3px; border-bottom-right-radius: 3px; display: flex; align-items: center; justify-content: center; padding: 0 5px;">
+                                        {% for i in "x"|ljust:graduacao.grau %}
+                                            <div class="degree-stripe" style="height: 25px; width: 8px; background-color: {{ degree_color }}; margin: 0 2px; border: 1px solid #6c757d;"></div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endwith %}
+                            {% else %}
+                                {% if faixa_display == 'BLUE' %}{% with belt_color='#0d6efd' %}{% endwith %}
+                                {% elif faixa_display == 'PURPLE' %}{% with belt_color='#6f42c1' %}{% endwith %}
+                                {% elif faixa_display == 'BROWN' %}{% with belt_color='#8B4513' %}{% endwith %}
+                                {% else %}{% with belt_color='#6c757d' %}{% endwith %}{% endif %}
+
+                                {% with tip_color='#212529' degree_color='white' %}
+                                <div class="belt-representation" style="height: 35px; background-color: {{ belt_color }}; border-radius: 4px; position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
+                                    <div class="belt-tip" style="position: absolute; right: 0; top: 0; bottom: 0; width: 25%; background-color: {{ tip_color }}; border-top-right-radius: 3px; border-bottom-right-radius: 3px; display: flex; align-items: center; justify-content: center; padding: 0 5px;">
+                                        {% for i in "x"|ljust:graduacao.grau %}
+                                            <div class="degree-stripe" style="height: 25px; width: 8px; background-color: {{ degree_color }}; margin: 0 2px; border: 1px solid #6c757d;"></div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endwith %}
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        <hr>
+                        {% endif %}
                         <form method="post" action="{% url 'perfil' %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="update_kimono">
@@ -159,64 +191,7 @@
                 </div>
             </div>
 
-            <!-- Item 3: Meus Pedidos -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingPedidos">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePedidos" aria-expanded="false" aria-controls="collapsePedidos">
-                        Meus Pedidos
-                    </button>
-                </h2>
-                <div id="collapsePedidos" class="accordion-collapse collapse" aria-labelledby="headingPedidos" data-bs-parent="#accordionPerfil">
-                    <div class="accordion-body">
-                        {% if pedidos %}
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Item</th>
-                                            <th>Tamanho</th>
-                                            <th>Data do Pedido</th>
-                                            <th>Status</th>
-                                            <th>Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for pedido in pedidos %}
-                                            <tr>
-                                                <td>{{ pedido.item.nome }}</td>
-                                                <td>{{ pedido.tamanho|default:"-" }}</td>
-                                                <td>{{ pedido.data_solicitacao|date:"d/m/Y" }}</td>
-                                                <td>
-                                                    <span class="badge 
-                                                        {% if pedido.status == 'PEND' %}bg-warning text-dark
-                                                        {% elif pedido.status == 'APRO' %}bg-primary
-                                                        {% elif pedido.status == 'CANC' %}bg-secondary
-                                                        {% elif pedido.status == 'REJE' %}bg-danger
-                                                        {% elif pedido.status == 'ENTR' %}bg-info text-dark
-                                                        {% elif pedido.status == 'FINA' %}bg-success
-                                                        {% endif %}">
-                                                        {{ pedido.get_status_display }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    {% if pedido.status == 'PEND' %}
-                                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelarPedidoModal-{{ pedido.id }}">
-                                                            Cancelar
-                                                        </button>
-                                                    {% endif %}
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <p>Você ainda não fez nenhum pedido.</p>
-                        {% endif %}
-                        <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-primary mt-3">Ver todos os pedidos</a>
-                    </div>
-                </div>
-            </div>
+            <!-- Item 3: Meus Pedidos -> retirado deste menu pois já está em Acadêmico -->
 
             <!-- Item 4: Relatórios -->
             <div class="accordion-item">

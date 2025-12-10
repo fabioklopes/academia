@@ -30,9 +30,12 @@ class SolicitacaoAcessoForm(forms.Form):
         return cleaned_data
 
 class PerfilEditForm(forms.ModelForm):
+    faixa = forms.ChoiceField(choices=Graduacao.FAIXA_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-select'}))
+    grau = forms.IntegerField(min_value=0, max_value=6, required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'birthday', 'photo']
+        fields = ['first_name', 'last_name', 'email', 'birthday', 'photo', 'faixa', 'grau']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -40,6 +43,25 @@ class PerfilEditForm(forms.ModelForm):
             'birthday': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'photo': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and hasattr(self.instance, 'graduacao'):
+            self.fields['faixa'].initial = self.instance.graduacao.faixa
+            self.fields['grau'].initial = self.instance.graduacao.grau
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        
+        graduacao, created = Graduacao.objects.get_or_create(aluno=user)
+        graduacao.faixa = self.cleaned_data.get('faixa')
+        graduacao.grau = self.cleaned_data.get('grau')
+        
+        if commit:
+            user.save()
+            graduacao.save()
+            
+        return user
 
 class GraduacaoForm(forms.ModelForm):
     class Meta:

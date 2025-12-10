@@ -13,24 +13,35 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <div class="mb-3">
-                        <label for="first_name" class="form-label">Nome</label>
-                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="last_name" class="form-label">Sobrenome</label>
-                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">Nome</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Sobrenome</label>
+                            {{ form.last_name }}
+                        </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        {{ form.email }}
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="birthday" class="form-label">Data de Nascimento</label>
-                        <input type="date" class="form-control" id="birthday" name="birthday" value="{{ user.birthday|date:'Y-m-d' }}">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="birthday" class="form-label">Data de Nascimento</label>
+                            {{ form.birthday }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="faixa" class="form-label">Faixa</label>
+                            {{ form.faixa }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="grau" class="form-label">Grau</label>
+                            {{ form.grau }}
+                        </div>
                     </div>
                     
                     <div class="mb-3">
