@@ -16,7 +16,17 @@ class SolicitacaoAcessoForm(forms.Form):
     def clean_whatsapp(self):
         whatsapp = self.cleaned_data.get('whatsapp')
         if whatsapp:
-            return ''.join(filter(str.isdigit, whatsapp))
+            # Remove all non-digit characters
+            digits_only = ''.join(filter(str.isdigit, whatsapp))
+            
+            # Format to (xx) xxxxx-xxxx if it's a valid length
+            if len(digits_only) == 11: # With 9th digit
+                return f"({digits_only[0:2]}) {digits_only[2:7]}-{digits_only[7:]}"
+            elif len(digits_only) == 10: # Without 9th digit
+                return f"({digits_only[0:2]}) {digits_only[2:6]}-{digits_only[6:]}"
+            else:
+                # If not 10 or 11 digits, save as is (or empty string if no digits)
+                return digits_only
         return whatsapp
 
     def clean(self):
@@ -35,11 +45,12 @@ class PerfilEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'birthday', 'photo', 'faixa', 'grau']
+        fields = ['first_name', 'last_name', 'email', 'whatsapp', 'birthday', 'photo', 'faixa', 'grau']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'whatsapp': forms.TextInput(attrs={'class': 'form-control'}),
             'birthday': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'photo': forms.FileInput(attrs={'class': 'form-control'}),
         }
@@ -49,6 +60,22 @@ class PerfilEditForm(forms.ModelForm):
         if self.instance and hasattr(self.instance, 'graduacao'):
             self.fields['faixa'].initial = self.instance.graduacao.faixa
             self.fields['grau'].initial = self.instance.graduacao.grau
+
+    def clean_whatsapp(self):
+        whatsapp = self.cleaned_data.get('whatsapp')
+        if whatsapp:
+            # Remove all non-digit characters
+            digits_only = ''.join(filter(str.isdigit, whatsapp))
+            
+            # Format to (xx) xxxxx-xxxx if it's a valid length
+            if len(digits_only) == 11: # With 9th digit
+                return f"({digits_only[0:2]}) {digits_only[2:7]}-{digits_only[7:]}"
+            elif len(digits_only) == 10: # Without 9th digit
+                return f"({digits_only[0:2]}) {digits_only[2:6]}-{digits_only[6:]}"
+            else:
+                # If not 10 or 11 digits, save as is (or empty string if no digits)
+                return digits_only
+        return whatsapp
 
     def save(self, commit=True):
         user = super().save(commit=False)
