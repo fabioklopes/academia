@@ -1,0 +1,63 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Quantidade</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+                <tr>
+                    <td>{{ item.nome }}</td>
+                    <td>{{ item.get_tipo_display }}</td>
+                    <td>R$ {{ item.valor|default:"-" }}</td>
+                    <td>{{ item.quantidade|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'professor_item_editar' item.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="{% url 'professor_item_deletar' item.id %}" class="btn btn-sm btn-outline-danger">Deletar</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination-container">
+    <ul class="pagination justify-content-center">
+        {% if itens.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ itens.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" data-page="{{ itens.previous_page_number }}">&laquo;</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&laquo;</span>
+            </li>
+        {% endif %}
+
+        {% for i in itens.paginator.page_range %}
+            {% if itens.number == i %}
+                <li class="page-item active">
+                    <span class="page-link">{{ i }}</span>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}" data-page="{{ i }}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if itens.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ itens.next_page_number }}{% if query %}&q={{ query }}{% endif %}" data-page="{{ itens.next_page_number }}">&raquo;</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&raquo;</span>
+            </li>
+        {% endif %}
+    </ul>
+</div>

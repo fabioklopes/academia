@@ -34,11 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('aluno-list-container');
     let debounceTimer;
 
-    function fetchResults() {
-        const query = searchInput.value;
-        // Always reset to the first page when a new search query is made
-        const url = `${searchForm.action}?q=${encodeURIComponent(query)}`;
-
+    function fetchAlunos(url) {
         fetch(url, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -47,19 +43,39 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.text())
         .then(html => {
             container.innerHTML = html;
+            window.history.pushState({path: url}, '', url);
         })
-        .catch(error => console.error('Error fetching search results:', error));
+        .catch(error => console.error('Error fetching alunos:', error));
     }
 
     searchInput.addEventListener('keyup', function() {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(fetchResults, 200); // Reduced delay to 200ms
+        debounceTimer = setTimeout(() => {
+            const query = searchInput.value;
+            const url = `${searchForm.action}?q=${encodeURIComponent(query)}`;
+            fetchAlunos(url);
+        }, 300);
     });
 
-    // Prevent form submission on enter key, but still trigger the search
     searchForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        fetchResults();
+        const query = searchInput.value;
+        const url = `${searchForm.action}?q=${encodeURIComponent(query)}`;
+        fetchAlunos(url);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.matches('.pagination a')) {
+            e.preventDefault();
+            const url = e.target.href;
+            fetchAlunos(url);
+        }
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.path) {
+            fetchAlunos(e.state.path);
+        }
     });
 });
 </script>

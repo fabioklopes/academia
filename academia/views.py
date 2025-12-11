@@ -851,6 +851,10 @@ def professor_turma_alunos(request, turma_id):
         'alunos_turma': alunos_turma,
         'alunos_disponiveis': User.objects.filter(group_role='STD', status='ATIVO').exclude(id__in=alunos_na_turma_ids).order_by('first_name', 'last_name'),
     }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'academia/professor/partials/turma_alunos_list.html', context)
+
     return render(request, 'academia/professor/turma_alunos.html', context)
 
 @login_required
@@ -1182,11 +1186,34 @@ def professor_pedidos(request):
         raise PermissionDenied
     
     if request.user.is_admin():
-        pedidos = Pedido.objects.all()
+        pedidos_list = Pedido.objects.all().order_by('-data_solicitacao')
     else:
-        pedidos = Pedido.objects.filter(item__isnull=False, aluno__turmas__professor=request.user).distinct()
+        pedidos_list = Pedido.objects.filter(item__isnull=False, aluno__turmas__professor=request.user).distinct().order_by('-data_solicitacao')
 
-    return render(request, 'academia/professor/pedidos.html', {'pedidos': pedidos})
+    query = request.GET.get('q')
+    if query:
+        pedidos_list = pedidos_list.filter(
+            Q(aluno__first_name__icontains=query) |
+            Q(aluno__last_name__icontains=query) |
+            Q(item__nome__icontains=query)
+        )
+
+    paginator = Paginator(pedidos_list, 10)
+    page = request.GET.get('page')
+
+    try:
+        pedidos = paginator.page(page)
+    except PageNotAnInteger:
+        pedidos = paginator.page(1)
+    except EmptyPage:
+        pedidos = paginator.page(paginator.num_pages)
+
+    context = {'pedidos': pedidos, 'query': query}
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'academia/professor/partials/pedidos_list.html', context)
+
+    return render(request, 'academia/professor/pedidos.html', context)
 
 @login_required
 def professor_pedido_aprovar(request, pedido_id):
@@ -1276,7 +1303,31 @@ def professor_pedido_finalizar(request, pedido_id):
 def professor_itens(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    return render(request, 'academia/professor/itens.html', {'itens': Item.objects.all()})
+    
+    itens_list = Item.objects.all().order_by('nome')
+
+    query = request.GET.get('q')
+    if query:
+        itens_list = itens_list.filter(
+            Q(nome__icontains=query)
+        )
+    
+    paginator = Paginator(itens_list, 10)
+    page = request.GET.get('page')
+    
+    try:
+        itens = paginator.page(page)
+    except PageNotAnInteger:
+        itens = paginator.page(1)
+    except EmptyPage:
+        itens = paginator.page(paginator.num_pages)
+        
+    context = {'itens': itens, 'query': query}
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'academia/professor/partials/itens_list.html', context)
+        
+    return render(request, 'academia/professor/itens.html', context)
 
 @login_required
 def professor_item_novo(request):
