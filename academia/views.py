@@ -707,7 +707,7 @@ def aluno_relatorio_presenca(request):
         'end_date': end_date.strftime('%Y-%m-%d'),
         'turma_id': int(turma_id) if turma_id else None,
     }
-    return render(request, 'academia/professor/relatorio_presenca.html', context)
+    return render(request, 'academia/aluno/relatorio_presenca.html', context)
 
 @login_required
 def aluno_relatorio_pedidos(request):

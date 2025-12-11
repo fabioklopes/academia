@@ -6,8 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/perfil.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/perfil.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_detalhe.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_detalhe.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academia/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/database.db" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,7 +166,7 @@
       <workItem from="1765129341655" duration="9776000" />
       <workItem from="1765326114091" duration="3387000" />
       <workItem from="1765329998516" duration="2523000" />
-      <workItem from="1765465651477" duration="5229000" />
+      <workItem from="1765465651477" duration="15743000" />
     </task>
     <servers />
   </component>
