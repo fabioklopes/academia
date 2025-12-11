@@ -579,10 +579,13 @@ def gerar_relatorio_aluno(request):
 
 @login_required
 def aluno_relatorio_presenca(request):
-    if not request.user.is_student():
-        raise PermissionDenied
+    if request.user.is_student():
+        turmas = Turma.objects.filter(alunos=request.user)
+    elif request.user.is_professor():
+        turmas = Turma.objects.filter(professor=request.user)
+    else:
+        turmas = Turma.objects.all()
 
-    turmas = Turma.objects.filter(alunos=request.user)
     turma_id = request.GET.get('turma')
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -603,7 +606,13 @@ def aluno_relatorio_presenca(request):
     
     if turma_id and turma_id.isdigit():
         turma_id_int = int(turma_id)
-        alunos = User.objects.filter(group_role='STD', status='ATIVO', turmas__id=turma_id_int)
+        
+        if request.user.is_student():
+            alunos = User.objects.filter(id=request.user.id)
+        elif request.user.is_professor_or_admin():
+            alunos = User.objects.filter(group_role='STD', status='ATIVO', turmas__id=turma_id_int)
+        else:
+            alunos = User.objects.none()
 
         aulas_ministradas = AttendanceRequest.objects.filter(
             turma_id=turma_id_int,
