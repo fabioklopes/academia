@@ -40,9 +40,9 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-people fs-1 text-primary mb-3"></i>
+                <i class="bi bi-people fs-1 text-secondary mb-3"></i>
                 <h5 class="card-title">Turmas</h5>
-                <p class="card-text">{{ turmas_count }} turma(s) ativa(s)</p>
+                <p class="card-text">Gerenciar turmas ativas</p>
                 <a href="{% url 'professor_turmas' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
@@ -51,9 +51,19 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-calendar-check fs-1 text-warning mb-3"></i>
+                <i class="bi bi-calendar-check fs-1 text-primary mb-3"></i>
                 <h5 class="card-title">Presenças</h5>
-                <p class="card-text">{{ solicitacoes_presenca }} pendente(s)</p>
+                <p class="card-text">
+                    {%  if solicitacoes_presenca == 0 %}
+                        <span class="card-text">
+                            Nenhuma pendência
+                        </span>
+                    {% elif solicitacoes_presenca == 1 %}
+                        <span class="card-text text-warning">
+                            {{ solicitacoes_presenca }} pendente {% elif solicitacoes_presenca != 1 %}s
+                        </span>
+                    {% endif %}
+                </p>
                 <a href="{% url 'professor_presencas' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
@@ -62,12 +72,18 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-person-gear fs-1 text-info mb-3"></i>
+                <i class="bi bi-person-gear fs-1 text-success mb-3"></i>
                 <h5 class="card-title">Alunos</h5>
                 <p class="card-text">
-                    <span class="text-success">{{ alunos_ativos }} ativos</span>
-                    <span class="mx-1">|</span>
-                    <span class="card-text">{{ alunos_pendentes }} pendente{% if alunos_pendentes != 1 %}s{% endif %}</span>
+                    {%  if alunos_pendentes == 0 %}
+                        <span class="card-text">
+                            Nenhuma pendência
+                        </span>
+                    {% elif alunos_pendentes == 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} pendente {% elif alunos_pendentes != 1 %}s
+                        </span>
+                    {% endif %}
                 </p>
                 <a href="{% url 'professor_alunos' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
@@ -88,7 +104,7 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-book fs-1 text-secondary mb-3"></i>
+                <i class="bi bi-book fs-1 text-info mb-3"></i>
                 <h5 class="card-title">Planos de Aula</h5>
                 <p class="card-text">Criar e editar planos</p>
                 <a href="{% url 'professor_planos_aula' %}" class="btn btn-outline-primary">Gerenciar</a>
@@ -106,24 +122,28 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-cart fs-1 {% if pedidos_pendentes > 0 %}text-warning{% else %}text-success{% endif %} mb-3"></i>
+                <i class="bi bi-person-gear fs-1 text-secondary mb-3"></i>
                 <h5 class="card-title">Pedidos</h5>
                 <p class="card-text">
-                    {% if pedidos_pendentes > 0 %}
-                        {{ pedidos_pendentes }} pendente{% if pedidos_pendentes != 1 %}s{% endif %}
-                    {% else %}
-                        Nenhuma pendência
+                    {%  if pedidos_pendentes == 0 %}
+                        <span class="card-text">
+                            Nenhuma pendência
+                        </span>
+                    {% elif pedidos_pendentes == 1 %}
+                        <span class="card-text text-warning">
+                            {{ pedidos_pendentes }} pendente {% elif pedidos_pendentes != 1 %}s
+                        </span>
                     {% endif %}
                 </p>
                 <a href="{% url 'professor_pedidos' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">

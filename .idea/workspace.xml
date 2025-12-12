@@ -5,9 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/academia/static/css/profile_colors.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_detalhe.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_detalhe.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/dashboard_administrador.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/dashboard_administrador.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/perfil.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/perfil.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/alunos.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/alunos.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/partials/aluno_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/partials/aluno_list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templatetags/academia_tags.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templatetags/academia_tags.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/database.db" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -90,6 +96,7 @@
       <recent name="D:\PROJECTS\PYTHON\academia\academia\static\img" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\PROJECTS\PYTHON\academia\academia\static\css" />
       <recent name="D:\PROJECTS\PYTHON\academia\media\photos" />
     </key>
   </component>
@@ -166,7 +173,7 @@
       <workItem from="1765129341655" duration="9776000" />
       <workItem from="1765326114091" duration="3387000" />
       <workItem from="1765329998516" duration="2523000" />
-      <workItem from="1765465651477" duration="15743000" />
+      <workItem from="1765465651477" duration="28601000" />
     </task>
     <servers />
   </component>

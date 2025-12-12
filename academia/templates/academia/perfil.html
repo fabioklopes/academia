@@ -2,307 +2,283 @@
 {% block title %}Meu Perfil - Academia de Jiu-Jitsu{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <h4 class="mb-4">Meu Perfil</h4>
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h4 class="mb-4">Meu Perfil</h4>
 
-        <div class="accordion" id="accordionPerfil">
-            <!-- Item 1: Dados do Perfil -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingPerfil">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePerfil" aria-expanded="true" aria-controls="collapsePerfil">
-                        Dados do Perfil
-                    </button>
-                </h2>
-                <div id="collapsePerfil" class="accordion-collapse collapse show" aria-labelledby="headingPerfil" data-bs-parent="#accordionPerfil">
-                    <div class="accordion-body">
-                        <div class="text-center mb-4">
-                            {% if user.photo %}
-                                <img src="{{ user.photo.url }}" alt="Foto" class="rounded-circle mb-3" width="150" height="150">
-                            {% else %}
-                                <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
-                                    <i class="bi bi-person text-white" style="font-size: 4rem;"></i>
-                                </div>
-                            {% endif %}
-                            <h5>{{ user.first_name }} {{ user.last_name }}</h5>
-                            <p class="text-muted">{{ user.email }}</p>
+            <div class="accordion" id="accordionPerfil">
+                <!-- Item 1: Dados do Perfil -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingPerfil">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapsePerfil" aria-expanded="true" aria-controls="collapsePerfil">
+                            Dados do Perfil
+                        </button>
+                    </h2>
+                    <div id="collapsePerfil" class="accordion-collapse collapse" aria-labelledby="headingPerfil"
+                         data-bs-parent="#accordionPerfil">
+                        <div class="accordion-body">
+                            <div class="text-center mb-4">
+                                {% if user.photo %}
+                                    <img src="{{ user.photo.url }}" alt="Foto" class="rounded-circle mb-3" width="150"
+                                         height="150">
+                                {% else %}
+                                    <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                                         style="width: 150px; height: 150px;">
+                                        <i class="bi bi-person text-white" style="font-size: 4rem;"></i>
+                                    </div>
+                                {% endif %}
+                                <h5>{{ user.first_name }} {{ user.last_name }}</h5>
+                                <p class="text-muted">{{ user.email }}</p>
+                            </div>
 
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Nome:</strong> {{ user.first_name }}
+                            <div class="row mb-3">
+                                <div class="col-md-6"><strong>Nome:</strong> {{ user.first_name }}</div>
+                                <div class="col-md-6"><strong>Sobrenome:</strong> {{ user.last_name }}</div>
                             </div>
-                            <div class="col-md-6">
-                                <strong>Sobrenome:</strong> {{ user.last_name }}
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Email:</strong> {{ user.email }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Data de Nascimento:</strong> {{ user.birthday|date:"d/m/Y"|default:"Não informado" }}
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Perfil:</strong> 
-                                {{ user.get_group_role_display }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Status:</strong> 
-                                <span class="badge bg-{{ user.status|lower }}">{{ user.get_status_display }}</span>
-                            </div>
-                        </div>
 
-                        <hr>
-                        <div class="mt-4">
-                            <a href="{% url 'perfil_editar' %}" class="btn btn-outline-primary">Editar Perfil</a>
-                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                            <div class="row mb-3">
+                                <div class="col-md-6"><strong>Email:</strong> {{ user.email }}</div>
+                                <div class="col-md-6"><strong>Data de Nascimento:</strong> {{ user.birthday|date:"d/m/Y"|default:"Não informado" }}</div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6"><strong>Perfil:</strong> {{ user.get_group_role_display }}</div>
+                                <div class="col-md-6"><strong>Status:</strong> <span class="badge bg-{{ user.status|lower }}">{{ user.get_status_display }}</span></div>
+                            </div>
+
+                            <hr>
+                            <div class="mt-4">
+                                <a href="{% url 'perfil_editar' %}" class="btn btn-outline-primary">Editar Perfil</a>
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Item 2: Meu Kimono -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingKimono">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKimono" aria-expanded="false" aria-controls="collapseKimono">
-                        Meu Kimono
-                    </button>
-                </h2>
-                <div id="collapseKimono" class="accordion-collapse collapse" aria-labelledby="headingKimono" data-bs-parent="#accordionPerfil">
-                    <div class="accordion-body">
-                        {% if graduacao %}
-                        <div class="mb-4 text-center">
-                            <h5>Minha Graduação</h5>
-                            {% with faixa_display=graduacao.get_faixa_display %}
-                            <p class="mb-2"><strong>Faixa {{ faixa_display }}</strong> ({{ graduacao.grau }}º grau)</p>
+                <!-- Item 2: Meu Kimono -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingKimono">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseKimono" aria-expanded="false" aria-controls="collapseKimono">
+                            Meu Kimono
+                        </button>
+                    </h2>
+                    <div id="collapseKimono" class="accordion-collapse collapse" aria-labelledby="headingKimono"
+                         data-bs-parent="#accordionPerfil">
+                        <div class="accordion-body">
+                            <form method="post" action="{% url 'perfil' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_kimono">
+                                <div class="row">
+                                    <!-- Coluna de Inserção de Dados -->
+                                    <div class="col-md-4">
+                                        <h5>Seus Dados</h5>
+                                        <div class="mb-3">
+                                            <label for="height" class="form-label">Altura (cm)</label>
+                                            <input type="number" class="form-control" id="height" name="height" value="{{ user.height|default_if_none:'' }}">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="weight" class="form-label">Peso (kg)</label>
+                                            <input type="number" class="form-control" id="weight" name="weight" value="{{ user.weight|default_if_none:'' }}">
+                                        </div>
+                                        <button type="submit" class="btn btn-outline-primary w-100">Salvar Informações</button>
+                                    </div>
 
-                            {% comment %} Logic to set belt colors based on display name {% endcomment %}
-                            {% if faixa_display == 'WHITE' %}
-                                {% with belt_color='#f8f9fa' belt_border='1px solid #dee2e6' tip_color='#212529' degree_color='white' %}
-                                <div class="belt-representation" style="height: 35px; background-color: {{ belt_color }}; border: {{ belt_border }}; border-radius: 4px; position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
-                                    <div class="belt-tip" style="position: absolute; right: 0; top: 0; bottom: 0; width: 25%; background-color: {{ tip_color }}; border-top-right-radius: 3px; border-bottom-right-radius: 3px; display: flex; align-items: center; justify-content: center; padding: 0 5px;">
-                                        {% for i in "x"|ljust:graduacao.grau %}
-                                            <div class="degree-stripe" style="height: 25px; width: 8px; background-color: {{ degree_color }}; margin: 0 2px; border: 1px solid #6c757d;"></div>
-                                        {% endfor %}
+                                    <!-- Coluna das Tabelas -->
+                                    <div class="col-md-8">
+                                        <!-- Tabela de Kimonos -->
+                                        <div class="mb-4">
+                                            <h5>Tamanho do Kimono</h5>
+                                            <p class="mt-2 mb-0">Tamanho selecionado: <span id="selectedKimonoSize" class="fw-bold">{{ user.kimono_size|default:"Nenhum" }}</span></p>
+                                            <input type="hidden" id="kimono_size" name="kimono_size" value="{{ user.kimono_size|default_if_none:'' }}">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover text-center" id="kimonoTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Tamanho</th>
+                                                            <th>Altura</th>
+                                                            <th>Peso</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr data-size="A0" data-min-height="155" data-max-height="160" data-max-weight="60"><td>A0</td><td>1,55 a 1,60m</td><td>até 60kg</td></tr>
+                                                        <tr data-size="A1" data-min-height="160" data-max-height="170" data-max-weight="75"><td>A1</td><td>1,60 a 1,70m</td><td>até 75kg</td></tr>
+                                                        <tr data-size="A2" data-min-height="170" data-max-height="180" data-max-weight="85"><td>A2</td><td>1,70 a 1,80m</td><td>até 85kg</td></tr>
+                                                        <tr data-size="A3" data-min-height="180" data-max-height="190" data-max-weight="95"><td>A3</td><td>1,80 a 1,90m</td><td>até 95kg</td></tr>
+                                                        <tr data-size="A4" data-min-height="190" data-max-height="200" data-max-weight="110"><td>A4</td><td>1,90 a 2,00m</td><td>até 110kg</td></tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                        </div>
+
+                                        <!-- Tabela de Faixas -->
+                                        <div>
+                                            <h5>Tamanho da Faixa</h5>
+                                            <p class="mt-2 mb-0">Tamanho selecionado: <span id="selectedBeltSize" class="fw-bold">{{ user.belt_size|default:"Nenhum" }}</span></p>
+                                            <input type="hidden" id="belt_size" name="belt_size" value="{{ user.belt_size|default_if_none:'' }}">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover text-center" id="beltTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Tamanho</th>
+                                                            <th>Medida</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr data-size="A0"><td>A0</td><td>2,40m</td></tr>
+                                                        <tr data-size="A1"><td>A1</td><td>2,60m</td></tr>
+                                                        <tr data-size="A2"><td>A2</td><td>2,80m</td></tr>
+                                                        <tr data-size="A3"><td>A3</td><td>3,00m</td></tr>
+                                                        <tr data-size="A4"><td>A4</td><td>3,20m</td></tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                        </div>
                                     </div>
                                 </div>
-                                {% endwith %}
-                            {% elif faixa_display == 'BLACK' %}
-                                {% with belt_color='#212529' tip_color='#dc3545' degree_color='white' %}
-                                <div class="belt-representation" style="height: 35px; background-color: {{ belt_color }}; border-radius: 4px; position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
-                                    <div class="belt-tip" style="position: absolute; right: 0; top: 0; bottom: 0; width: 25%; background-color: {{ tip_color }}; border-top-right-radius: 3px; border-bottom-right-radius: 3px; display: flex; align-items: center; justify-content: center; padding: 0 5px;">
-                                        {% for i in "x"|ljust:graduacao.grau %}
-                                            <div class="degree-stripe" style="height: 25px; width: 8px; background-color: {{ degree_color }}; margin: 0 2px; border: 1px solid #6c757d;"></div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endwith %}
-                            {% else %}
-                                {% if faixa_display == 'BLUE' %}{% with belt_color='#0d6efd' %}{% endwith %}
-                                {% elif faixa_display == 'PURPLE' %}{% with belt_color='#6f42c1' %}{% endwith %}
-                                {% elif faixa_display == 'BROWN' %}{% with belt_color='#8B4513' %}{% endwith %}
-                                {% else %}{% with belt_color='#6c757d' %}{% endwith %}{% endif %}
-
-                                {% with tip_color='#212529' degree_color='white' %}
-                                <div class="belt-representation" style="height: 35px; background-color: {{ belt_color }}; border-radius: 4px; position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
-                                    <div class="belt-tip" style="position: absolute; right: 0; top: 0; bottom: 0; width: 25%; background-color: {{ tip_color }}; border-top-right-radius: 3px; border-bottom-right-radius: 3px; display: flex; align-items: center; justify-content: center; padding: 0 5px;">
-                                        {% for i in "x"|ljust:graduacao.grau %}
-                                            <div class="degree-stripe" style="height: 25px; width: 8px; background-color: {{ degree_color }}; margin: 0 2px; border: 1px solid #6c757d;"></div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endwith %}
-                            {% endif %}
-                            {% endwith %}
+                            </form>
                         </div>
-                        <hr>
-                        {% endif %}
-                        <form method="post" action="{% url 'perfil' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="update_kimono">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="height" class="form-label">Altura (cm)</label>
-                                    <input type="number" class="form-control" id="height" name="height" value="{{ user.height|default_if_none:'' }}" oninput="updateHeightDisplay()">
-                                    <small class="text-muted" id="heightDisplay"></small>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="weight" class="form-label">Peso (kg)</label>
-                                    <input type="number" class="form-control" id="weight" name="weight" value="{{ user.weight|default_if_none:'' }}">
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Tamanho do Kimono</label>
-                                <input type="hidden" id="kimono_size" name="kimono_size" value="{{ user.kimono_size|default_if_none:'' }}">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered text-center" id="kimonoTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Tamanho</th>
-                                                <th>Altura</th>
-                                                <th>Peso</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr data-size="A0"><td>A0</td><td>1,55 a 1,60m</td><td>até 60kg</td></tr>
-                                            <tr data-size="A1"><td>A1</td><td>1,60 a 1,70m</td><td>até 75kg</td></tr>
-                                            <tr data-size="A2"><td>A2</td><td>1,70 a 1,80m</td><td>até 85kg</td></tr>
-                                            <tr data-size="A3"><td>A3</td><td>1,80 a 1,90m</td><td>até 95kg</td></tr>
-                                            <tr data-size="A4"><td>A4</td><td>1,90 a 2,00m</td><td>até 110kg</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <p>Tamanho selecionado: <span id="selectedKimonoSize" class="fw-bold">{{ user.kimono_size|default:"Nenhum" }}</span></p>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Tamanho da Faixa</label>
-                                <input type="hidden" id="belt_size" name="belt_size" value="{{ user.belt_size|default_if_none:'' }}">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered text-center" id="beltTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Tamanho</th>
-                                                <th>Medida</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr data-size="A0"><td>A0</td><td>2,40m</td></tr>
-                                            <tr data-size="A1"><td>A1</td><td>2,60m</td></tr>
-                                            <tr data-size="A2"><td>A2</td><td>2,80m</td></tr>
-                                            <tr data-size="A3"><td>A3</td><td>3,00m</td></tr>
-                                            <tr data-size="A4"><td>A4</td><td>3,20m</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <p>Tamanho selecionado: <span id="selectedBeltSize" class="fw-bold">{{ user.belt_size|default:"Nenhum" }}</span></p>
-                            </div>
-
-                            <button type="submit" class="btn btn-outline-primary">Salvar Informações do Kimono</button>
-                        </form>
                     </div>
                 </div>
-            </div>
 
-            <!-- Item 3: Meus Pedidos -> retirado deste menu pois já está em Acadêmico -->
-
-            <!-- Item 5: Alterar Senha -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingPasswordChange">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePasswordChange" aria-expanded="false" aria-controls="collapsePasswordChange">
-                        Alterar Senha
-                    </button>
-                </h2>
-                <div id="collapsePasswordChange" class="accordion-collapse collapse" aria-labelledby="headingPasswordChange" data-bs-parent="#accordionPerfil">
-                    <div class="accordion-body">
-                        <form method="post" action="{% url 'perfil' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="change_password">
-                            <div class="mb-3">
-                                <label for="current_password" class="form-label">Senha Atual</label>
-                                <input type="password" class="form-control" id="current_password" name="current_password" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="new_password" class="form-label">Nova Senha</label>
-                                <input type="password" class="form-control" id="new_password" name="new_password" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="confirm_new_password" class="form-label">Confirmar Nova Senha</label>
-                                <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
-                            </div>
-                            <button type="submit" class="btn btn-outline-warning text-dark">Alterar Senha</button>
-                        </form>
+                <!-- Item 3: Alterar Senha -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingPasswordChange">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapsePasswordChange" aria-expanded="false"
+                                aria-controls="collapsePasswordChange">
+                            Alterar Senha
+                        </button>
+                    </h2>
+                    <div id="collapsePasswordChange" class="accordion-collapse collapse"
+                         aria-labelledby="headingPasswordChange" data-bs-parent="#accordionPerfil">
+                        <div class="accordion-body">
+                            <form method="post" action="{% url 'perfil' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="change_password">
+                                <div class="mb-3"><label for="current_password" class="form-label">Senha Atual</label><input type="password" class="form-control" id="current_password" name="current_password" required></div>
+                                <div class="mb-3"><label for="new_password" class="form-label">Nova Senha</label><input type="password" class="form-control" id="new_password" name="new_password" required></div>
+                                <div class="mb-3"><label for="confirm_new_password" class="form-label">Confirmar Nova Senha</label><input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required></div>
+                                <button type="submit" class="btn btn-outline-warning text-dark">Alterar Senha</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Modals de Cancelamento -->
-{% for pedido in pedidos %}
-<div class="modal fade" id="cancelarPedidoModal-{{ pedido.id }}" tabindex="-1" aria-labelledby="cancelarPedidoModalLabel-{{ pedido.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="cancelarPedidoModalLabel-{{ pedido.id }}">Confirmar Cancelamento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Tem certeza de que deseja cancelar o pedido de <strong>{{ pedido.item.nome }}</strong>?
-            </div>
-            <div class="modal-footer">
-                <form action="{% url 'aluno_pedido_cancelar' pedido.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="submit" class="btn btn-outline-danger">Confirmar Cancelamento</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-{% endfor %}
 {% endblock %}
 
 {% block extra_js %}
-{{ block.super }}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Height conversion
-    const heightInput = document.getElementById('height');
-    const heightDisplay = document.getElementById('heightDisplay');
+    {{ block.super }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Lógica para o Kimono ---
+            const heightInput = document.getElementById('height');
+            const weightInput = document.getElementById('weight');
+            const kimonoTable = document.getElementById('kimonoTable');
+            const kimonoSizeInput = document.getElementById('kimono_size');
+            const selectedKimonoSize = document.getElementById('selectedKimonoSize');
+            const kimonoRows = kimonoTable.querySelectorAll('tbody tr');
 
-    function updateHeightDisplay() {
-        const heightCm = heightInput.value;
-        if (heightCm) {
-            const heightM = (heightCm / 100).toFixed(2);
-            heightDisplay.textContent = `(${heightM}m)`;
-        } else {
-            heightDisplay.textContent = '';
-        }
-    }
+            function getRecommendedSize(height, weight) {
+                for (const row of kimonoRows) {
+                    const minHeight = parseInt(row.dataset.minHeight);
+                    const maxHeight = parseInt(row.dataset.maxHeight);
+                    const maxWeight = parseInt(row.dataset.maxWeight);
+                    if (height >= minHeight && height <= maxHeight && weight <= maxWeight) {
+                        return row.dataset.size;
+                    }
+                }
+                // Lógica de fallback se o peso for o fator decisivo
+                for (const row of kimonoRows) {
+                    if (weight <= parseInt(row.dataset.maxWeight)) return row.dataset.size;
+                }
+                return null;
+            }
 
-    heightInput.addEventListener('input', updateHeightDisplay);
-    updateHeightDisplay(); // Initial call
+            function updateKimonoSelection(isManualClick = false) {
+                const height = parseInt(heightInput.value);
+                const weight = parseInt(weightInput.value);
+                const currentManualSize = kimonoSizeInput.value;
 
-    // Kimono table selection
-    const kimonoTable = document.getElementById('kimonoTable');
-    const kimonoSizeInput = document.getElementById('kimono_size');
-    const selectedKimonoSize = document.getElementById('selectedKimonoSize');
-    const kimonoRows = kimonoTable.querySelectorAll('tbody tr');
+                kimonoRows.forEach(r => r.classList.remove('table-primary', 'table-active'));
 
-    kimonoRows.forEach(row => {
-        row.addEventListener('click', () => {
-            kimonoRows.forEach(r => r.classList.remove('table-active'));
-            row.classList.add('table-active');
-            const size = row.dataset.size;
-            kimonoSizeInput.value = size;
-            selectedKimonoSize.textContent = size;
+                // Só faz a recomendação se não for um clique manual
+                if (!isManualClick && height && weight) {
+                    const recommendedSize = getRecommendedSize(height, weight);
+                    if (recommendedSize) {
+                        const recommendedRow = kimonoTable.querySelector(`tr[data-size="${recommendedSize}"]`);
+                        if (recommendedRow) {
+                            recommendedRow.classList.add('table-primary');
+                            // Se não houver seleção manual, a recomendação vira a seleção
+                            if (!currentManualSize) {
+                                kimonoSizeInput.value = recommendedSize;
+                                selectedKimonoSize.textContent = recommendedSize;
+                            }
+                        }
+                    }
+                }
+                
+                // Restaura a seleção manual do usuário se houver
+                if (currentManualSize) {
+                    const selectedRow = kimonoTable.querySelector(`tr[data-size="${currentManualSize}"]`);
+                    if (selectedRow) {
+                        selectedRow.classList.add('table-active');
+                        selectedKimonoSize.textContent = currentManualSize;
+                    }
+                }
+
+                if (!kimonoSizeInput.value) {
+                    selectedKimonoSize.textContent = "Nenhum";
+                }
+            }
+
+            heightInput.addEventListener('input', () => updateKimonoSelection(false));
+            weightInput.addEventListener('input', () => updateKimonoSelection(false));
+
+            kimonoRows.forEach(row => {
+                row.addEventListener('click', () => {
+                    const size = row.dataset.size;
+                    kimonoSizeInput.value = size;
+                    updateKimonoSelection(true); // Indica que é um clique manual
+                });
+            });
+
+            // --- Lógica para a Faixa ---
+            const beltTable = document.getElementById('beltTable');
+            const beltSizeInput = document.getElementById('belt_size');
+            const selectedBeltSize = document.getElementById('selectedBeltSize');
+            const beltRows = beltTable.querySelectorAll('tbody tr');
+
+            function updateBeltSelection() {
+                const currentBeltSize = beltSizeInput.value;
+                beltRows.forEach(r => r.classList.remove('table-active'));
+                if (currentBeltSize) {
+                    const selectedRow = beltTable.querySelector(`tr[data-size="${currentBeltSize}"]`);
+                    if (selectedRow) {
+                        selectedRow.classList.add('table-active');
+                    }
+                    selectedBeltSize.textContent = currentBeltSize;
+                } else {
+                    selectedBeltSize.textContent = "Nenhum";
+                }
+            }
+
+            beltRows.forEach(row => {
+                row.addEventListener('click', () => {
+                    const size = row.dataset.size;
+                    beltSizeInput.value = size;
+                    updateBeltSelection();
+                });
+            });
+
+            // --- Inicialização ---
+            updateKimonoSelection();
+            updateBeltSelection();
         });
-    });
-
-    // Belt table selection
-    const beltTable = document.getElementById('beltTable');
-    const beltSizeInput = document.getElementById('belt_size');
-    const selectedBeltSize = document.getElementById('selectedBeltSize');
-    const beltRows = beltTable.querySelectorAll('tbody tr');
-
-    beltRows.forEach(row => {
-        row.addEventListener('click', () => {
-            beltRows.forEach(r => r.classList.remove('table-active'));
-            row.classList.add('table-active');
-            const size = row.dataset.size;
-            beltSizeInput.value = size;
-            selectedBeltSize.textContent = size;
-        });
-    });
-});
-</script>
+    </script>
 {% endblock %}

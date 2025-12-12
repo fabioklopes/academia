@@ -49,7 +49,6 @@
                                     {% elif aluno.status == 'INATIVO' %}
                                         <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-outline-success">Ativar</a>
                                     {% endif %}
-                                    <a href="{% url 'professor_aluno_definir_tipo' aluno.id %}" class="btn btn-sm btn-outline-info">Gerenciar aluno</a>
                                 </td>
                             </tr>
                         {% endfor %}
