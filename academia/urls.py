@@ -36,7 +36,6 @@ urlpatterns = [
     path('aluno/pedidos/', views.aluno_pedidos, name='aluno_pedidos'),
     path('aluno/pedidos/novo/', views.aluno_pedido_novo, name='aluno_pedido_novo'),
     path('aluno/pedidos/<int:pedido_id>/cancelar/', views.aluno_pedido_cancelar, name='aluno_pedido_cancelar'),
-    path('aluno/gerar-relatorio/', views.gerar_relatorio_aluno, name='gerar_relatorio_aluno'),
     path('aluno/relatorios/presenca/', views.aluno_relatorio_presenca, name='aluno_relatorio_presenca'),
     path('aluno/relatorios/pedidos/', views.aluno_relatorio_pedidos, name='aluno_relatorio_pedidos'),
     
@@ -91,6 +90,6 @@ urlpatterns = [
 
     # Painel do Professor - Relatórios
     path('professor/relatorios/', views.professor_relatorios, name='professor_relatorios'),
-    path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='relatorio_pedidos'),
-    path('professor/relatorios/presenca/', views.relatorio_presenca, name='relatorio_presenca'),
+    path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='professor_relatorio_pedidos'),
+    path('professor/relatorios/presenca/', views.relatorio_presenca, name='professor_relatorio_presenca'),
 ]

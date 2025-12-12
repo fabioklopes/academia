@@ -12,24 +12,13 @@
             <div class="card-body">
                 <form method="GET">
                     <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="item">Produto</label>
-                                <select class="form-control" id="item" name="item">
-                                    <option value="">Todos os Produtos</option>
-                                    {% for i in itens %}
-                                        <option value="{{ i.id }}" {% if i.id == item_id|add:0 %}selected{% endif %}>{{ i.nome }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="start_date">Data de Início</label>
                                 <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="end_date">Data de Fim</label>
                                 <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
@@ -39,8 +28,8 @@
                     <div class="mt-3">
                         <button type="submit" class="btn btn-outline-primary">Filtrar</button>
                         <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-secondary">Voltar</a>
-                        <a href="?item={{ item_id|default_if_none:'' }}&start_date={{ start_date }}&end_date={{ end_date }}&export=pdf" class="btn btn-outline-danger">Exportar para PDF</a>
-                        <a href="?item={{ item_id|default_if_none:'' }}&start_date={{ start_date }}&end_date={{ end_date }}&export=xlsx" class="btn btn-outline-success">Exportar para XLSX</a>
+                        <a href="?start_date={{ start_date }}&end_date={{ end_date }}&export=pdf" class="btn btn-outline-danger">Exportar para PDF</a>
+                        <a href="?start_date={{ start_date }}&end_date={{ end_date }}&export=xlsx" class="btn btn-outline-success">Exportar para XLSX</a>
                     </div>
                 </form>
 
@@ -50,21 +39,19 @@
                             <thead>
                                 <tr>
                                     <th>Data do pedido</th>
-                                    <th>Nome completo</th>
-                                    <th>Descrição do Produto Solicitado (quantidade)</th>
-                                    <th>Valor Unitário</th>
-                                    <th>Total</th>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Valor Total</th>
                                     <th>Status</th>
-                                    <th>Motivo do Status</th>
+                                    <th>Desfecho</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for pedido in pedidos %}
                                     <tr>
                                         <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
-                                        <td>{{ pedido.aluno.get_full_name }}</td>
-                                        <td>{{ pedido.item.nome }} ({{ pedido.quantidade }})</td>
-                                        <td>R$ {{ pedido.item.valor|default_if_none:"0.00" }}</td>
+                                        <td>{{ pedido.item.nome }}</td>
+                                        <td>{{ pedido.quantidade }}</td>
                                         <td>R$ {{ pedido.final_value|default_if_none:"0.00" }}</td>
                                         <td>{{ pedido.get_status_display }}</td>
                                         <td>
@@ -82,7 +69,7 @@
                         </table>
                     </div>
                 {% else %}
-                    <p class="text-muted mt-4">Nenhum pedido encontrado.</p>
+                    <p class="text-muted mt-4">Nenhum pedido encontrado para os filtros selecionados.</p>
                 {% endif %}
             </div>
         </div>
