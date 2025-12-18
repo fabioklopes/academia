@@ -227,3 +227,17 @@ class Pedido(models.Model):
     
     def __str__(self):
         return f"{self.aluno} - {self.item.nome} - {self.get_status_display()}"
+
+class Log(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.TextField('Ação')
+    timestamp = models.DateTimeField('Data e Hora', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Log de Ação'
+        verbose_name_plural = 'Logs de Ações'
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        user_name = self.user.get_full_name() if self.user else 'Sistema'
+        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} {user_name} executou {self.action}"

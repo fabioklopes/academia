@@ -51,29 +51,53 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-calendar-check fs-1 text-warning mb-3"></i>
-                <h5 class="card-title">Presenças</h5>
-                <p class="card-text">{{ solicitacoes_presenca }} pendente(s)</p>
-                <a href="{% url 'professor_presencas' %}" class="btn btn-outline-primary">Gerenciar</a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card h-100 dashboard-card">
-            <div class="card-body text-center">
-                <i class="bi bi-person-gear fs-1 text-info mb-3"></i>
+                <i class="bi bi-person-gear fs-1 text-success mb-3"></i>
                 <h5 class="card-title">Alunos</h5>
                 <p class="card-text">
-                    <span class="text-success">{{ alunos_ativos }} ativos</span>
-                    <span class="mx-1">|</span>
-                    <span class="text-warning">{{ alunos_pendentes }} pendente{% if alunos_pendentes != 1 %}s{% endif %}</span>
+                    {%  if alunos_pendentes == 0 %}
+                        <span class="card-text">
+                            Nenhuma aprovação pendente
+                        </span>
+                    {% elif alunos_pendentes == 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} aprovação pendente
+                        </span>
+                    {% elif alunos_pendentes > 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} aprovações pendentes
+                        </span>
+                    {% endif %}
                 </p>
                 <a href="{% url 'professor_alunos' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>
-    
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-person-gear fs-1 text-success mb-3"></i>
+                <h5 class="card-title">Alunos</h5>
+                <p class="card-text">
+                    {%  if alunos_pendentes == 0 %}
+                        <span class="card-text">
+                            Nenhuma aprovação pendente
+                        </span>
+                    {% elif alunos_pendentes == 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} aprovação pendente
+                        </span>
+                    {% elif alunos_pendentes > 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} aprovações pendentes
+                        </span>
+                    {% endif %}
+                </p>
+                <a href="{% url 'professor_alunos' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">

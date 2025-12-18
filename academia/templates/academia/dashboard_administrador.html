@@ -47,7 +47,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
@@ -56,11 +56,15 @@
                 <p class="card-text">
                     {%  if solicitacoes_presenca == 0 %}
                         <span class="card-text">
-                            Nenhuma pendência
+                            Nenhuma solicitação pendente
                         </span>
                     {% elif solicitacoes_presenca == 1 %}
                         <span class="card-text text-warning">
-                            {{ solicitacoes_presenca }} pendente {% elif solicitacoes_presenca != 1 %}s
+                            {{ solicitacoes_presenca }} presença pendente
+                        </span>
+                    {% elif solicitacoes_presenca > 1 %}
+                        <span class="card-text text-warning">
+                            {{ solicitacoes_presenca }} presenças pendentes
                         </span>
                     {% endif %}
                 </p>
@@ -68,7 +72,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
@@ -77,11 +81,15 @@
                 <p class="card-text">
                     {%  if alunos_pendentes == 0 %}
                         <span class="card-text">
-                            Nenhuma pendência
+                            Nenhuma aprovação pendente
                         </span>
                     {% elif alunos_pendentes == 1 %}
                         <span class="card-text text-warning">
-                            {{ alunos_pendentes }} pendente {% elif alunos_pendentes != 1 %}s
+                            {{ alunos_pendentes }} aprovação pendente
+                        </span>
+                    {% elif alunos_pendentes > 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} aprovações pendentes
                         </span>
                     {% endif %}
                 </p>

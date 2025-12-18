@@ -5,20 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/academia/logs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/8ee69be0-bf0d-4399-a40a-66e9d05a7b89.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/8ee69be0-bf0d-4399-a40a-66e9d05a7b89.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_pedidos.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_pedidos.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_pedidos_pdf.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_pedidos_pdf.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_presenca.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_presenca.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_presenca_pdf.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorio_presenca_pdf.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorios.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/aluno/relatorios.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academia/templates/academia/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_pedidos.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_pedidos.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_pedidos_pdf.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_pedidos_pdf.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_presenca.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_presenca.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_presenca_pdf.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/relatorio_presenca_pdf.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/dashboard_administrador.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/dashboard_administrador.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/dashboard_professor.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/dashboard_professor.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/academia/templates/academia/perfil_editar.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/perfil_editar.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/relatorios.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/relatorios.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academia/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/academia/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/database.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/photos/2_1765133293.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/photos/41_1765050761.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,6 +78,7 @@
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.pycharm.django.structure.promotion.once.per.project&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
     &quot;database.data.extractors.current.export.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
     &quot;database.data.extractors.current.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
@@ -120,6 +123,7 @@
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="launchJavascriptDebuger" value="false" />
       <option name="port" value="8000" />
       <option name="host" value="127.0.0.1" />
@@ -135,8 +139,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-PY-252.28238.29" />
-        <option value="bundled-python-sdk-a101402ee41c-968fe969f28a-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.28238.29" />
+        <option value="bundled-js-predefined-d6986cc7102b-c7e53b3be11b-JavaScript-PY-253.28294.336" />
+        <option value="bundled-python-sdk-0978a7220b69-9867c7d4c0a4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.28294.336" />
       </set>
     </attachedChunks>
   </component>
@@ -177,7 +181,12 @@
       <workItem from="1765129341655" duration="9776000" />
       <workItem from="1765326114091" duration="3387000" />
       <workItem from="1765329998516" duration="2523000" />
-      <workItem from="1765465651477" duration="30621000" />
+      <workItem from="1765465651477" duration="30715000" />
+      <workItem from="1765574288677" duration="860000" />
+      <workItem from="1765663057417" duration="3245000" />
+      <workItem from="1765666374909" duration="941000" />
+      <workItem from="1765667345850" duration="330000" />
+      <workItem from="1766013249100" duration="2737000" />
     </task>
     <servers />
   </component>

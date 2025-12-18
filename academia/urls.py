@@ -90,6 +90,6 @@ urlpatterns = [
 
     # Painel do Professor - Relatórios
     path('professor/relatorios/', views.professor_relatorios, name='professor_relatorios'),
-    path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='professor_relatorio_pedidos'),
+    path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='relatorio_pedidos'),
     path('professor/relatorios/presenca/', views.relatorio_presenca, name='professor_relatorio_presenca'),
 ]

@@ -23,6 +23,7 @@ import uuid
 import os
 import time
 from django.conf import settings
+from .logs import create_log
 
 # --- VIEWS GERAIS ---
 
@@ -55,6 +56,7 @@ def login_view(request):
         if user is not None:
             if user.status == 'ATIVO':
                 auth_login(request, user)
+                create_log(user, 'realizou login')
                 next_url = request.GET.get('next')
                 return redirect(next_url) if next_url else redirect('dashboard')
             elif user.status == 'PENDENTE':
@@ -67,6 +69,7 @@ def login_view(request):
     return render(request, 'academia/login.html')
 
 def logout_view(request):
+    create_log(request.user, 'realizou logout')
     auth_logout(request)
     return redirect('index')
 
@@ -140,6 +143,9 @@ def switch_account(request, user_id):
     # The user to switch to must be a dependent of the main account holder.
     dependent_user = get_object_or_404(User, id=user_id, responsible_id=original_user_id)
     
+    # Log the action before switching. The action is performed by the currently logged-in user.
+    create_log(request.user, f'iniciou o gerenciamento da conta de {dependent_user.get_full_name()}')
+    
     # Log in as the dependent user. This clears the session.
     auth_login(request, dependent_user, backend='django.contrib.auth.backends.ModelBackend')
     
@@ -147,7 +153,7 @@ def switch_account(request, user_id):
     request.session['original_user_id'] = original_user_id
     
     messages.info(request, f"Você agora está gerenciando a conta de {dependent_user.get_full_name()}.")
-    return redirect('perfil')
+    return redirect('dashboard')
 
 @login_required
 def switch_account_back(request):
@@ -155,13 +161,16 @@ def switch_account_back(request):
     if original_user_id:
         original_user = get_object_or_404(User, id=original_user_id)
         
+        # Log the action. The action is performed by the original user, who is taking back control.
+        create_log(original_user, f'encerrou o gerenciamento da conta de {request.user.get_full_name()}')
+        
         # Log in as the original user. This clears the session, removing 'original_user_id'.
         auth_login(request, original_user, backend='django.contrib.auth.backends.ModelBackend')
         messages.success(request, "Você voltou para a sua conta.")
     else:
         messages.warning(request, "Nenhuma conta original encontrada para retornar.")
 
-    return redirect('perfil')
+    return redirect('dashboard')
 
 @login_required
 def dashboard(request):
@@ -295,6 +304,7 @@ def perfil_editar(request):
                     os.remove(old_photo.path)
             
             form.save()
+            create_log(request.user, 'editou seu perfil')
             messages.success(request, 'Perfil atualizado com sucesso!')
             return redirect('perfil')
     else:
@@ -359,7 +369,8 @@ def aluno_marcar_presenca(request):
             except ValueError:
                 messages.error(request, f'Formato de data inválido para {date_str}.')
                 continue
-
+        
+        create_log(request.user, f'solicitou/alterou presença para {len(dates)} dia(s) na turma "{turma.nome}"')
         return redirect('aluno_presencas')
 
     today = timezone.localdate()
@@ -723,7 +734,12 @@ def aluno_relatorio_pedidos(request):
 
 @login_required
 def professor_turmas(request):
-    turmas = Turma.objects.all() if request.user.is_admin() else Turma.objects.filter(professor=request.user)
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    if request.user.is_admin():
+        turmas = Turma.objects.all()
+    else:
+        turmas = Turma.objects.filter(professor=request.user)
     return render(request, 'academia/professor/turmas.html', {'turmas': turmas})
 
 @login_required
@@ -951,9 +967,12 @@ def professor_aluno_ativar(request, aluno_id):
     aluno.status = 'ATIVO'
     aluno.save()
     if previous_status == 'PENDENTE':
+        action_text = f'aprovou o cadastro de {aluno.get_full_name()}'
         messages.success(request, f'O cadastro de {aluno.get_full_name()} foi aprovado.')
     else:
+        action_text = f'ativou o usuário {aluno.get_full_name()}'
         messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado.')
+    create_log(request.user, action_text)
     return redirect('professor_alunos')
 
 @login_required
@@ -1023,6 +1042,7 @@ def professor_presenca_aprovar(request, request_id):
         attendance_request.notified = False
         attendance_request.save()
 
+        create_log(request.user, f'aprovou a presença de {attendance_request.student.get_full_name()} para a data {attendance_request.attendance_date.strftime("%d/%m/%Y")}')
         messages.success(request, 'Solicitação de presença aprovada.')
     
     return redirect('professor_presencas')
@@ -1044,6 +1064,8 @@ def professor_presenca_rejeitar(request, request_id):
         attendance_request.processed_by = request.user
         attendance_request.processed_at = timezone.now()
         attendance_request.save()
+        
+        create_log(request.user, f'rejeitou a presença de {attendance_request.student.get_full_name()} para a data {attendance_request.attendance_date.strftime("%d/%m/%Y")}')
         messages.success(request, 'Solicitação de presença rejeitada.')
     
     return redirect('professor_presencas')
