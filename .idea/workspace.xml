@@ -4,24 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/academia/logs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/8ee69be0-bf0d-4399-a40a-66e9d05a7b89.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/8ee69be0-bf0d-4399-a40a-66e9d05a7b89.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/dashboard_administrador.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/dashboard_administrador.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/dashboard_professor.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/dashboard_professor.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/perfil_editar.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/perfil_editar.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/templates/academia/professor/relatorios.html" beforeDir="false" afterPath="$PROJECT_DIR$/academia/templates/academia/professor/relatorios.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/academia/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/academia/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/database.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/photos/2_1765133293.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/photos/41_1765050761.png" beforeDir="false" />
-    </list>
+    <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -186,7 +169,7 @@
       <workItem from="1765663057417" duration="3245000" />
       <workItem from="1765666374909" duration="941000" />
       <workItem from="1765667345850" duration="330000" />
-      <workItem from="1766013249100" duration="2737000" />
+      <workItem from="1766013249100" duration="3466000" />
     </task>
     <servers />
   </component>
