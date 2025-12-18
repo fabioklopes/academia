@@ -51,24 +51,24 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-person-gear fs-1 text-success mb-3"></i>
-                <h5 class="card-title">Alunos</h5>
+                <i class="bi bi-calendar-check fs-1 text-primary mb-3"></i>
+                <h5 class="card-title">Presenças</h5>
                 <p class="card-text">
-                    {%  if alunos_pendentes == 0 %}
+                    {%  if solicitacoes_presenca == 0 %}
                         <span class="card-text">
-                            Nenhuma aprovação pendente
+                            Nenhuma solicitação pendente
                         </span>
-                    {% elif alunos_pendentes == 1 %}
+                    {% elif solicitacoes_presenca == 1 %}
                         <span class="card-text text-warning">
-                            {{ alunos_pendentes }} aprovação pendente
+                            {{ solicitacoes_presenca }} presença pendente
                         </span>
-                    {% elif alunos_pendentes > 1 %}
+                    {% elif solicitacoes_presenca > 1 %}
                         <span class="card-text text-warning">
-                            {{ alunos_pendentes }} aprovações pendentes
+                            {{ solicitacoes_presenca }} presenças pendentes
                         </span>
                     {% endif %}
                 </p>
-                <a href="{% url 'professor_alunos' %}" class="btn btn-outline-primary">Gerenciar</a>
+                <a href="{% url 'professor_presencas' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>
     </div>

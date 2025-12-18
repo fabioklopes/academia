@@ -205,7 +205,7 @@ def dashboard(request):
     elif request.user.is_professor():
         context = {
             'turmas_count': Turma.objects.filter(professor=request.user, ativa=True).count(),
-            'solicitacoes_presenca': AttendanceRequest.objects.filter(turma__professor=request.user, status='PEN').count(),
+            'solicitacoes_presenca': AttendanceRequest.objects.filter(status='PEN').count(),
             'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, status='ATIVO').distinct().count(),
             'alunos_pendentes': User.objects.filter(status='PENDENTE').count(),
             'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
@@ -736,10 +736,7 @@ def aluno_relatorio_pedidos(request):
 def professor_turmas(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
-    if request.user.is_admin():
-        turmas = Turma.objects.all()
-    else:
-        turmas = Turma.objects.filter(professor=request.user)
+    turmas = Turma.objects.all()
     return render(request, 'academia/professor/turmas.html', {'turmas': turmas})
 
 @login_required
@@ -766,8 +763,6 @@ def professor_turma_editar(request, turma_id):
         raise PermissionDenied
     
     turma = get_object_or_404(Turma, pk=turma_id)
-    if not request.user.is_admin() and turma.professor != request.user:
-        raise PermissionDenied
 
     if request.method == 'POST':
         form = TurmaForm(request.POST, instance=turma)
@@ -786,8 +781,6 @@ def professor_turma_alunos(request, turma_id):
         raise PermissionDenied
     
     turma = get_object_or_404(Turma, pk=turma_id)
-    if not request.user.is_admin() and turma.professor != request.user:
-        raise PermissionDenied
     
     alunos_na_turma_list = TurmaAluno.objects.filter(turma=turma, status='APRO').select_related('aluno').order_by('aluno__first_name', 'aluno__last_name')
     
@@ -820,8 +813,6 @@ def professor_turma_adicionar_aluno(request, turma_id):
         raise PermissionDenied
     
     turma = get_object_or_404(Turma, pk=turma_id)
-    if not request.user.is_admin() and turma.professor != request.user:
-        raise PermissionDenied
     
     if request.method == 'POST':
         alunos_ids = request.POST.getlist('alunos')
@@ -848,8 +839,6 @@ def professor_turma_remover_aluno(request, turma_id, aluno_id):
         raise PermissionDenied
     
     turma = get_object_or_404(Turma, pk=turma_id)
-    if not request.user.is_admin() and turma.professor != request.user:
-        raise PermissionDenied
     
     turma_aluno = get_object_or_404(TurmaAluno, turma=turma, aluno_id=aluno_id)
     aluno_nome = turma_aluno.aluno.get_full_name()
@@ -1015,8 +1004,6 @@ def professor_presencas(request):
         raise PermissionDenied
 
     query = AttendanceRequest.objects.filter(status='PEN')
-    if request.user.is_professor():
-        query = query.filter(turma__professor=request.user)
     
     pending_requests = query.select_related('student', 'turma').order_by('-attendance_date')
     return render(request, 'academia/professor/presencas.html', {'pending_requests': pending_requests})
@@ -1148,10 +1135,7 @@ def professor_pedidos(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
     
-    if request.user.is_admin():
-        pedidos_list = Pedido.objects.all().order_by('-data_solicitacao')
-    else:
-        pedidos_list = Pedido.objects.filter(item__isnull=False, aluno__turmas__professor=request.user).distinct().order_by('-data_solicitacao')
+    pedidos_list = Pedido.objects.all().order_by('-data_solicitacao')
 
     query = request.GET.get('q')
     if query:
@@ -1343,10 +1327,7 @@ def relatorio_pedidos(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
-    if request.user.is_admin():
-        base_query = Pedido.objects.all()
-    else: # is_professor
-        base_query = Pedido.objects.filter(aluno__turmas__professor=request.user).distinct()
+    base_query = Pedido.objects.all()
 
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -1427,14 +1408,9 @@ def relatorio_presenca(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
-    if request.user.is_admin():
-        turmas = Turma.objects.all()
-        alunos = User.objects.filter(group_role='STD', status='ATIVO').order_by('first_name', 'last_name')
-        base_query = AttendanceRequest.objects.all()
-    else:  # is_professor
-        turmas = Turma.objects.filter(professor=request.user)
-        alunos = User.objects.filter(turmas__professor=request.user, group_role='STD', status='ATIVO').distinct().order_by('first_name', 'last_name')
-        base_query = AttendanceRequest.objects.filter(turma__professor=request.user)
+    turmas = Turma.objects.all()
+    alunos = User.objects.filter(group_role='STD', status='ATIVO').order_by('first_name', 'last_name')
+    base_query = AttendanceRequest.objects.all()
 
     turma_id = request.GET.get('turma')
     aluno_id = request.GET.get('aluno')

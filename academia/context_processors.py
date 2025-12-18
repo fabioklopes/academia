@@ -33,8 +33,6 @@ def notifications_context(request):
     if request.user.is_professor_or_admin():
         # Solicitações de presença pendentes
         pending_attendances = AttendanceRequest.objects.filter(status='PEN')
-        if not request.user.is_admin():
-            pending_attendances = pending_attendances.filter(turma__professor=request.user)
         
         if pending_attendances.exists():
             count = pending_attendances.count()
