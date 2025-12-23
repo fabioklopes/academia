@@ -1,5 +1,13 @@
 from django import forms
 from .models import Graduacao, Item, Pedido, Turma, User
+from django.contrib.auth.forms import PasswordResetForm
+
+class CustomPasswordResetForm(PasswordResetForm):
+    email = forms.EmailField(
+        label="E-mail",
+        max_length=254,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'autocomplete': 'email'})
+    )
 
 class SolicitacaoAcessoForm(forms.Form):
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
