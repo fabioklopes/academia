@@ -81,42 +81,16 @@ WSGI_APPLICATION = 'jiujitsu_academy.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-<<<<<<< Updated upstream
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'database.db',
-#     }
-# }
-
-DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'db_academia',
-       'USER': 'postgres',
-       'PASSWORD': 'Mirium@#043015',
-       'HOST': '191.252.219.164',
-       'PORT': '5432',
-   }
-=======
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'database.db',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'db_academia',
+        'USER': 'postgres',
+        'PASSWORD': 'Mirium@#043015',
+        'HOST': '191.252.219.164',
+        'PORT': '5432',
     }
->>>>>>> Stashed changes
 }
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'db_academia',
-#        'USER': 'postgres',
-#        'PASSWORD': 'Mirium@#043015',
-#        'HOST': 'localhost',
-#        'PORT': '5432',
-#    }
-#}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
