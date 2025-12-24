@@ -25,7 +25,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     '*',
-    '*.ngrok-free.dev',
+    '191.252.219.164',
+    'crtn-belem.com.br',
+#    '*.ngrok-free.dev',
 ]
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.dev',
@@ -79,6 +81,7 @@ WSGI_APPLICATION = 'jiujitsu_academy.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+<<<<<<< Updated upstream
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
@@ -95,7 +98,24 @@ DATABASES = {
        'HOST': '191.252.219.164',
        'PORT': '5432',
    }
+=======
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'database.db',
+    }
+>>>>>>> Stashed changes
 }
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'db_academia',
+#        'USER': 'postgres',
+#        'PASSWORD': 'Mirium@#043015',
+#        'HOST': 'localhost',
+#        'PORT': '5432',
+#    }
+#}
 
 
 # Password validation
