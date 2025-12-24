@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="" />
+    <list default="true" id="664f4035-c90d-4dfb-8c30-4246002be3af" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/database.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jiujitsu_academy/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/jiujitsu_academy/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -171,7 +176,8 @@
       <workItem from="1765667345850" duration="330000" />
       <workItem from="1766013249100" duration="4226000" />
       <workItem from="1766097159413" duration="2942000" />
-      <workItem from="1766497486351" duration="5567000" />
+      <workItem from="1766497486351" duration="8955000" />
+      <workItem from="1766575906959" duration="811000" />
     </task>
     <servers />
   </component>

@@ -85,15 +85,16 @@ WSGI_APPLICATION = 'jiujitsu_academy.wsgi.application'
 #         'NAME': BASE_DIR / 'database.db',
 #     }
 # }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_academia',
-        'USER': 'postgres',
-        'PASSWORD': 'Mirium@#043015',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+   'default': {
+       'ENGINE': 'django.db.backends.postgresql',
+       'NAME': 'db_academia',
+       'USER': 'postgres',
+       'PASSWORD': 'Mirium@#043015',
+       'HOST': '191.252.219.164',
+       'PORT': '5432',
+   }
 }
 
 
