@@ -3,6 +3,9 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 import time
 import os
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
 
 def photo_upload_to(instance, filename):
     timestamp = str(int(time.time()))
@@ -36,6 +39,30 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         self.is_active = self.status == 'ATIVO'
         
+        # Process photo to ensure it's under 1MB
+        if self.photo and not getattr(self.photo, '_committed', True):
+            if self.photo.size > 1048576: # 1MB
+                try:
+                    img = Image.open(self.photo)
+                    output = BytesIO()
+
+                    # Convert RGBA to RGB to ensure JPEG compatibility
+                    if img.mode in ('RGBA', 'P'):
+                        img = img.convert('RGB')
+
+                    # Resize if dimensions are too large
+                    if img.height > 1280 or img.width > 1280:
+                        img.thumbnail((1280, 1280))
+
+                    # Save with compression
+                    img.save(output, format='JPEG', quality=60, optimize=True)
+
+                    new_content = ContentFile(output.getvalue())
+                    new_content.name = self.photo.name
+                    self.photo = new_content
+                except Exception as e:
+                    print(f"Error compressing image: {e}")
+
         # Check if the instance has a temporary photo path
         if self.photo and 'temp' in self.photo.name:
             # Save the instance to get a primary key
