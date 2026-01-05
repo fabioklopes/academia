@@ -14,3 +14,8 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+# Configuração de handlers de erro
+handler404 = 'academia.views.error_404'
+handler500 = 'academia.views.error_500'
+handler403 = 'academia.views.error_403'
+handler400 = 'academia.views.error_400'

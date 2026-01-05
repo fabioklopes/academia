@@ -1,12 +1,19 @@
+from django.contrib import admin
+from django.conf import settings
 from django.urls import path, include
+from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
+
 from academia import views
 from academia.forms import CustomPasswordResetForm
-from django.contrib.auth import views as auth_views
+
+
+
 
 urlpatterns = [
     # Home/Index
     path('', views.dashboard, name='index'),
-    
+
     # Autenticação
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
@@ -94,3 +101,10 @@ urlpatterns = [
     path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='relatorio_pedidos'),
     path('professor/relatorios/presenca/', views.relatorio_presenca, name='professor_relatorio_presenca'),
 ]
+
+# Página padrão para erros no aplicativo
+handler400 = 'academia.views.error_400'
+handler403 = 'academia.views.error_403'
+handler413 = 'academia.views.error_413'
+handler404 = 'academia.views.error_404'
+handler500 = 'academia.views.error_500'

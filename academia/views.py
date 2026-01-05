@@ -24,6 +24,8 @@ import os
 import time
 from django.conf import settings
 from .logs import create_log
+from PIL import Image
+from django.core.files.base import ContentFile
 
 # --- VIEWS GERAIS ---
 
@@ -105,17 +107,75 @@ def solicitar_acesso(request):
 
             if data.get('photo'):
                 photo = data['photo']
-                ext = os.path.splitext(photo.name)[1]
-                filename = f"{user.id}_{int(time.time())}{ext}"
-                filepath = os.path.join(settings.MEDIA_ROOT, 'photos', filename)
                 
-                os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                
-                with open(filepath, 'wb+') as destination:
-                    for chunk in photo.chunks():
-                        destination.write(chunk)
-                
-                user.photo = os.path.join('photos', filename)
+                try:
+                    # Verifica se a imagem é maior que 1MB (1048576 bytes)
+                    if photo.size > 1048576:
+                        img = Image.open(photo)
+                        
+                        # Converter para RGB se necessário (para salvar como JPEG)
+                        if img.mode in ('RGBA', 'P'):
+                            img = img.convert('RGB')
+                        
+                        # Redimensionar para no máximo 200x200
+                        img.thumbnail((200, 200))
+                        
+                        # Comprimir até ficar abaixo de 1024 bytes
+                        output = BytesIO()
+                        quality = 85
+                        
+                        # Loop para reduzir qualidade até atingir o tamanho desejado
+                        while True:
+                            output.seek(0)
+                            output.truncate()
+                            img.save(output, format='JPEG', quality=quality, optimize=True)
+                            
+                            # Se tamanho ok ou qualidade muito baixa, para
+                            if output.tell() <= 1024 or quality <= 5:
+                                break
+                            quality -= 5
+                        
+                        # Se ainda estiver maior que 1024 bytes, força um resize menor
+                        if output.tell() > 1024:
+                            img.thumbnail((100, 100))
+                            output.seek(0)
+                            output.truncate()
+                            img.save(output, format='JPEG', quality=5, optimize=True)
+
+                        # Preparar nome e conteúdo do arquivo
+                        filename = f"{user.id}_{int(time.time())}.jpg"
+                        photo_content = output.getvalue()
+                        
+                        # Salvar no disco
+                        filepath = os.path.join(settings.MEDIA_ROOT, 'photos', filename)
+                        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                        
+                        with open(filepath, 'wb+') as destination:
+                            destination.write(photo_content)
+                            
+                        user.photo = os.path.join('photos', filename)
+                    
+                    else:
+                        # Processo normal para imagens menores que 1MB
+                        ext = os.path.splitext(photo.name)[1]
+                        filename = f"{user.id}_{int(time.time())}{ext}"
+                        filepath = os.path.join(settings.MEDIA_ROOT, 'photos', filename)
+                        
+                        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                        
+                        with open(filepath, 'wb+') as destination:
+                            for chunk in photo.chunks():
+                                destination.write(chunk)
+                        
+                        user.photo = os.path.join('photos', filename)
+                        
+                except Exception as e:
+                    # Em caso de erro, remove o usuário criado e exibe erro
+                    user.delete()
+                    return render(request, 'default_errors.html', {
+                        'error_code': '500',
+                        'error_message': f'Erro ao processar a imagem: {str(e)}'
+                    })
 
             responsible_user = None
             if has_responsible and responsible_email:
@@ -1497,3 +1557,35 @@ def relatorio_presenca(request):
         'aluno_id': aluno_id,
     }
     return render(request, 'academia/professor/relatorio_presenca.html', context)
+
+# --- VIEWS DE ERRO ---
+
+def error_404(request, exception):
+    return render(request, 'default_errors.html', {
+        'error_code': '404',
+        'error_message': 'O endereço pode estar incorreto ou a página foi removida.'
+    }, status=404)
+
+def error_500(request):
+    return render(request, 'default_errors.html', {
+        'error_code': '500',
+        'error_message': 'Erro interno do servidor. Tente novamente mais tarde.'
+    }, status=500)
+
+def error_403(request, exception):
+    return render(request, 'default_errors.html', {
+        'error_code': '403',
+        'error_message': 'Você não tem permissão para acessar esta página.'
+    }, status=403)
+
+def error_400(request, exception):
+    return render(request, 'default_errors.html', {
+        'error_code': '400',
+        'error_message': 'Requisição inválida.'
+    }, status=400)
+
+def error_413(request, exception):
+    return render(request, 'default_errors.html', {
+        'error_code': '413',
+        'error_message': 'Arquivo muito grande ou dados excedendo limites.'
+    }, status=413)
