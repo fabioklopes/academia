@@ -14,14 +14,18 @@
                 <tr>
                     <td>
                         {% if turma_aluno.aluno.photo %}
-                            <img src="{{ turma_aluno.aluno.photo.url }}" alt="Foto" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                            <img src="{{ turma_aluno.aluno.photo.url }}" alt="Foto" class="rounded-circle" width="40" height="40" style="object-fit: cover; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ turma_aluno.aluno.id }}">
                         {% else %}
-                            <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ turma_aluno.aluno.id }}">
                                 <i class="bi bi-person text-white"></i>
                             </div>
                         {% endif %}
                     </td>
-                    <td>{{ turma_aluno.aluno.get_full_name }}</td>
+                    <td>
+                        <a href="#" class="text-decoration-none text-dark" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ turma_aluno.aluno.id }}">
+                            {{ turma_aluno.aluno.get_full_name }}
+                        </a>
+                    </td>
                     <td>{{ turma_aluno.aluno.email }}</td>
                     <td>{{ turma_aluno.data_solicitacao|date:"d/m/Y" }}</td>
                     <td>
@@ -30,6 +34,53 @@
                         </button>
                     </td>
                 </tr>
+
+                <!-- Modal Detalhes do Aluno -->
+                <div class="modal fade" id="alunoDetalheModal{{ turma_aluno.aluno.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalhes do Aluno</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <div class="card border-0">
+                                    <div class="card-body">
+                                        {% if turma_aluno.aluno.photo %}
+                                            <img src="{{ turma_aluno.aluno.photo.url }}" alt="Foto de {{ turma_aluno.aluno.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                                                <i class="bi bi-person text-white" style="font-size: 100px;"></i>
+                                            </div>
+                                        {% endif %}
+
+                                        <h2 class="fw-bold mb-1">{{ turma_aluno.aluno.first_name }}</h2>
+                                        <h5 class="text-muted mb-4">{{ turma_aluno.aluno.get_full_name }}</h5>
+
+                                        <div class="mb-3">
+                                            {% if turma_aluno.aluno.graduacao %}
+                                                {% with faixa_img="faixas/"|add:turma_aluno.aluno.graduacao.faixa|lower|add:".png" %}
+                                                    <img src="/media/{{ faixa_img }}" alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}" style="max-width: 100%; height: auto; max-height: 50px;">
+                                                {% endwith %}
+                                            {% else %}
+                                                <span class="badge bg-secondary">Sem graduação</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <p class="card-text fs-5">
+                                            <i class="bi bi-cake2 me-2 text-primary"></i>
+                                            {% if turma_aluno.aluno.birthday %}
+                                                {{ turma_aluno.aluno.birthday|date:"d/m/Y" }}
+                                            {% else %}
+                                                Não informado
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Modal de Confirmação de Remoção -->
                 <div class="modal fade" id="removeModal{{ turma_aluno.aluno.id }}" tabindex="-1" aria-labelledby="removeModalLabel{{ turma_aluno.aluno.id }}" aria-hidden="true">

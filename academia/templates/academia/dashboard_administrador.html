@@ -192,10 +192,57 @@
                         </thead>
                         <tbody>
                             {% for u in aniversariantes %}
-                                <tr>
+                                <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ u.id }}">
                                     <td>{{ u.get_full_name }}</td>
                                     <td>{{ u.birthday|date:"d/m" }}</td>
                                 </tr>
+
+                                <!-- Modal Detalhes do Aluno -->
+                                <div class="modal fade" id="alunoDetalheModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Detalhes do Aluno</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <div class="card border-0">
+                                                    <div class="card-body">
+                                                        {% if u.photo %}
+                                                            <img src="{{ u.photo.url }}" alt="Foto de {{ u.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                                        {% else %}
+                                                            <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                                                                <i class="bi bi-person text-white" style="font-size: 100px;"></i>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        <h2 class="fw-bold mb-1">{{ u.first_name }}</h2>
+                                                        <h5 class="text-muted mb-4">{{ u.get_full_name }}</h5>
+
+                                                        <div class="mb-3">
+                                                            {% if u.graduacao %}
+                                                                {% with faixa_img="faixas/"|add:u.graduacao.faixa|lower|add:".png" %}
+                                                                    <img src="/media/{{ faixa_img }}" alt="{{ u.graduacao.get_faixa_display }}" style="max-width: 100%; height: auto; max-height: 50px;">
+                                                                {% endwith %}
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">Sem graduação</span>
+                                                            {% endif %}
+                                                        </div>
+
+                                                        <p class="card-text fs-5">
+                                                            <i class="bi bi-cake2 me-2 text-primary"></i>
+                                                            {% if u.birthday %}
+                                                                {{ u.birthday|date:"d/m/Y" }}
+                                                            {% else %}
+                                                                Não informado
+                                                            {% endif %}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             {% empty %}
                                 <tr><td colspan="2" class="text-center">Nenhum aniversariante neste mês.</td></tr>
                             {% endfor %}
