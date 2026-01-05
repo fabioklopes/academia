@@ -94,8 +94,7 @@ def solicitar_acesso(request):
                     return render(request, 'academia/solicitar_acesso.html', {'form': form})
 
             whatsapp_number = data.get('whatsapp')
-            if whatsapp_number:
-                whatsapp_number = '({}) {}-{}'.format(whatsapp_number[:2], whatsapp_number[2:7], whatsapp_number[7:])
+            # O número já vem formatado do clean_whatsapp do formulário
 
             user = User(
                 username=username, email=email,

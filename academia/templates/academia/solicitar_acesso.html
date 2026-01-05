@@ -205,18 +205,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (whatsappInput) {
         whatsappInput.addEventListener('input', function (e) {
             let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
-            let formattedValue = '';
-
-            if (value.length > 0) {
-                formattedValue = '(' + value.substring(0, 2);
-                if (value.length > 2) {
-                    formattedValue += ') ' + value.substring(2, 7);
-                    if (value.length > 7) {
-                        formattedValue += '-' + value.substring(7, 11);
-                    }
-                }
+            if (value.length > 11) {
+                value = value.slice(0, 11);
             }
-            e.target.value = formattedValue;
+
+            if (value.length > 2) {
+                value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
+            }
+            if (value.length > 9) {
+                value = value.substring(0, 9) + '-' + value.substring(9);
+            }
+
+            e.target.value = value;
         });
     }
 
