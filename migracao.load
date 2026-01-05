@@ -1,7 +1,0 @@
-LOAD DATABASE
-     FROM sqlite:///var/www/academia/database.db
-     INTO postgresql://postgres@191.252.219.164:5432/db_academia
-
-  WITH include drop, create tables, create indexes, reset sequences
-
-  SET work_mem to '16MB', maintenance_work_mem to '512MB';
