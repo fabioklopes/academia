@@ -13,7 +13,6 @@ def photo_upload_to(instance, filename):
     if instance.pk:
         return f'photos/{instance.pk}_{timestamp}{ext}'
     
-    # Generate a temporary filename if the instance is not yet saved
     return f'photos/temp/{timestamp}_{filename}'
 
 class User(AbstractUser):
