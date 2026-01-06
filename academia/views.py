@@ -93,99 +93,33 @@ def solicitar_acesso(request):
                     messages.warning(request, 'Este e-mail já está sendo usado por outro usuário.')
                     return render(request, 'academia/solicitar_acesso.html', {'form': form})
 
+            # Check responsible user before creating the new user
+            responsible_user = None
+            if has_responsible and responsible_email:
+                responsible_user = User.objects.filter(email=responsible_email, group_role='STD', status='ATIVO').first()
+                if not responsible_user:
+                    messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
+                    return render(request, 'academia/solicitar_acesso.html', {'form': form})
+
             whatsapp_number = data.get('whatsapp')
             # O número já vem formatado do clean_whatsapp do formulário
 
             user = User(
                 username=username, email=email,
                 first_name=data['first_name'], last_name=data['last_name'],
-                birthday=data['birthday'], whatsapp=whatsapp_number, status='PENDENTE'
+                birthday=data['birthday'], whatsapp=whatsapp_number, status='PENDENTE',
+                responsible=responsible_user,
+                photo=data.get('photo')
             )
             user.set_password(data['password'])
-            user.save()
-
-            if data.get('photo'):
-                photo = data['photo']
-                
-                try:
-                    # Verifica se a imagem é maior que 1MB (1048576 bytes)
-                    if photo.size > 1048576:
-                        img = Image.open(photo)
-                        
-                        # Converter para RGB se necessário (para salvar como JPEG)
-                        if img.mode in ('RGBA', 'P'):
-                            img = img.convert('RGB')
-                        
-                        # Redimensionar para no máximo 200x200
-                        img.thumbnail((200, 200))
-                        
-                        # Comprimir até ficar abaixo de 1024 bytes
-                        output = BytesIO()
-                        quality = 85
-                        
-                        # Loop para reduzir qualidade até atingir o tamanho desejado
-                        while True:
-                            output.seek(0)
-                            output.truncate()
-                            img.save(output, format='JPEG', quality=quality, optimize=True)
-                            
-                            # Se tamanho ok ou qualidade muito baixa, para
-                            if output.tell() <= 1024 or quality <= 5:
-                                break
-                            quality -= 5
-                        
-                        # Se ainda estiver maior que 1024 bytes, força um resize menor
-                        if output.tell() > 1024:
-                            img.thumbnail((100, 100))
-                            output.seek(0)
-                            output.truncate()
-                            img.save(output, format='JPEG', quality=5, optimize=True)
-
-                        # Preparar nome e conteúdo do arquivo
-                        filename = f"{user.id}_{int(time.time())}.jpg"
-                        photo_content = output.getvalue()
-                        
-                        # Salvar no disco
-                        filepath = os.path.join(settings.MEDIA_ROOT, 'photos', filename)
-                        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                        
-                        with open(filepath, 'wb+') as destination:
-                            destination.write(photo_content)
-                            
-                        user.photo = os.path.join('photos', filename)
-                    
-                    else:
-                        # Processo normal para imagens menores que 1MB
-                        ext = os.path.splitext(photo.name)[1]
-                        filename = f"{user.id}_{int(time.time())}{ext}"
-                        filepath = os.path.join(settings.MEDIA_ROOT, 'photos', filename)
-                        
-                        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                        
-                        with open(filepath, 'wb+') as destination:
-                            for chunk in photo.chunks():
-                                destination.write(chunk)
-                        
-                        user.photo = os.path.join('photos', filename)
-                        
-                except Exception as e:
-                    # Em caso de erro, remove o usuário criado e exibe erro
-                    user.delete()
-                    return render(request, 'default_errors.html', {
-                        'error_code': '500',
-                        'error_message': f'Erro ao processar a imagem: {str(e)}'
-                    })
-
-            responsible_user = None
-            if has_responsible and responsible_email:
-                responsible_user = User.objects.filter(email=responsible_email, group_role='STD', status='ATIVO').first()
-                if not responsible_user:
-                    messages.error(request, f'O e-mail do responsável "{responsible_email}" não foi encontrado ou não é de um aluno ativo.')
-                    user.delete()
-                    return render(request, 'academia/solicitar_acesso.html', {'form': form})
             
-            user.responsible = responsible_user
-            user.save()
+            try:
+                user.save()
+            except Exception as e:
+                return render(request, 'default_errors.html', {
+                    'error_code': '500',
+                    'error_message': f'Erro ao salvar usuário: {str(e)}'
+                })
             
             messages.success(request, 'Sua solicitação de acesso foi enviada com sucesso! Aguarde a aprovação de um administrador.')
             return redirect('solicitar_acesso') # Redireciona para a própria página de solicitação de acesso

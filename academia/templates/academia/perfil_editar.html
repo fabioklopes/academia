@@ -59,6 +59,7 @@
                             </button>
                         </div>
                         <input type="file" class="form-control d-none" id="photo" name="photo" accept="image/*">
+                        <div id="photo-error" class="text-danger mt-1" style="display: none;"></div>
                         <img id="photo-preview" src="{% if user.photo %}{{ user.photo.url }}{% endif %}" alt="Pré-visualização da foto" class="img-fluid mt-2" style="{% if user.photo %}display: block;{% else %}display: none;{% endif %} max-height: 150px;">
                     </div>
                     
@@ -102,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Lógica do Modal e da Foto
     const photoInput = document.getElementById('photo');
     const photoPreview = document.getElementById('photo-preview');
+    const photoError = document.getElementById('photo-error');
     const photoModal = new bootstrap.Modal(document.getElementById('photo-modal'));
 
     document.getElementById('select-gallery-btn').addEventListener('click', () => {
@@ -116,16 +118,80 @@ document.addEventListener('DOMContentLoaded', function() {
 
     photoInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
+        photoError.style.display = 'none';
+        photoError.textContent = '';
+
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                photoPreview.src = e.target.result;
-                photoPreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-            photoModal.hide();
+            if (file.size > 1048576) { // 1MB
+                photoError.textContent = 'A imagem é maior que 1MB e será redimensionada antes do envio.';
+                photoError.style.display = 'block';
+                photoError.classList.remove('text-danger');
+                photoError.classList.add('text-warning');
+
+                resizeImage(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                photoModal.hide();
+            }
         }
     });
+
+    function resizeImage(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX_WIDTH = 1280;
+                const MAX_HEIGHT = 1280;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(function(blob) {
+                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(newFile);
+                    photoInput.files = dataTransfer.files;
+
+                    photoPreview.src = URL.createObjectURL(newFile);
+                    photoPreview.style.display = 'block';
+                    photoModal.hide();
+
+                    photoError.textContent = 'Imagem redimensionada com sucesso!';
+                    photoError.classList.remove('text-warning');
+                    photoError.classList.add('text-success');
+                }, 'image/jpeg', 0.7);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
 
     // Máscara para o campo WhatsApp
     const whatsappInput = document.getElementById('id_whatsapp');

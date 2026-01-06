@@ -9,8 +9,9 @@ from django.core.files.base import ContentFile
 
 def photo_upload_to(instance, filename):
     timestamp = str(int(time.time()))
+    ext = os.path.splitext(filename)[1]
     if instance.pk:
-        return f'photos/{instance.pk}_{timestamp}.png'
+        return f'photos/{instance.pk}_{timestamp}{ext}'
     
     # Generate a temporary filename if the instance is not yet saved
     return f'photos/temp/{timestamp}_{filename}'
@@ -43,6 +44,11 @@ class User(AbstractUser):
         if self.photo and not getattr(self.photo, '_committed', True):
             if self.photo.size > 1048576: # 1MB
                 try:
+                    if hasattr(self.photo, 'open'):
+                        self.photo.open()
+                    if hasattr(self.photo, 'seek'):
+                        self.photo.seek(0)
+                        
                     img = Image.open(self.photo)
                     output = BytesIO()
 
@@ -58,24 +64,42 @@ class User(AbstractUser):
                     img.save(output, format='JPEG', quality=60, optimize=True)
 
                     new_content = ContentFile(output.getvalue())
-                    new_content.name = self.photo.name
+                    
+                    # Update extension to .jpg
+                    name_base = os.path.splitext(os.path.basename(self.photo.name))[0]
+                    new_content.name = f"{name_base}.jpg"
+                    
                     self.photo = new_content
                 except Exception as e:
                     print(f"Error compressing image: {e}")
 
-        # Check if the instance has a temporary photo path
-        if self.photo and 'temp' in self.photo.name:
-            # Save the instance to get a primary key
-            if not self.pk:
-                super().save(*args, **kwargs)
-
-            # Rename the file
-            old_path = self.photo.path
-            new_path = photo_upload_to(self, os.path.basename(self.photo.name))
-            os.rename(old_path, os.path.join(os.path.dirname(old_path), os.path.basename(new_path)))
-            self.photo.name = new_path
+        # Check if it's a new instance (no pk yet)
+        is_new = self.pk is None
 
         super().save(*args, **kwargs)
+        
+        # Check if the instance has a temporary photo path and needs renaming
+        # This happens only for new users where photo_upload_to returned a temp path
+        if is_new and self.photo and 'photos/temp/' in self.photo.name:
+            old_path = self.photo.path
+            filename = os.path.basename(self.photo.name)
+            
+            # Now that we have a PK, generate the final path
+            new_name = photo_upload_to(self, filename)
+            
+            # Use storage to get absolute path for new location
+            new_absolute_path = self.photo.storage.path(new_name)
+            
+            # Ensure directory exists
+            new_dir = os.path.dirname(new_absolute_path)
+            if not os.path.exists(new_dir):
+                os.makedirs(new_dir)
+                
+            if os.path.exists(old_path):
+                os.rename(old_path, new_absolute_path)
+                self.photo.name = new_name
+                # Update the database with the new path
+                super().save(update_fields=['photo'])
         
     def __str__(self):
         return self.get_full_name()

@@ -88,13 +88,16 @@ class PerfilEditForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         
-        graduacao, created = Graduacao.objects.get_or_create(aluno=user)
-        graduacao.faixa = self.cleaned_data.get('faixa')
-        graduacao.grau = self.cleaned_data.get('grau')
+        # Only try to get/create graduation if the user is a student
+        if user.is_student():
+            graduacao, created = Graduacao.objects.get_or_create(aluno=user)
+            graduacao.faixa = self.cleaned_data.get('faixa')
+            graduacao.grau = self.cleaned_data.get('grau')
+            if commit:
+                graduacao.save()
         
         if commit:
             user.save()
-            graduacao.save()
             
         return user
 
