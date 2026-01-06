@@ -170,8 +170,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.drawImage(img, 0, 0, width, height);
 
                 canvas.toBlob(function(blob) {
-                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
-                        type: 'image/jpeg',
+                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".png", {
+                        type: 'image/png',
                         lastModified: Date.now()
                     });
 
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     photoError.textContent = 'Imagem redimensionada com sucesso!';
                     photoError.classList.remove('text-warning');
                     photoError.classList.add('text-success');
-                }, 'image/jpeg', 0.7);
+                }, 'image/png', 0.7);
             };
             img.src = e.target.result;
         };

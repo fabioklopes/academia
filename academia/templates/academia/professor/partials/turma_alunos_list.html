@@ -59,9 +59,17 @@
 
                                         <div class="mb-3">
                                             {% if turma_aluno.aluno.graduacao %}
-                                                {% with faixa_img="faixas/"|add:turma_aluno.aluno.graduacao.faixa|lower|add:".png" %}
-                                                    <img src="/media/{{ faixa_img }}" alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}" style="max-width: 100%; height: auto; max-height: 50px;">
-                                                {% endwith %}
+                                                <div class="mt-2">
+                                                    {% if turma_aluno.aluno.graduacao.grau > 0 %}
+                                                        <img src="/media/faixas/{{ turma_aluno.aluno.graduacao.faixa }}_{{ turma_aluno.aluno.graduacao.grau }}_DEGREES.png"
+                                                             alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}"
+                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                    {% else %}
+                                                        <img src="/media/faixas/{{ turma_aluno.aluno.graduacao.faixa }}.png"
+                                                             alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}"
+                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                    {% endif %}
+                                                </div>
                                             {% else %}
                                                 <span class="badge bg-secondary">Sem graduação</span>
                                             {% endif %}

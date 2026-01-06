@@ -39,9 +39,12 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         self.is_active = self.status == 'ATIVO'
         
-        # Process photo to ensure it's under 1MB
+        # Process photo to ensure it's under 1MB and is PNG
         if self.photo and not getattr(self.photo, '_committed', True):
-            if self.photo.size > 1048576: # 1MB
+            filename = self.photo.name
+            ext = os.path.splitext(filename)[1].lower()
+            
+            if self.photo.size > 1048576 or ext != '.png': # 1MB or not PNG
                 try:
                     if hasattr(self.photo, 'open'):
                         self.photo.open()
@@ -51,26 +54,22 @@ class User(AbstractUser):
                     img = Image.open(self.photo)
                     output = BytesIO()
 
-                    # Convert RGBA to RGB to ensure JPEG compatibility
-                    if img.mode in ('RGBA', 'P'):
-                        img = img.convert('RGB')
-
                     # Resize if dimensions are too large
                     if img.height > 1280 or img.width > 1280:
                         img.thumbnail((1280, 1280))
 
-                    # Save with compression
-                    img.save(output, format='JPEG', quality=60, optimize=True)
+                    # Save as PNG
+                    img.save(output, format='PNG', optimize=True)
 
                     new_content = ContentFile(output.getvalue())
                     
-                    # Update extension to .jpg
+                    # Update extension to .png
                     name_base = os.path.splitext(os.path.basename(self.photo.name))[0]
-                    new_content.name = f"{name_base}.jpg"
+                    new_content.name = f"{name_base}.png"
                     
                     self.photo = new_content
                 except Exception as e:
-                    print(f"Error compressing image: {e}")
+                    print(f"Error compressing/converting image: {e}")
 
         # Check if it's a new instance (no pk yet)
         is_new = self.pk is None
