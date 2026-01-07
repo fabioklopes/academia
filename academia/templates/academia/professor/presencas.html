@@ -22,17 +22,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for request in pending_requests %}
+                                {% for req in pending_requests %}
                                     <tr>
-                                        <td>{{ request.student.get_full_name }}</td>
-                                        <td>{{ request.turma.nome }}</td>
-                                        <td>{{ request.attendance_date|date:"d/m/Y" }}</td>
+                                        <td>{{ req.student.get_full_name }}</td>
+                                        <td>{{ req.turma.nome }}</td>
+                                        <td>{{ req.attendance_date|date:"d/m/Y" }}</td>
                                         <td>
-                                            <form method="post" action="{% url 'professor_presenca_aprovar' request.id %}" style="display: inline;">
+                                            <form method="post" action="{% url 'professor_presenca_aprovar' req.id %}" style="display: inline;">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-sm btn-outline-success">Aprovar</button>
                                             </form>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ request.id }}">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ req.id }}">
                                                 Rejeitar
                                             </button>
                                         </td>
@@ -53,18 +53,43 @@
 </div>
 
 <!-- Modals de Rejeição -->
-{% for request in pending_requests %}
-<div class="modal fade" id="rejectModal{{ request.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ request.id }}" aria-hidden="true">
+{% for req in pending_requests %}
+<div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ req.id }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="rejectModalLabel{{ request.id }}">Rejeitar Solicitação</h5>
+                <h5 class="modal-title" id="rejectModalLabel{{ req.id }}">Rejeitar Solicitação</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" action="{% url 'professor_presenca_rejeitar' request.id %}">
+            <form method="post" action="{% url 'professor_presenca_rejeitar' req.id %}">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p>Tem certeza que deseja rejeitar a solicitação de presença de <strong>{{ request.student.get_full_name }}</strong> para a turma <strong>{{ request.turma.nome }}</strong> em <strong>{{ request.attendance_date|date:"d/m/Y" }}</strong>?</p>
+                    <p>Tem certeza que deseja rejeitar a solicitação de presença de <strong>{{ req.student.get_full_name }}</strong> para a turma <strong>{{ req.turma.nome }}</strong> em <strong>{{ req.attendance_date|date:"d/m/Y" }}</strong>?</p>
+
+                    {% if req.attendance_date|date:"w" == "2" and req.class_type == "BOTH" %}
+                    <div class="mb-3 border p-2 rounded bg-light">
+                        <label class="form-label fw-bold">Opções de Rejeição (Terça-feira):</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejection_scope" id="reject_both_{{ req.id }}" value="both" checked>
+                            <label class="form-check-label" for="reject_both_{{ req.id }}">
+                                Rejeitar ambas as aulas (0 Presenças)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejection_scope" id="reject_first_{{ req.id }}" value="first">
+                            <label class="form-check-label" for="reject_first_{{ req.id }}">
+                                Rejeitar 1ª Aula (Gi) - Aprovar 2ª Aula (No-Gi)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="rejection_scope" id="reject_second_{{ req.id }}" value="second">
+                            <label class="form-check-label" for="reject_second_{{ req.id }}">
+                                Rejeitar 2ª Aula (No-Gi) - Aprovar 1ª Aula (Gi)
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="mb-3">
                         <label for="rejection_reason" class="form-label">Motivo da Rejeição (Opcional)</label>
                         <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3"></textarea>

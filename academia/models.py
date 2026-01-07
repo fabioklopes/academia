@@ -140,10 +140,12 @@ class TurmaAluno(models.Model):
 
 class AttendanceRequest(models.Model):
     STATUS_CHOICES = [('PEN', 'Pendente'), ('APR', 'Aprovado'), ('REJ', 'Rejeitado'), ('CAN', 'Cancelado')]
+    CLASS_TYPE_CHOICES = [('GI', 'Gi'), ('NOGI', 'No-Gi'), ('BOTH', 'Ambas')]
 
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'group_role': 'STD'}, related_name='attendance_requests')
     turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='attendance_requests')
     attendance_date = models.DateField('Data da Presença')
+    class_type = models.CharField('Tipo de Aula', max_length=4, choices=CLASS_TYPE_CHOICES, default='BOTH')
     reason = models.TextField('Motivo da Solicitação')
     status = models.CharField('Status', max_length=3, choices=STATUS_CHOICES, default='PEN')
     rejection_reason = models.TextField('Motivo da Rejeição', blank=True)
@@ -154,7 +156,7 @@ class AttendanceRequest(models.Model):
     class Meta:
         verbose_name, verbose_name_plural = 'Solicitação de Presença', 'Solicitações de Presença'
         ordering = ['-attendance_date']
-        unique_together = ['student', 'turma', 'attendance_date']
+        unique_together = ['student', 'turma', 'attendance_date', 'class_type']
 
     def __str__(self):
         return f"{self.student} - {self.attendance_date} - {self.get_status_display()}"

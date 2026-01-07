@@ -307,6 +307,12 @@ def perfil_editar(request):
 
 # --- PAINEL DO ALUNO ---
 
+def extract_class_type(reason):
+    if '[TYPE: GI]' in reason: return 'Primeira Aula (Gi)'
+    if '[TYPE: NOGI]' in reason: return 'Segunda Aula (No-Gi)'
+    if '[TYPE: BOTH]' in reason: return 'As duas aulas'
+    return 'N/A'
+
 @login_required
 def aluno_marcar_presenca(request):
     if not request.user.is_student():
@@ -330,18 +336,30 @@ def aluno_marcar_presenca(request):
             try:
                 attendance_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
                 
+                class_type_val = 'BOTH'
+                if attendance_date.weekday() == 1: # Tuesday
+                    class_type_val = request.POST.get(f'class_type_{date_str}', 'BOTH')
+                
+                reason_text = "Solicitação de presença pelo aluno."
+                if class_type_val != 'BOTH':
+                    reason_text += f" [TYPE: {class_type_val}]"
+                elif attendance_date.weekday() == 1:
+                    reason_text += " [TYPE: BOTH]"
+
                 # Try to get an existing request for this student, turma, and date
                 existing_request = AttendanceRequest.objects.filter(
                     student=request.user,
                     turma=turma,
-                    attendance_date=attendance_date
+                    attendance_date=attendance_date,
+                    class_type=class_type_val
                 ).first()
 
                 if existing_request:
                     if existing_request.status == 'CAN':
                         # If cancelled, re-activate it (change status to Pending)
                         existing_request.status = 'PEN'
-                        existing_request.reason = "Solicitação de presença pelo aluno (re-solicitada)."
+                        existing_request.reason = reason_text
+                        existing_request.class_type = class_type_val
                         existing_request.processed_by = None
                         existing_request.processed_at = None
                         existing_request.rejection_reason = ""
@@ -356,7 +374,8 @@ def aluno_marcar_presenca(request):
                     AttendanceRequest.objects.create(
                         student=request.user, turma=turma,
                         attendance_date=attendance_date,
-                        reason="Solicitação de presença pelo aluno."
+                        reason=reason_text,
+                        class_type=class_type_val
                     )
                     messages.success(request, f'Presença para {attendance_date.strftime("%d/%m/%Y")} solicitada com sucesso!')
             except ValueError:
@@ -386,6 +405,7 @@ def aluno_marcar_presenca(request):
             'processed_by': req.processed_by.get_full_name() if req.processed_by else None,
             'processed_at': req.processed_at.strftime('%Y-%m-%d %H:%M') if req.processed_at else None,
             'rejection_reason': req.rejection_reason,
+            'class_type': extract_class_type(req.reason),
         })
 
     context = {
@@ -424,6 +444,7 @@ def get_attendance_details(request):
             'processed_by': req.processed_by.get_full_name() if req.processed_by else 'N/A',
             'processed_at': req.processed_at.strftime('%d/%m/%Y %H:%M') if req.processed_at else 'N/A',
             'rejection_reason': req.rejection_reason if req.rejection_reason else 'N/A',
+            'class_type': extract_class_type(req.reason),
         })
     
     return JsonResponse({'date': date_str, 'details': details})
@@ -1008,9 +1029,6 @@ def professor_presenca_aprovar(request, request_id):
 
     attendance_request = get_object_or_404(AttendanceRequest, id=request_id)
     
-    if request.user.is_professor() and attendance_request.turma.professor != request.user:
-        raise PermissionDenied
-
     if request.method == 'POST':
         if not attendance_request.student.status == 'ATIVO':
             messages.error(request, f'Não é possível aprovar a presença de um aluno desativado ({attendance_request.student.get_full_name()}).')
@@ -1034,11 +1052,75 @@ def professor_presenca_rejeitar(request, request_id):
 
     attendance_request = get_object_or_404(AttendanceRequest, id=request_id)
 
-    if request.user.is_professor() and attendance_request.turma.professor != request.user:
-        raise PermissionDenied
-
     if request.method == 'POST':
         reason = request.POST.get('rejection_reason', 'Sem motivo especificado.')
+        rejection_scope = request.POST.get('rejection_scope', 'both')
+        
+        # Check if it's a Tuesday and the request is for both classes
+        is_tuesday = attendance_request.attendance_date.weekday() == 1
+        is_both_classes = attendance_request.class_type == 'BOTH'
+        
+        if is_tuesday and is_both_classes:
+            if rejection_scope == 'first':
+                # Reject first class (Gi), Approve second class (No-Gi)
+                # We modify the current request to be the approved one (No-Gi)
+                # And create a new rejected request for the first class (Gi)
+                
+                # Create rejected request for Gi class
+                AttendanceRequest.objects.create(
+                    student=attendance_request.student,
+                    turma=attendance_request.turma,
+                    attendance_date=attendance_request.attendance_date,
+                    reason="Solicitação de presença pelo aluno. [TYPE: GI]",
+                    class_type='GI',
+                    status='REJ',
+                    rejection_reason=reason,
+                    processed_by=request.user,
+                    processed_at=timezone.now()
+                )
+                
+                # Update current request to be approved No-Gi class
+                attendance_request.reason = "Solicitação de presença pelo aluno. [TYPE: NOGI]"
+                attendance_request.class_type = 'NOGI'
+                attendance_request.status = 'APR'
+                attendance_request.processed_by = request.user
+                attendance_request.processed_at = timezone.now()
+                attendance_request.notified = False
+                attendance_request.save()
+                
+                create_log(request.user, f'rejeitou a 1ª aula e aprovou a 2ª aula de {attendance_request.student.get_full_name()} para a data {attendance_request.attendance_date.strftime("%d/%m/%Y")}')
+                messages.success(request, 'Solicitação processada: 1ª aula rejeitada, 2ª aula aprovada.')
+                return redirect('professor_presencas')
+                
+            elif rejection_scope == 'second':
+                # Reject second class (No-Gi), Approve first class (Gi)
+                
+                # Create rejected request for No-Gi class
+                AttendanceRequest.objects.create(
+                    student=attendance_request.student,
+                    turma=attendance_request.turma,
+                    attendance_date=attendance_request.attendance_date,
+                    reason="Solicitação de presença pelo aluno. [TYPE: NOGI]",
+                    class_type='NOGI',
+                    status='REJ',
+                    rejection_reason=reason,
+                    processed_by=request.user,
+                    processed_at=timezone.now()
+                )
+                
+                # Update current request to be approved Gi class
+                attendance_request.reason = "Solicitação de presença pelo aluno. [TYPE: GI]"
+                attendance_request.class_type = 'GI'
+                attendance_request.status = 'APR'
+                attendance_request.processed_by = request.user
+                attendance_request.processed_at = timezone.now()
+                attendance_request.notified = False
+                attendance_request.save()
+                
+                create_log(request.user, f'rejeitou a 2ª aula e aprovou a 1ª aula de {attendance_request.student.get_full_name()} para a data {attendance_request.attendance_date.strftime("%d/%m/%Y")}')
+                messages.success(request, 'Solicitação processada: 2ª aula rejeitada, 1ª aula aprovada.')
+                return redirect('professor_presencas')
+
         attendance_request.status = 'REJ'
         attendance_request.rejection_reason = reason
         attendance_request.processed_by = request.user
