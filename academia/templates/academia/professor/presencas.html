@@ -15,6 +15,7 @@
                         <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
+                                    <th scope="col" style="width: 5%;">Foto</th>
                                     <th>Aluno</th>
                                     <th>Turma</th>
                                     <th>Data da Presença</th>
@@ -24,7 +25,20 @@
                             <tbody>
                                 {% for req in pending_requests %}
                                     <tr>
-                                        <td>{{ req.student.get_full_name }}</td>
+                                        <td>
+                                            {% if req.student.photo %}
+                                                <img src="{{ req.student.photo.url }}" alt="Foto de {{ req.student.first_name }}" class="rounded-circle" width="40" height="40" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ req.id }}">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle me-2 d-inline-block align-middle" style="width: 40px; height: 40px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ req.id }}">
+                                                    <i class="bi bi-person text-white" style="font-size: 24px; line-height: 40px;"></i>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="#" class="text-decoration-none text-dark" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ req.id }}">
+                                                {{ req.student.get_full_name }}
+                                            </a>
+                                        </td>
                                         <td>{{ req.turma.nome }}</td>
                                         <td>{{ req.attendance_date|date:"d/m/Y" }}</td>
                                         <td>
@@ -37,6 +51,61 @@
                                             </button>
                                         </td>
                                     </tr>
+
+                                    <!-- Modal Detalhes do Aluno -->
+                                    <div class="modal fade" id="alunoDetalheModal{{ req.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Detalhes do Aluno</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body text-center">
+                                                    <div class="card border-0">
+                                                        <div class="card-body">
+                                                            {% if req.student.photo %}
+                                                                <img src="{{ req.student.photo.url }}" alt="Foto de {{ req.student.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                                            {% else %}
+                                                                <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                                                                    <i class="bi bi-person text-white" style="font-size: 100px;"></i>
+                                                                </div>
+                                                            {% endif %}
+
+                                                            <h2 class="fw-bold mb-1">{{ req.student.first_name }}</h2>
+                                                            <h5 class="text-muted mb-4">{{ req.student.get_full_name }}</h5>
+
+                                                            <div class="mb-3">
+                                                                {% if req.student.graduacao %}
+                                                                    <div class="mt-2">
+                                                                        {% if req.student.graduacao.grau > 0 %}
+                                                                            <img src="/media/faixas/{{ req.student.graduacao.faixa }}_{{ req.student.graduacao.grau }}_DEGREES.png"
+                                                                                 alt="{{ req.student.graduacao.get_faixa_display }}"
+                                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                        {% else %}
+                                                                            <img src="/media/faixas/{{ req.student.graduacao.faixa }}.png"
+                                                                                 alt="{{ req.student.graduacao.get_faixa_display }}"
+                                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">Sem graduação</span>
+                                                                {% endif %}
+                                                            </div>
+
+                                                            <p class="card-text fs-5">
+                                                                <i class="bi bi-cake2 me-2 text-primary"></i>
+                                                                {% if req.student.birthday %}
+                                                                    {{ req.student.birthday|date:"d/m/Y" }}
+                                                                {% else %}
+                                                                    Não informado
+                                                                {% endif %}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 {% endfor %}
                             </tbody>
                         </table>
