@@ -44,7 +44,7 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6"><strong>Perfil:</strong> {{ user.get_group_role_display }}</div>
-                                <div class="col-md-6"><strong>Status:</strong> <span class="badge bg-{{ user.status|lower }}">{{ user.get_status_display }}</span></div>
+                                <div class="col-md-6"><strong>Status:</strong> {{ user.get_status_display }} </div>
                             </div>
 
                             <hr>

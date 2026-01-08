@@ -38,18 +38,51 @@
 
     <h2 class="mb-4">Acesso Rápido</h2>
 
-        <div class="col-md-4">
+    <div class="row mb-4">
+        <div class="col-md-3">
             <div class="card h-100 dashboard-card">
                 <div class="card-body text-center">
                     <i class="bi bi-calendar-week fs-1 text-primary mb-3"></i>
                     <h5 class="card-title">Minhas Presenças</h5>
                     <p class="card-text">Solicite e cancele suas presenças</p>
-                        <a href="{% url 'aluno_presencas' %}" class="btn btn-outline-primary">Acessar</a>
+                    <a href="{% url 'aluno_presencas' %}" class="btn btn-outline-primary">Acessar</a>
                 </div>
             </div>
         </div>
 
+        <div class="col-md-3">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-award fs-1 text-danger mb-3"></i>
+                    <h5 class="card-title">Minhas Graduações</h5>
+                    <p class="card-text">Visualize seu histórico de faixas</p>
+                    <a href="{% url 'aluno_graduacoes' %}" class="btn btn-outline-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
 
+        <div class="col-md-3">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-cart fs-1 text-success mb-3"></i>
+                    <h5 class="card-title">Meus Pedidos</h5>
+                    <p class="card-text">Faça pedidos de equipamentos</p>
+                    <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-file-earmark-bar-graph fs-1 text-info mb-3"></i>
+                    <h5 class="card-title">Relatórios</h5>
+                    <p class="card-text">Visualize seus relatórios</p>
+                    <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="row mt-4">
         <div class="col-md-12">

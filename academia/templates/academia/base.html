@@ -21,7 +21,8 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <!-- Lista da Esquerda (Dashboard, Acadêmico) -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'dashboard' %}">
                             <i class="bi bi-speedometer2 me-1"></i>Dashboard
@@ -110,7 +111,23 @@
                         </li>
                     {% endif %}
                 </ul>
-                <ul class="navbar-nav">
+
+                <!-- Lista da Direita (Notificações, Usuário) -->
+                <ul class="navbar-nav align-items-center">
+                    <!-- Notificações -->
+                    {% if has_pending_tasks %}
+                    <li class="nav-item me-3">
+                        <a class="nav-link position-relative d-flex align-items-center" href="#" id="notificationBell">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="margin-left: -5px;">
+                                {{ notification_count }}
+                                <span class="visually-hidden">notificações</span>
+                            </span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Menu do Usuário -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
                            data-bs-toggle="dropdown" aria-expanded="false">
@@ -229,30 +246,35 @@
     </nav>
 {% endif %}
 
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
     {% if has_pending_tasks %}
-        <div id="pendingTasksToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"
-             data-bs-autohide="false">
-            <div class="toast-header">
-                {% if user.is_student %}
-                    <i class="bi bi-bell-fill me-2 text-info"></i>
-                    <strong class="me-auto">Notificações</strong>
-                {% else %}
-                    <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
-                    <strong class="me-auto">Pendências</strong>
-                {% endif %}
-                <small id="toast-timer">agora</small>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        {% for notification in notifications %}
+            <div class="toast notification-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+                <div class="toast-header">
+                    {% if notification.type == 'danger' %}
+                        <i class="bi bi-exclamation-circle-fill me-2 text-danger"></i>
+                    {% elif notification.type == 'warning' %}
+                        <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
+                    {% elif notification.type == 'success' %}
+                        <i class="bi bi-check-circle-fill me-2 text-success"></i>
+                    {% else %}
+                        <i class="bi bi-info-circle-fill me-2 text-info"></i>
+                    {% endif %}
+
+                    <strong class="me-auto">{{ notification.title }}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    {{ notification.text }}
+                    {% if notification.url %}
+                        <div class="mt-2 pt-2 border-top">
+                            <a href="{% url notification.url %}" class="btn btn-sm btn-outline-secondary w-100">Verificar</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="toast-body">
-                Você possui novas notificações:
-                <ul class="list-unstyled mb-0">
-                    {% for notification in notifications %}
-                        <li><a href="{% url notification.url %}">{{ notification.text }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+        {% endfor %}
     {% endif %}
 </div>
 
@@ -273,6 +295,7 @@
 {% block extra_js %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Auto-dismiss alerts
             const messages = new Set();
             const alerts = document.querySelectorAll('.alert');
 
@@ -289,25 +312,21 @@
     {% if has_pending_tasks %}
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const toastEl = document.getElementById('pendingTasksToast');
-                if (toastEl) {
-                    const toast = new bootstrap.Toast(toastEl, {autohide: false});
-                    const timerEl = document.getElementById('toast-timer');
-                    let countdown = 10;
+                const toastElList = [].slice.call(document.querySelectorAll('.notification-toast'));
+                const toastList = toastElList.map(function (toastEl) {
+                    return new bootstrap.Toast(toastEl, {autohide: false});
+                });
 
-                    function updateTimer() {
-                        if (timerEl) {
-                            timerEl.textContent = countdown + ' segundo' + (countdown !== 1 ? 's' : '');
-                        }
-                        countdown--;
-                        if (countdown < 0) {
-                            toast.hide();
-                            clearInterval(interval);
-                        }
-                    }
+                // Show all toasts initially
+                toastList.forEach(toast => toast.show());
 
-                    const interval = setInterval(updateTimer, 1000);
-                    toast.show();
+                // Re-show toasts when clicking on the bell icon
+                const bellIcon = document.getElementById('notificationBell');
+                if (bellIcon) {
+                    bellIcon.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        toastList.forEach(toast => toast.show());
+                    });
                 }
             });
         </script>

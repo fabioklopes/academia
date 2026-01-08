@@ -1,9 +1,5 @@
-# Python
+# PASTAS DO SISTEMA
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
 env/
 venv/
 ENV/
@@ -20,28 +16,35 @@ sdist/
 var/
 wheels/
 *.egg-info/
-.installed.cfg
-*.egg
+.vscode/
+.idea/
+/media
 
-# Django
-*.log
+# ARQUIVOS
+settings.py
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-/media
-/staticfiles
+Thumbs.db
 
-# IDEs
-.vscode/
-.idea/
+# EXTENSÕES
+*.log
+*.py[cod]
+*$py.class
+*.so
+.Python
+.installed.cfg
+*.egg
 *.swp
 *.swo
+*.bkp
+*.db.bkp
+
+# AMBIENTES
 *~
+/staticfiles
 
 # OS
 .DS_Store
-Thumbs.db
 
 # Demais arquivos julgados desnecessários
-*.bkp
-*.db.bkp

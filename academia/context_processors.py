@@ -1,57 +1,129 @@
+from django.core.exceptions import ObjectDoesNotExist
 from .models import AttendanceRequest, Graduacao, User
 
 def notifications_context(request):
     """
-    Fornece notificações para o sistema de toast.
+    Fornece notificações granulares para o sistema de toasts múltiplos.
     """
-    # Se o usuário não estiver ativo, não contabilizar os Toasters (notificações)
     if not request.user.is_active:
         return {}
 
     notifications = []
+    total_count = 0
+    user = request.user
     
-    # Notificações para Alunos
-    if request.user.is_student():
-        # Presenças aprovadas
-        approved_attendances = AttendanceRequest.objects.filter(student=request.user, status='APR', notified=False)
+    # --- NOTIFICAÇÕES DE EVENTOS ---
+
+    # Para Alunos
+    if user.is_student():
+        approved_attendances = AttendanceRequest.objects.filter(student=user, status='APR', notified=False)
         if approved_attendances.exists():
             count = approved_attendances.count()
+            total_count += count
             notifications.append({
+                'title': 'Presença Aprovada',
                 'text': f'{count} presença(s) aprovada(s).',
-                'url': 'aluno_presencas'
+                'url': 'aluno_presencas',
+                'type': 'info'
             })
 
-        # Graduações novas
-        new_graduations = Graduacao.objects.filter(aluno=request.user, notified=False)
+        new_graduations = Graduacao.objects.filter(aluno=user, notified=False)
         if new_graduations.exists():
+            count = new_graduations.count()
+            total_count += count
             notifications.append({
-                'text': 'Você tem uma nova graduação!',
-                'url': 'aluno_graduacoes'
+                'title': 'Nova Graduação',
+                'text': 'Parabéns! Você tem uma nova graduação.',
+                'url': 'aluno_graduacoes',
+                'type': 'success'
             })
 
-    # Notificações para Professores e Administradores
-    if request.user.is_professor_or_admin():
-        # Solicitações de presença pendentes
+    # Para Professores e Admins
+    if user.is_professor_or_admin():
         pending_attendances = AttendanceRequest.objects.filter(status='PEN')
-        
         if pending_attendances.exists():
             count = pending_attendances.count()
+            total_count += count
             notifications.append({
-                'text': f'{count} solicitação(ões) de presença pendente(s).',
-                'url': 'professor_presencas'
+                'title': 'Solicitação de Presença',
+                'text': f'{count} solicitação(ões) pendente(s).',
+                'url': 'professor_presencas',
+                'type': 'warning'
             })
 
-        # Novos usuários pendentes de aprovação
-        pending_users = User.objects.filter(status='PENDENTE') # Alterado de is_active=False para status='PENDENTE'
+        pending_users = User.objects.filter(status='PENDENTE')
         if pending_users.exists():
             count = pending_users.count()
+            total_count += count
             notifications.append({
-                'text': f'{count} novo(s) usuário(s) aguardando aprovação.',
-                'url': 'professor_alunos'
+                'title': 'Novos Usuários',
+                'text': f'{count} usuário(s) aguardando aprovação.',
+                'url': 'professor_alunos',
+                'type': 'warning'
             })
 
+    # --- VERIFICAÇÃO DE PENDÊNCIAS CADASTRAIS (GRANULAR) ---
+    
+    # 1. DADOS DO PERFIL (Aplica-se a ALUNOS e PROFESSORES)
+    # Lista de campos obrigatórios e seus labels amigáveis
+    profile_fields = [
+        ('first_name', 'Nome'),
+        ('last_name', 'Sobrenome'),
+        ('email', 'E-mail'),
+        ('whatsapp', 'WhatsApp'),
+        ('birthday', 'Data de Nascimento'),
+        ('photo', 'Foto de Perfil')
+    ]
+
+    for field_name, label in profile_fields:
+        if not getattr(user, field_name):
+            total_count += 1
+            notifications.append({
+                'title': 'Dados do Perfil',
+                'text': f'O campo "{label}" é obrigatório.',
+                'url': 'perfil_editar',
+                'type': 'danger'
+            })
+
+    # 2. DADOS ESPECÍFICOS DE ALUNO (Graduação e Kimono)
+    if user.is_student():
+        # Graduação
+        try:
+            user.graduacao
+        except ObjectDoesNotExist:
+            # Se não existe objeto graduação, conta como pendência de Faixa e Grau
+            total_count += 1
+            notifications.append({
+                'title': 'Dados do Perfil',
+                'text': 'Informe sua Faixa e Grau.',
+                'url': 'perfil_editar',
+                'type': 'danger'
+            })
+
+        # Meu Kimono
+        kimono_fields = [
+            ('height', 'Altura'),
+            ('weight', 'Peso'),
+            ('kimono_size', 'Tamanho do Kimono'),
+            ('belt_size', 'Tamanho da Faixa')
+        ]
+
+        for field_name, label in kimono_fields:
+            if not getattr(user, field_name):
+                total_count += 1
+                notifications.append({
+                    'title': 'Meu Kimono',
+                    'text': f'Informe sua {label}.',
+                    'url': 'perfil',
+                    'type': 'danger'
+                })
+
     if notifications:
-        return {'notifications': notifications, 'has_pending_tasks': True}
+        return {
+            'notifications': notifications, 
+            'has_pending_tasks': True,
+            'notification_count': total_count
+        }
         
     return {}
 

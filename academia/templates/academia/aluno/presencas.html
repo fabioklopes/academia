@@ -18,6 +18,7 @@
                                 <tr>
                                     <th>Data da Presença</th>
                                     <th>Turma</th>
+                                    <th>Tipo de Aula</th>
                                     <th>Status</th>
                                     <th>Mensagem</th>
                                     <th>Ações</th>
@@ -28,6 +29,7 @@
                                     <tr>
                                         <td>{{ request.attendance_date|date:"d/m/Y" }}</td>
                                         <td>{{ request.turma.nome }}</td>
+                                        <td>{{ request.get_class_type_display }}</td>
                                         <td>
                                             {% if request.status == 'PEN' %}
                                                 <span class="badge bg-warning">Pendente</span>
