@@ -15,9 +15,10 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-4">
-                        Preencha todos os campos abaixo para solicitar acesso ao sistema.
-                        Seu cadastro será analisado e você receberá uma notificação quando for aprovado.
+                    <p class="text-muted text-center mb-4">
+                        Preencha todos os campos abaixo para solicitar acesso ao sistema. <br />
+                        Seu cadastro será analisado e você receberá uma notificação quando for aprovado. <br />
+                        <span class="text-danger">Campos com * são obrigatórios</span>
                     </p>
 
                     <form method="post" enctype="multipart/form-data" id="solicitar-acesso-form">
@@ -42,14 +43,14 @@
                                 <small class="form-text text-muted">Este será usado para fazer login. O e-mail deve ser único.</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.whatsapp.id_for_label }}" class="form-label">WhatsApp (apenas números)</label>
+                                <label for="{{ form.whatsapp.id_for_label }}" class="form-label">WhatsApp (apenas números) <span class="text-danger">*</span></label>
                                 {{ form.whatsapp }}
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.birthday.id_for_label }}" class="form-label">Data de Nascimento</label>
+                                <label for="{{ form.birthday.id_for_label }}" class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
                                 {{ form.birthday }}
                             </div>
                         </div>
@@ -79,7 +80,7 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="photo" class="form-label">Foto</label>
+                                <label for="photo" class="form-label">Foto <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#photo-modal">
                                         <i class="bi bi-camera-fill me-2"></i> Adicionar Foto
@@ -150,6 +151,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('solicitar-acesso-form');
     const hasResponsibleCheckbox = document.getElementById('{{ form.has_responsible.id_for_label }}');
     const responsibleEmailField = document.getElementById('responsible-email-field');
     const whatsappInput = document.getElementById('{{ form.whatsapp.id_for_label }}');
@@ -167,6 +169,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoPreview = document.getElementById('photo-preview');
     const photoError = document.getElementById('photo-error');
     const photoModal = new bootstrap.Modal(document.getElementById('photo-modal'));
+    const addPhotoButton = document.querySelector('button[data-bs-target="#photo-modal"]');
+
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (photoInput.files.length === 0) {
+                event.preventDefault();
+                photoError.textContent = 'Por favor, adicione uma foto para o perfil.';
+                photoError.style.display = 'block';
+                photoError.classList.remove('text-warning', 'text-success');
+                photoError.classList.add('text-danger');
+                if (addPhotoButton) {
+                    addPhotoButton.classList.remove('btn-outline-secondary');
+                    addPhotoButton.classList.add('btn-danger');
+                    addPhotoButton.focus();
+                }
+            }
+        });
+    }
 
     document.getElementById('select-gallery-btn').addEventListener('click', () => {
         photoInput.removeAttribute('capture');
@@ -179,6 +199,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     photoInput.addEventListener('change', (event) => {
+        if (addPhotoButton) {
+            addPhotoButton.classList.remove('btn-danger');
+            addPhotoButton.classList.add('btn-outline-secondary');
+        }
+
         const file = event.target.files[0];
         photoError.style.display = 'none';
         photoError.textContent = '';
