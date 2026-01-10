@@ -1,5 +1,5 @@
 from django import forms
-from .models import Graduacao, Item, Pedido, Turma, User
+from .models import Graduacao, Item, Pedido, Turma, User, Meta as MetaModel
 from django.contrib.auth.forms import PasswordResetForm
 
 class CustomPasswordResetForm(PasswordResetForm):
@@ -174,4 +174,17 @@ class TurmaForm(forms.ModelForm):
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'ativa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class MetaForm(forms.ModelForm):
+    class Meta:
+        model = MetaModel
+        fields = ['titulo', 'data_inicio', 'data_fim', 'meta_aulas', 'minimo_aulas', 'minimo_frequencia']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'data_inicio': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+            'data_fim': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+            'meta_aulas': forms.NumberInput(attrs={'class': 'form-control'}),
+            'minimo_aulas': forms.NumberInput(attrs={'class': 'form-control'}),
+            'minimo_frequencia': forms.NumberInput(attrs={'class': 'form-control'}),
         }

@@ -11,8 +11,8 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q, Case, When, Count
-from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item
-from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm
+from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item, Meta as MetaModel
+from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm, MetaForm
 import calendar
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -192,6 +192,43 @@ def dashboard(request):
             'presencas_aprovadas': AttendanceRequest.objects.filter(student=request.user, status='APR').count(),
             'turmas': TurmaAluno.objects.filter(aluno=request.user),
         }
+        
+        # Lógica para o gráfico de metas
+        meta_ativa = MetaModel.objects.filter(data_inicio__lte=today, data_fim__gte=today).first()
+        if meta_ativa:
+            presencas_no_periodo = AttendanceRequest.objects.filter(
+                student=request.user,
+                status='APR',
+                attendance_date__range=[meta_ativa.data_inicio, meta_ativa.data_fim]
+            ).count()
+            
+            percentual_presenca = (presencas_no_periodo / meta_ativa.meta_aulas) * 100 if meta_ativa.meta_aulas > 0 else 0
+            
+            # Classificação
+            if percentual_presenca < 20:
+                classificacao = 'Insatisfatório'
+                cor_classificacao = 'danger'
+            elif percentual_presenca < 40:
+                classificacao = 'Regular'
+                cor_classificacao = 'warning'
+            elif percentual_presenca < 60:
+                classificacao = 'Bom'
+                cor_classificacao = 'info'
+            elif percentual_presenca < 80:
+                classificacao = 'Satisfatório'
+                cor_classificacao = 'primary'
+            else:
+                classificacao = 'Excelente'
+                cor_classificacao = 'success'
+                
+            context.update({
+                'meta_ativa': meta_ativa,
+                'presencas_meta': presencas_no_periodo,
+                'percentual_meta': round(percentual_presenca, 1),
+                'classificacao_meta': classificacao,
+                'cor_classificacao_meta': cor_classificacao,
+            })
+
         context.update(base_context)
         return render(request, 'academia/dashboard_aluno.html', context)
     
@@ -1572,6 +1609,65 @@ def relatorio_presenca(request):
         'aluno_id': aluno_id,
     }
     return render(request, 'academia/professor/relatorio_presenca.html', context)
+
+# --- VIEWS DE METAS ---
+
+@login_required
+def professor_metas(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    metas = MetaModel.objects.all()
+    return render(request, 'academia/professor/metas.html', {'metas': metas})
+
+@login_required
+def professor_meta_nova(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        form = MetaForm(request.POST)
+        if form.is_valid():
+            meta = form.save(commit=False)
+            meta.professor = request.user
+            meta.save()
+            messages.success(request, 'Meta criada com sucesso!')
+            return redirect('professor_metas')
+    else:
+        form = MetaForm()
+    
+    return render(request, 'academia/professor/meta_form.html', {'form': form})
+
+@login_required
+def professor_meta_editar(request, meta_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    meta = get_object_or_404(MetaModel, pk=meta_id)
+    
+    if request.method == 'POST':
+        form = MetaForm(request.POST, instance=meta)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Meta atualizada com sucesso!')
+            return redirect('professor_metas')
+    else:
+        form = MetaForm(instance=meta)
+    
+    return render(request, 'academia/professor/meta_form.html', {'form': form})
+
+@login_required
+def professor_meta_deletar(request, meta_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    meta = get_object_or_404(MetaModel, pk=meta_id)
+    
+    if request.method == 'POST':
+        meta.delete()
+        messages.success(request, 'Meta excluída com sucesso!')
+        return redirect('professor_metas')
+    
+    return render(request, 'academia/professor/meta_confirm_delete.html', {'meta': meta})
 
 # --- VIEWS DE ERRO ---
 

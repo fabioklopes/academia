@@ -96,6 +96,12 @@ urlpatterns = [
     path('professor/rankings/', views.professor_rankings, name='professor_rankings'),
     path('professor/rankings/novo/', views.professor_ranking_novo, name='professor_ranking_novo'),
 
+    # Painel do Professor - Metas
+    path('professor/metas/', views.professor_metas, name='professor_metas'),
+    path('professor/metas/nova/', views.professor_meta_nova, name='professor_meta_nova'),
+    path('professor/metas/<int:meta_id>/editar/', views.professor_meta_editar, name='professor_meta_editar'),
+    path('professor/metas/<int:meta_id>/deletar/', views.professor_meta_deletar, name='professor_meta_deletar'),
+
     # Painel do Professor - Relatórios
     path('professor/relatorios/', views.professor_relatorios, name='professor_relatorios'),
     path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='relatorio_pedidos'),

@@ -86,10 +86,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db_academia',
         'USER': 'postgres',
-        'PASSWORD': 'Mirium@#043015',
-        'HOST': '191.252.219.164',
-        #'PASSWORD': '5tgb6yhn',
-        #'HOST': 'localhost',
+        #'PASSWORD': 'Mirium@#043015',
+        #'HOST': '191.252.219.164',
+        'PASSWORD': '5tgb6yhn',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }

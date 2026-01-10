@@ -1,0 +1,54 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Metas - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Gerenciar Metas</h4>
+                <a href="{% url 'professor_meta_nova' %}" class="btn btn-outline-primary">Nova Meta</a>
+            </div>
+            <div class="card-body">
+                {% if metas %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Período</th>
+                                    <th>Meta (Aulas)</th>
+                                    <th>Mínimo (Aulas)</th>
+                                    <th>Freq. Mínima (%)</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for meta in metas %}
+                                    <tr>
+                                        <td>{{ meta.titulo }}</td>
+                                        <td>{{ meta.data_inicio|date:"d/m/Y" }} - {{ meta.data_fim|date:"d/m/Y" }}</td>
+                                        <td>{{ meta.meta_aulas }}</td>
+                                        <td>{{ meta.minimo_aulas }}</td>
+                                        <td>{{ meta.minimo_frequencia }}%</td>
+                                        <td>
+                                            <a href="{% url 'professor_meta_editar' meta.id %}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                                            <a href="{% url 'professor_meta_deletar' meta.id %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nenhuma meta cadastrada.</p>
+                {% endif %}
+                <div class="mt-3">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

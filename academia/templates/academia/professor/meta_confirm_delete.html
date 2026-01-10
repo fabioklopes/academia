@@ -1,0 +1,23 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Excluir Meta - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>Excluir Meta</h4>
+            </div>
+            <div class="card-body">
+                <p>Tem certeza que deseja excluir a meta "<strong>{{ meta.titulo }}</strong>"?</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Sim, excluir</button>
+                    <a href="{% url 'professor_metas' %}" class="btn btn-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

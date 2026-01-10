@@ -245,6 +245,23 @@ class PosicaoRanking(models.Model):
     def __str__(self):
         return f"{self.ranking} - {self.aluno} - {self.posicao}º lugar"
 
+class Meta(models.Model):
+    professor = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'group_role__in': ['PRO', 'ADM']}, related_name='metas')
+    titulo = models.CharField('Título', max_length=200)
+    data_inicio = models.DateField('Data Início')
+    data_fim = models.DateField('Data Fim')
+    meta_aulas = models.IntegerField('Meta de Aulas (Qtd)')
+    minimo_aulas = models.IntegerField('Mínimo de Aulas (Qtd)')
+    minimo_frequencia = models.IntegerField('Frequência Mínima (%)')
+    
+    class Meta:
+        verbose_name = 'Meta'
+        verbose_name_plural = 'Metas'
+        ordering = ['-data_inicio']
+
+    def __str__(self):
+        return f"{self.titulo} - {self.professor.first_name}"
+
 class Item(models.Model):
     TIPO_CHOICES = [('KIMONO', 'Kimono'), ('FAIXA', 'Faixa'), ('HASHGUARD', 'Hashguard'), ('TAXA', 'Taxa')]
     nome = models.CharField(max_length=100)
