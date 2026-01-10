@@ -21,6 +21,7 @@ wheels/
 /media
 
 # ARQUIVOS
+jiujitsu_academy/settings.py
 settings.py
 local_settings.py
 db.sqlite3
@@ -47,4 +48,3 @@ Thumbs.db
 # OS
 .DS_Store
 
-# Demais arquivos julgados desnecessários
