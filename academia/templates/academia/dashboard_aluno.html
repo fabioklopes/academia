@@ -93,13 +93,13 @@
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
-                <h5 class="card-title mb-3">Meta de Aulas: {{ meta_ativa.titulo }}</h5>
-                <p class="text-muted mb-2">Período: {{ meta_ativa.data_inicio|date:"d/m/Y" }} a {{ meta_ativa.data_fim|date:"d/m/Y" }}</p>
+                <h5 class="card-title mb-3">Meta: {{ meta_ativa.titulo }}</h5>
+                <p class="text-muted mb-2"><b>Período:</b> de {{ meta_ativa.data_inicio|date:"d/m/Y" }} à {{ meta_ativa.data_fim|date:"d/m/Y" }}</p>
 
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <div class="progress" style="height: 25px;">
-                            <div class="progress-bar bg-{{ cor_classificacao_meta }}" role="progressbar" style="width: {{ percentual_meta }}%;" aria-valuenow="{{ percentual_meta }}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{ cor_classificacao_meta }}" role="progressbar" style="width: {{ percentual_meta }}%;" aria-valuenow="{{ percentual_meta }}" aria-valuemin="0" aria-valuemax="100">
                                 {{ percentual_meta }}%
                             </div>
                         </div>
