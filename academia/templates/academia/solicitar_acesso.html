@@ -1,8 +1,21 @@
-
 {% extends 'academia/base.html' %}
 {% load static %}
 
 {% block title %}Solicitar Acesso - Academia de Jiu-Jitsu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+    .img-container {
+        max-height: 500px;
+        width: 100%;
+    }
+    .img-container img {
+        max-width: 100%;
+        display: block;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -146,9 +159,31 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Recorte -->
+<div class="modal fade" id="crop-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crop-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crop-modal-label">Ajustar Foto (3x4)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container">
+                    <img id="image-to-crop" src="" alt="Foto para recortar">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="crop-btn">Confirmar Recorte</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('solicitar-acesso-form');
@@ -169,7 +204,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoPreview = document.getElementById('photo-preview');
     const photoError = document.getElementById('photo-error');
     const photoModal = new bootstrap.Modal(document.getElementById('photo-modal'));
+    const cropModal = new bootstrap.Modal(document.getElementById('crop-modal'));
+    const imageToCrop = document.getElementById('image-to-crop');
     const addPhotoButton = document.querySelector('button[data-bs-target="#photo-modal"]');
+    let cropper;
 
     if (form) {
         form.addEventListener('submit', function(event) {
@@ -209,76 +247,79 @@ document.addEventListener('DOMContentLoaded', function() {
         photoError.textContent = '';
 
         if (file) {
-            if (file.size > 1048576) { // 1MB
-                photoError.textContent = 'A imagem é maior que 1MB e será redimensionada antes do envio.';
-                photoError.style.display = 'block';
-                photoError.classList.remove('text-danger');
-                photoError.classList.add('text-warning');
-
-                resizeImage(file);
-            } else {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    photoPreview.src = e.target.result;
-                    photoPreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imageToCrop.src = e.target.result;
                 photoModal.hide();
-            }
+                cropModal.show();
+            };
+            reader.readAsDataURL(file);
         }
     });
 
-    function resizeImage(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                const MAX_WIDTH = 1280;
-                const MAX_HEIGHT = 1280;
+    document.getElementById('crop-modal').addEventListener('shown.bs.modal', function () {
+        cropper = new Cropper(imageToCrop, {
+            aspectRatio: 1 / 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+        });
+    });
 
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
+    document.getElementById('crop-modal').addEventListener('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        if (photoInput.files.length > 0 && !photoPreview.src.startsWith('blob:')) {
+             photoInput.value = '';
+        }
+    });
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
+    document.getElementById('crop-btn').addEventListener('click', function() {
+        if (!cropper) return;
 
-                canvas.toBlob(function(blob) {
-                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".png", {
-                        type: 'image/png',
-                        lastModified: Date.now()
-                    });
+        const canvas = cropper.getCroppedCanvas({
+            width: 200,
+            height: 200,
+            minWidth: 200,
+            minHeight: 200,
+            fillColor: '#fff',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
 
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(newFile);
-                    photoInput.files = dataTransfer.files;
+        canvas.toBlob(function(blob) {
+            if (!blob) return;
 
-                    photoPreview.src = URL.createObjectURL(newFile);
-                    photoPreview.style.display = 'block';
-                    photoModal.hide();
+            const newFile = new File([blob], "profile_photo.png", {
+                type: 'image/png',
+                lastModified: Date.now()
+            });
 
-                    photoError.textContent = 'Imagem redimensionada com sucesso!';
-                    photoError.classList.remove('text-warning');
-                    photoError.classList.add('text-success');
-                }, 'image/png', 0.7);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(newFile);
+            photoInput.files = dataTransfer.files;
+
+            photoPreview.src = URL.createObjectURL(newFile);
+            photoPreview.style.display = 'block';
+
+            cropModal.hide();
+
+            photoError.textContent = 'Foto recortada e pronta para envio!';
+            photoError.style.display = 'block';
+            photoError.classList.remove('text-danger', 'text-warning');
+            photoError.classList.add('text-success');
+
+        }, 'image/png');
+    });
 
     // Máscara para o campo WhatsApp
     if (whatsappInput) {

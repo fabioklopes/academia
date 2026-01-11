@@ -39,37 +39,52 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         self.is_active = self.status == 'ATIVO'
         
-        # Process photo to ensure it's under 1MB and is PNG
+        # Process photo to ensure it fits 3x4 dimensions (354x472) and is under 1MB
         if self.photo and not getattr(self.photo, '_committed', True):
-            filename = self.photo.name
-            ext = os.path.splitext(filename)[1].lower()
-            
-            if self.photo.size > 1048576 or ext != '.png': # 1MB or not PNG
-                try:
-                    if hasattr(self.photo, 'open'):
-                        self.photo.open()
-                    if hasattr(self.photo, 'seek'):
-                        self.photo.seek(0)
-                        
-                    img = Image.open(self.photo)
+            try:
+                if hasattr(self.photo, 'open'):
+                    self.photo.open()
+                if hasattr(self.photo, 'seek'):
+                    self.photo.seek(0)
+                    
+                img = Image.open(self.photo)
+                
+                # Convert to RGB if necessary (e.g. if input is RGBA and we save as JPEG, or just to be safe)
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                # Target dimensions: 354x472 (3x4 aspect ratio)
+                target_width = 200
+                target_height = 200
+                
+                # Resize the image to the target dimensions
+                # We use resize directly because the frontend is expected to provide a cropped image with the correct aspect ratio.
+                # If not, this might distort the image, but it ensures the dimensions are exact.
+                img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+
+                output = BytesIO()
+                
+                # Save as PNG with optimization
+                img.save(output, format='PNG', optimize=True)
+                
+                # Check size, if > 1MB, try to compress (though 354x472 PNG should be well under 1MB)
+                if output.tell() > 1048576:
                     output = BytesIO()
+                    # Try saving as JPEG if PNG is too big (unlikely for this resolution but good for safety)
+                    img.save(output, format='JPEG', quality=85, optimize=True)
+                    new_ext = '.jpg'
+                else:
+                    new_ext = '.png'
 
-                    # Resize if dimensions are too large
-                    if img.height > 1280 or img.width > 1280:
-                        img.thumbnail((1280, 1280))
-
-                    # Save as PNG
-                    img.save(output, format='PNG', optimize=True)
-
-                    new_content = ContentFile(output.getvalue())
-                    
-                    # Update extension to .png
-                    name_base = os.path.splitext(os.path.basename(self.photo.name))[0]
-                    new_content.name = f"{name_base}.png"
-                    
-                    self.photo = new_content
-                except Exception as e:
-                    print(f"Error compressing/converting image: {e}")
+                new_content = ContentFile(output.getvalue())
+                
+                # Update filename
+                name_base = os.path.splitext(os.path.basename(self.photo.name))[0]
+                new_content.name = f"{name_base}{new_ext}"
+                
+                self.photo = new_content
+            except Exception as e:
+                print(f"Error processing image: {e}")
 
         # Check if it's a new instance (no pk yet)
         is_new = self.pk is None
