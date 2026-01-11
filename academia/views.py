@@ -939,7 +939,7 @@ def professor_alunos(request):
 
 @login_required
 def promover_aluno(request):
-    if not request.user.is_admin():
+    if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
     status_order = Case(
@@ -1017,7 +1017,7 @@ def professor_aluno_ativar(request, aluno_id):
 
 @login_required
 def professor_aluno_definir_tipo(request, aluno_id):
-    if not request.user.is_admin():
+    if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
     user_to_change = get_object_or_404(User, pk=aluno_id)

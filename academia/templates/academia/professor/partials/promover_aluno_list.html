@@ -4,6 +4,7 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
+                        <th scope="col" style="width: 5%;">Foto</th>
                         <th>Nome</th>
                         <th>Email</th>
                         <th>Status</th>
@@ -13,6 +14,15 @@
                 <tbody>
                     {% for aluno in alunos %}
                     <tr>
+                        <td>
+                            {% if aluno.photo %}
+                                <img src="{{ aluno.photo.url }}" alt="Foto de {{ aluno.first_name }}" class="rounded-circle" width="40" height="40" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ aluno.id }}">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle me-2 d-inline-block align-middle" style="width: 40px; height: 40px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ aluno.id }}">
+                                    <i class="bi bi-person text-white" style="font-size: 24px; line-height: 40px;"></i>
+                                </div>
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="#" class="text-decoration-none text-dark" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ aluno.id }}">
                                 {{ aluno.get_full_name }}
@@ -53,9 +63,17 @@
 
                                             <div class="mb-3">
                                                 {% if aluno.graduacao %}
-                                                    {% with faixa_img="faixas/"|add:aluno.graduacao.faixa|lower|add:".png" %}
-                                                        <img src="/media/{{ faixa_img }}" alt="{{ aluno.graduacao.get_faixa_display }}" style="max-width: 100%; height: auto; max-height: 50px;">
-                                                    {% endwith %}
+                                                    <div class="mt-2">
+                                                        {% if aluno.graduacao.grau > 0 %}
+                                                            <img src="/media/faixas/{{ aluno.graduacao.faixa }}_{{ aluno.graduacao.grau }}_DEGREES.png"
+                                                                 alt="{{ aluno.graduacao.get_faixa_display }}"
+                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                        {% else %}
+                                                            <img src="/media/faixas/{{ aluno.graduacao.faixa }}.png"
+                                                                 alt="{{ aluno.graduacao.get_faixa_display }}"
+                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                        {% endif %}
+                                                    </div>
                                                 {% else %}
                                                     <span class="badge bg-secondary">Sem graduação</span>
                                                 {% endif %}
@@ -77,7 +95,7 @@
                     </div>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center">Nenhum aluno encontrado.</td>
+                        <td colspan="5" class="text-center">Nenhum aluno encontrado.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

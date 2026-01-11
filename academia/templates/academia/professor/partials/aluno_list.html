@@ -116,43 +116,7 @@
             </div>
 
             {# Controles de Paginação #}
-            {% if alunos.has_other_pages %}
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        {% if alunos.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ alunos.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">&laquo;</span>
-                            </li>
-                        {% endif %}
-
-                        {% for i in alunos.paginator.page_range %}
-                            {% if alunos.number == i %}
-                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ i }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ i }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if alunos.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ alunos.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">&raquo;</span>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            {% endif %}
+            {% include 'academia/partials/pagination.html' with page_obj=alunos %}
 
         {% else %}
             <p class="text-muted">Nenhum aluno encontrado.</p>
