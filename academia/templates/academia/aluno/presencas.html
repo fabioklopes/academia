@@ -29,7 +29,19 @@
                                     <tr>
                                         <td>{{ request.attendance_date|date:"d/m/Y" }}</td>
                                         <td>{{ request.turma.nome }}</td>
-                                        <td>{{ request.get_class_type_display }}</td>
+                                        <td>
+                                            {% if request.attendance_date|date:"w" == "2" %}
+                                                {% if request.class_type == 'GI' %}
+                                                    Gi (1ª aula)
+                                                {% elif request.class_type == 'NOGI' %}
+                                                    No-Gi (2ª aula)
+                                                {% else %}
+                                                    Integral
+                                                {% endif %}
+                                            {% else %}
+                                                Integral
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if request.status == 'PEN' %}
                                                 <span class="badge bg-warning">Pendente</span>

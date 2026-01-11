@@ -121,6 +121,13 @@
 <script>
 $(document).ready(function() {
     const today = new Date();
+    // Set time to 00:00:00 for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+
+    // Calculate limit date (15 days ago)
+    const limitDate = new Date(today);
+    limitDate.setDate(today.getDate() - 15);
+
     let currentMonth = today.getMonth();
     let currentYear = today.getFullYear();
     const selectedDates = new Set();
@@ -152,17 +159,13 @@ $(document).ready(function() {
         // Fill days of the month
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentYear, currentMonth, day);
+            date.setHours(0, 0, 0, 0);
             const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
             
             let dayClass = 'calendar-day current-month';
             let isDisabled = false;
             let iconHtml = '';
-
-            // Disable future dates
-            if (date > today) {
-                dayClass += ' disabled';
-                isDisabled = true;
-            }
+            let isCancelled = false;
 
             // Check for attendance data
             if (attendanceData[dateString]) {
@@ -178,6 +181,9 @@ $(document).ready(function() {
                         iconClass = 'bi-check-circle-fill text-success';
                     } else if (att.status === 'PEN') {
                         iconClass = 'bi-info-circle-fill text-warning';
+                    } else if (att.status === 'CAN') {
+                        // Cancelled status
+                        isCancelled = true;
                     }
 
                     if (iconClass) {
@@ -191,7 +197,22 @@ $(document).ready(function() {
                 });
                 iconsHtml += '</div>';
 
-                iconHtml = iconsHtml;
+                // Only show icons if there are any non-cancelled statuses or if we want to show cancelled history
+                // Currently, cancelled requests don't show icons, but allow re-selection
+                if (iconsHtml.includes('bi-')) {
+                    iconHtml = iconsHtml;
+                }
+            }
+
+            // Disable future dates
+            if (date > today) {
+                dayClass += ' disabled';
+                isDisabled = true;
+            }
+            // Disable dates older than 15 days, UNLESS it was cancelled previously
+            else if (date < limitDate && !isCancelled) {
+                dayClass += ' disabled';
+                isDisabled = true;
             }
 
             if (selectedDates.has(dateString)) {
@@ -204,7 +225,7 @@ $(document).ready(function() {
             if (!isDisabled) {
                 dayEl.on('click', function() {
                     if ($(this).find('.status-icons').length > 0) {
-                        // If there's an icon, show details modal
+                        // If there's an icon (meaning active request), show details modal
                         showAttendanceDetails(dateString);
                     } else {
                         // Otherwise, select/deselect date for attendance request
@@ -213,6 +234,7 @@ $(document).ready(function() {
                 });
             } else {
                 dayEl.css('cursor', 'not-allowed');
+                dayEl.attr('title', 'Data fora do período permitido (15 dias)');
             }
             calendarEl.append(dayEl);
         }

@@ -369,10 +369,26 @@ def aluno_marcar_presenca(request):
             messages.error(request, 'Você não está inscrito nesta turma.')
             return redirect('aluno_marcar_presenca')
 
+        limit_date = timezone.localdate() - timedelta(days=15)
+
         for date_str in dates:
             try:
                 attendance_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
                 
+                # Check if date is older than 15 days
+                if attendance_date < limit_date:
+                    # Check if there was a cancelled request for this date
+                    cancelled_request = AttendanceRequest.objects.filter(
+                        student=request.user,
+                        turma=turma,
+                        attendance_date=attendance_date,
+                        status='CAN'
+                    ).exists()
+                    
+                    if not cancelled_request:
+                        messages.error(request, f'Não é possível solicitar presença para {attendance_date.strftime("%d/%m/%Y")}. O limite é de 15 dias retroativos.')
+                        continue
+
                 class_type_val = 'BOTH'
                 if attendance_date.weekday() == 1: # Tuesday
                     class_type_val = request.POST.get(f'class_type_{date_str}', 'BOTH')
@@ -402,7 +418,7 @@ def aluno_marcar_presenca(request):
                         existing_request.rejection_reason = ""
                         existing_request.notified = False
                         existing_request.save()
-                        messages.success(request, f'Solicitação de presença para {attendance_date.strftime("%d/%m/%Y")} re-enviada com sucesso!')
+                        messages.success(request, f'Presença para {attendance_date.strftime("%d/%m/%Y")} solicitada com sucesso!')
                     else:
                         # If already Pending, Approved, or Rejected, inform the user
                         messages.warning(request, f'Já existe uma solicitação de presença ({existing_request.get_status_display()}) para {attendance_date.strftime("%d/%m/%Y")} nesta turma.')
