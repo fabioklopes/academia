@@ -104,6 +104,9 @@ urlpatterns = [
     path('professor/relatorios/', views.professor_relatorios, name='professor_relatorios'),
     path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='relatorio_pedidos'),
     path('professor/relatorios/presenca/', views.relatorio_presenca, name='professor_relatorio_presenca'),
+
+    # Logs
+    path('logs/', views.log_list, name='logs'),
 ]
 
 # Página padrão para erros no aplicativo

@@ -312,8 +312,13 @@ class Pedido(models.Model):
         return f"{self.aluno} - {self.item.nome} - {self.get_status_display()}"
 
 class Log(models.Model):
+    STATUS_CHOICES = [('SUCESSO', 'Sucesso'), ('FALHA', 'Falha')]
+    
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    first_name = models.CharField('Nome', max_length=150, null=True, blank=True)
+    email = models.EmailField('Email', null=True, blank=True)
     action = models.TextField('Ação')
+    status = models.CharField('Status', max_length=10, choices=STATUS_CHOICES, default='SUCESSO')
     timestamp = models.DateTimeField('Data e Hora', auto_now_add=True)
 
     class Meta:
@@ -322,5 +327,5 @@ class Log(models.Model):
         ordering = ['-timestamp']
 
     def __str__(self):
-        user_name = self.user.get_full_name() if self.user else 'Sistema'
-        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} {user_name} executou {self.action}"
+        user_name = self.first_name if self.first_name else (self.user.get_full_name() if self.user else 'Sistema')
+        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} {user_name} executou {self.action} [{self.status}]"

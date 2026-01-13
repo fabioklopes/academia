@@ -1,7 +1,23 @@
-from .models import Log
+from .models import Log, User
 
-def create_log(user, action):
+def create_log(user, action, status='SUCESSO', first_name=None, email=None):
     """
-    Cria um registro de log para uma ação do usuário.
+    Cria um registro de log para uma ação.
     """
-    Log.objects.create(user=user, action=action)
+    if user and isinstance(user, User):
+        Log.objects.create(
+            user=user,
+            first_name=user.first_name,
+            email=user.email,
+            action=action,
+            status=status
+        )
+    else:
+        # For failed logins or system actions where user is not authenticated
+        Log.objects.create(
+            user=None,
+            first_name=first_name,
+            email=email,
+            action=action,
+            status=status
+        )

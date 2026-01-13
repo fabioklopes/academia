@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q, Case, When, Count
-from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item, Meta as MetaModel
+from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item, Meta as MetaModel, Log
 from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm, MetaForm
 import calendar
 import openpyxl
@@ -62,16 +62,20 @@ def login_view(request):
                 next_url = request.GET.get('next')
                 return redirect(next_url) if next_url else redirect('dashboard')
             elif user.status == 'PENDENTE':
+                create_log(user, 'tentou login (cadastro pendente)', status='FALHA')
                 context = {'error': 'Seu cadastro está pendente de aprovação.'}
             else:
+                create_log(user, 'tentou login (usuário inativo)', status='FALHA')
                 context = {'error': 'Usuário inativo. Contate o administrador.'}
         else:
+            create_log(None, 'tentativa de login falhou (credenciais inválidas)', status='FALHA', email=email)
             context = {'error': 'E-mail ou senha inválidos.'}
         return render(request, 'academia/login.html', context)
     return render(request, 'academia/login.html')
 
 def logout_view(request):
-    create_log(request.user, 'realizou logout')
+    if request.user.is_authenticated:
+        create_log(request.user, 'realizou logout')
     auth_logout(request)
     return redirect('index')
 
@@ -115,7 +119,9 @@ def solicitar_acesso(request):
             
             try:
                 user.save()
+                create_log(user, 'solicitou acesso ao sistema')
             except Exception as e:
+                create_log(None, f'erro ao solicitar acesso: {str(e)}', status='FALHA', email=email, first_name=data['first_name'])
                 return render(request, 'default_errors.html', {
                     'error_code': '500',
                     'error_message': f'Erro ao salvar usuário: {str(e)}'
@@ -283,6 +289,7 @@ def perfil(request):
             user.kimono_size = request.POST.get('kimono_size')
             user.belt_size = request.POST.get('belt_size')
             user.save()
+            create_log(user, 'atualizou informações do kimono')
             messages.success(request, 'Informações do kimono atualizadas com sucesso!')
         
         elif action == 'change_password':
@@ -292,14 +299,17 @@ def perfil(request):
 
             # Password check should be against the logged-in user
             if not user.check_password(current_password):
+                create_log(user, 'tentou alterar senha (senha atual incorreta)', status='FALHA')
                 messages.error(request, 'Senha atual incorreta.')
             elif new_password != confirm_new_password:
+                create_log(user, 'tentou alterar senha (senhas não coincidem)', status='FALHA')
                 messages.error(request, 'As novas senhas não coincidem.')
             else:
                 user.set_password(new_password)
                 user.save()
                 # Re-login to keep the session active with the new password
                 auth_login(request, user)
+                create_log(user, 'alterou a senha')
                 messages.success(request, 'Senha alterada com sucesso!')
         
         return redirect('perfil')
@@ -516,6 +526,7 @@ def aluno_cancelar_presenca(request, request_id):
         # Change status to Cancelled instead of deleting
         attendance_request.status = 'CAN'
         attendance_request.save()
+        create_log(request.user, f'cancelou solicitação de presença para {attendance_request.attendance_date}')
         messages.success(request, 'Solicitação de presença cancelada com sucesso.')
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -566,6 +577,7 @@ def aluno_pedido_novo(request):
             pedido.final_value = item.valor * pedido.quantidade if item.valor else None
             pedido.save()
             
+            create_log(request.user, f'realizou pedido de {pedido.quantidade}x {item.nome}')
             messages.success(request, f'Pedido de "{item.nome}" realizado com sucesso! O item está reservado para você por 15 dias.')
             return redirect('aluno_pedidos')
     else:
@@ -589,6 +601,7 @@ def aluno_pedido_cancelar(request, pedido_id):
 
             pedido.status = 'CANC'
             pedido.save()
+            create_log(request.user, f'cancelou pedido de {item.nome}')
             messages.success(request, 'Pedido cancelado com sucesso e item devolvido ao estoque.')
         else:
             messages.error(request, 'Apenas pedidos pendentes podem ser cancelados.')
@@ -654,7 +667,8 @@ def gerar_relatorio_aluno(request):
     else:
         messages.error(request, "Tipo de relatório inválido.")
         return redirect('perfil')
-
+    
+    create_log(request.user, f'gerou relatório de {report_type}')
     return render(request, 'academia/aluno/relatorio_detalhe.html', context)
 
 @login_required
@@ -685,6 +699,7 @@ def aluno_relatorio_presenca(request):
         })
 
     if export_format == 'pdf':
+        create_log(request.user, 'exportou relatório de presenças (PDF)')
         template = get_template('academia/aluno/relatorio_presenca_pdf.html')
         context = {
             'report_data': report_data,
@@ -702,6 +717,7 @@ def aluno_relatorio_presenca(request):
         return response
 
     if export_format == 'xlsx':
+        create_log(request.user, 'exportou relatório de presenças (XLSX)')
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="relatorio_presencas.xlsx"'
         
@@ -749,6 +765,7 @@ def aluno_relatorio_pedidos(request):
     ).order_by('-data_solicitacao')
 
     if export_format == 'pdf':
+        create_log(request.user, 'exportou relatório de pedidos (PDF)')
         template = get_template('academia/aluno/relatorio_pedidos_pdf.html')
         context = {
             'pedidos': pedidos,
@@ -766,6 +783,7 @@ def aluno_relatorio_pedidos(request):
         return response
 
     if export_format == 'xlsx':
+        create_log(request.user, 'exportou relatório de pedidos (XLSX)')
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="relatorio_pedidos.xlsx"'
         
@@ -818,6 +836,7 @@ def professor_turma_nova(request):
             turma = form.save(commit=False)
             turma.professor = request.user
             turma.save()
+            create_log(request.user, f'criou a turma "{turma.nome}"')
             messages.success(request, f'Turma "{turma.nome}" criada com sucesso!')
             return redirect('professor_turmas')
     else:
@@ -836,6 +855,7 @@ def professor_turma_editar(request, turma_id):
         form = TurmaForm(request.POST, instance=turma)
         if form.is_valid():
             form.save()
+            create_log(request.user, f'editou a turma "{turma.nome}"')
             messages.success(request, f'Turma "{turma.nome}" atualizada com sucesso!')
             return redirect('professor_turmas')
     else:
@@ -895,6 +915,7 @@ def professor_turma_adicionar_aluno(request, turma_id):
                     count += 1
             
             if count > 0:
+                create_log(request.user, f'adicionou {count} aluno(s) à turma "{turma.nome}"')
                 messages.success(request, f'{count} aluno(s) adicionado(s) à turma "{turma.nome}".')
             else:
                 messages.warning(request, 'Nenhum aluno novo adicionado.')
@@ -912,6 +933,7 @@ def professor_turma_remover_aluno(request, turma_id, aluno_id):
     aluno_nome = turma_aluno.aluno.get_full_name()
     turma_aluno.delete()
     
+    create_log(request.user, f'removeu o aluno "{aluno_nome}" da turma "{turma.nome}"')
     messages.success(request, f'Aluno "{aluno_nome}" removido da turma "{turma.nome}".')
     return redirect('professor_turma_alunos', turma_id=turma_id)
 
@@ -1000,6 +1022,7 @@ def professor_aluno_desativar(request, aluno_id):
     aluno = get_object_or_404(User, pk=aluno_id, group_role='STD')
     aluno.status = 'INATIVO'
     aluno.save()
+    create_log(request.user, f'desativou o usuário {aluno.get_full_name()}')
     messages.success(request, f'O usuário {aluno.get_full_name()} foi desativado.')
     return redirect('professor_alunos')
 
@@ -1010,6 +1033,7 @@ def professor_aluno_excluir(request, aluno_id):
     aluno = get_object_or_404(User, pk=aluno_id)
     if aluno.status == 'PENDENTE':
         aluno.delete()
+        create_log(request.user, f'excluiu a solicitação de cadastro de {aluno.get_full_name()}')
         messages.success(request, f'A solicitação de {aluno.get_full_name()} foi excluída.')
     else:
         messages.error(request, 'Apenas solicitações pendentes podem ser excluídas.')
@@ -1042,11 +1066,13 @@ def professor_aluno_definir_tipo(request, aluno_id):
     if request.method == 'POST':
         password = request.POST.get('password')
         if not request.user.check_password(password):
+            create_log(request.user, f'tentou promover {user_to_change.get_full_name()} (senha incorreta)', status='FALHA')
             messages.error(request, 'Senha incorreta.')
             return redirect('promover_aluno')
 
         user_to_change.group_role = 'PRO'
         user_to_change.save()
+        create_log(request.user, f'promoveu {user_to_change.get_full_name()} para Professor')
         messages.success(request, f'O tipo de usuário de {user_to_change.get_full_name()} foi alterado para Professor.')
         return redirect('promover_aluno')
 
@@ -1217,6 +1243,7 @@ def professor_graduacao_editar(request, aluno_id):
             graduacao = form.save(commit=False)
             graduacao.notified = False
             graduacao.save()
+            create_log(request.user, f'atualizou a graduação de {aluno.get_full_name()}')
             messages.success(request, 'Graduação salva com sucesso!')
             return redirect('professor_graduacoes')
     else:
@@ -1302,6 +1329,7 @@ def professor_pedido_aprovar(request, pedido_id):
         pedido.aprovado_por = request.user
         pedido.data_aprovacao = timezone.now()
         pedido.save()
+        create_log(request.user, f'aprovou o pedido de {pedido.aluno.get_full_name()} ({pedido.item.nome})')
         messages.success(request, 'Pedido atendido com sucesso!')
     
     return redirect('professor_pedidos')
@@ -1321,6 +1349,7 @@ def professor_pedido_rejeitar(request, pedido_id):
         pedido.status = 'REJE'
         pedido.rejection_reason = request.POST.get('rejection_reason', 'Sem motivo especificado.')
         pedido.save()
+        create_log(request.user, f'rejeitou o pedido de {pedido.aluno.get_full_name()} ({pedido.item.nome})')
         messages.success(request, 'Pedido rejeitado e estoque atualizado.')
 
     return redirect('professor_pedidos')
@@ -1335,6 +1364,7 @@ def professor_pedido_cancelar(request, pedido_id):
         pedido.status = 'CANC'
         pedido.cancellation_reason = request.POST.get('cancellation_reason', 'Sem motivo especificado.')
         pedido.save()
+        create_log(request.user, f'cancelou o pedido de {pedido.aluno.get_full_name()} ({pedido.item.nome})')
         messages.success(request, 'Pedido cancelado com sucesso!')
 
     return redirect('professor_pedidos')
@@ -1358,6 +1388,7 @@ def professor_pedido_entregar(request, pedido_id):
         
         pedido.status = 'ENTR'
         pedido.save()
+        create_log(request.user, f'marcou como entregue o pedido de {pedido.aluno.get_full_name()} ({pedido.item.nome})')
         messages.success(request, 'Pedido marcado como entregue!')
 
     return redirect('professor_pedidos')
@@ -1371,6 +1402,7 @@ def professor_pedido_finalizar(request, pedido_id):
     if request.method == 'POST':
         pedido.status = 'FINA'
         pedido.save()
+        create_log(request.user, f'finalizou o pedido de {pedido.aluno.get_full_name()} ({pedido.item.nome})')
         messages.success(request, 'Pedido finalizado com sucesso!')
 
     return redirect('professor_pedidos')
@@ -1412,7 +1444,8 @@ def professor_item_novo(request):
     if request.method == 'POST':
         form = ItemForm(request.POST)
         if form.is_valid():
-            form.save()
+            item = form.save()
+            create_log(request.user, f'criou o item "{item.nome}"')
             messages.success(request, 'Item criado com sucesso!')
             return redirect('professor_itens')
     else:
@@ -1428,6 +1461,7 @@ def professor_item_editar(request, item_id):
         form = ItemForm(request.POST, instance=item)
         if form.is_valid():
             form.save()
+            create_log(request.user, f'editou o item "{item.nome}"')
             messages.success(request, 'Item atualizado com sucesso!')
             return redirect('professor_itens')
     else:
@@ -1440,7 +1474,9 @@ def professor_item_deletar(request, item_id):
         raise PermissionDenied
     item = get_object_or_404(Item, pk=item_id)
     if request.method == 'POST':
+        item_nome = item.nome
         item.delete()
+        create_log(request.user, f'deletou o item "{item_nome}"')
         messages.success(request, 'Item deletado com sucesso!')
         return redirect('professor_itens')
     return render(request, 'academia/professor/item_confirm_delete.html', {'item': item})
@@ -1472,6 +1508,7 @@ def relatorio_pedidos(request):
     ).order_by('data_solicitacao', 'aluno__first_name', 'aluno__last_name').select_related('aluno', 'item')
 
     if export_format == 'pdf':
+        create_log(request.user, 'exportou relatório de pedidos (PDF)')
         template = get_template('academia/professor/relatorio_pedidos_pdf.html')
         context = {
             'pedidos': pedidos,
@@ -1489,6 +1526,7 @@ def relatorio_pedidos(request):
         return response
 
     if export_format == 'xlsx':
+        create_log(request.user, 'exportou relatório de pedidos (XLSX)')
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="relatorio_pedidos.xlsx"'
         
@@ -1578,6 +1616,7 @@ def relatorio_presenca(request):
         })
 
     if export_format == 'pdf':
+        create_log(request.user, 'exportou relatório de presenças (PDF)')
         template = get_template('academia/professor/relatorio_presenca_pdf.html')
         context = {
             'report_data': report_data,
@@ -1594,6 +1633,7 @@ def relatorio_presenca(request):
         return response
 
     if export_format == 'xlsx':
+        create_log(request.user, 'exportou relatório de presenças (XLSX)')
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="relatorio_presencas.xlsx"'
 
@@ -1647,6 +1687,7 @@ def professor_meta_nova(request):
             meta = form.save(commit=False)
             meta.professor = request.user
             meta.save()
+            create_log(request.user, f'criou a meta "{meta.titulo}"')
             messages.success(request, 'Meta criada com sucesso!')
             return redirect('professor_metas')
     else:
@@ -1665,6 +1706,7 @@ def professor_meta_editar(request, meta_id):
         form = MetaForm(request.POST, instance=meta)
         if form.is_valid():
             form.save()
+            create_log(request.user, f'editou a meta "{meta.titulo}"')
             messages.success(request, 'Meta atualizada com sucesso!')
             return redirect('professor_metas')
     else:
@@ -1680,11 +1722,50 @@ def professor_meta_deletar(request, meta_id):
     meta = get_object_or_404(MetaModel, pk=meta_id)
     
     if request.method == 'POST':
+        meta_titulo = meta.titulo
         meta.delete()
+        create_log(request.user, f'excluiu a meta "{meta_titulo}"')
         messages.success(request, 'Meta excluída com sucesso!')
         return redirect('professor_metas')
     
     return render(request, 'academia/professor/meta_confirm_delete.html', {'meta': meta})
+
+# --- LOGS ---
+
+@login_required
+def log_list(request):
+    if not request.user.is_admin():
+        raise PermissionDenied
+    
+    items_per_page = request.GET.get('items_per_page', 10)
+    try:
+        items_per_page = int(items_per_page)
+        if items_per_page not in [10, 20, 30]:
+            items_per_page = 10
+    except ValueError:
+        items_per_page = 10
+
+    status_filter = request.GET.get('status')
+    logs_list = Log.objects.all().order_by('-timestamp')
+    
+    if status_filter:
+        logs_list = logs_list.filter(status=status_filter)
+    
+    paginator = Paginator(logs_list, items_per_page)
+    page = request.GET.get('page')
+    
+    try:
+        logs = paginator.page(page)
+    except PageNotAnInteger:
+        logs = paginator.page(1)
+    except EmptyPage:
+        logs = paginator.page(paginator.num_pages)
+        
+    return render(request, 'academia/logs.html', {
+        'logs': logs,
+        'items_per_page': items_per_page,
+        'status_filter': status_filter
+    })
 
 # --- VIEWS DE ERRO ---
 
