@@ -41,11 +41,11 @@
                                 {% if user.is_student %}
                                     <li><h6 class="dropdown-header">Área do Aluno</h6></li>
                                     <li><a class="dropdown-item" href="{% url 'aluno_presencas' %}"><i
-                                            class="bi bi-list-ul me-2"></i>Minhas Presenças</a></li>
+                                            class="bi bi-calendar-check me-2"></i>Minhas Presenças</a></li>
                                     <li><a class="dropdown-item" href="{% url 'aluno_pedidos' %}"><i
-                                            class="bi bi-cart me-2"></i>Meus Pedidos</a></li>
+                                            class="bi bi-box me-2"></i>Meus Pedidos</a></li>
                                     <li><a class="dropdown-item" href="{% url 'aluno_relatorios' %}"><i
-                                            class="bi bi-graph-up me-2"></i>Relatórios</a></li>
+                                            class="bi bi-file-earmark-text me-2"></i>Relatórios</a></li>
                                 {% endif %}
 
                                 {% if user.is_student and user.is_professor_or_admin %}
@@ -58,19 +58,19 @@
                                 {% if user.is_professor_or_admin %}
                                     <li><h6 class="dropdown-header">Área do Professor</h6></li>
                                     <li><a class="dropdown-item" href="{% url 'professor_turmas' %}"><i
-                                            class="bi bi-list-ul me-2"></i>Gerenciar Turmas</a></li>
+                                            class="bi bi-people me-2"></i>Gerenciar Turmas</a></li>
                                     <li><a class="dropdown-item" href="{% url 'professor_turma_nova' %}"><i
                                             class="bi bi-plus-circle me-2"></i>Nova Turma</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li><a class="dropdown-item" href="{% url 'professor_presencas' %}"><i
-                                            class="bi bi-check-circle me-2"></i>Aprovar Presenças</a></li>
+                                            class="bi bi-calendar-check me-2"></i>Aprovar Presenças</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li><a class="dropdown-item" href="{% url 'professor_alunos' %}"><i
-                                            class="bi bi-people me-2"></i>Gerenciar Alunos</a></li>
+                                            class="bi bi-person-check me-2"></i>Gerenciar Alunos</a></li>
                                     <li><a class="dropdown-item" href="{% url 'promover_aluno' %}"><i
                                             class="bi bi-person-check-fill me-2"></i>Promover Aluno</a></li>
                                     <li><a class="dropdown-item" href="{% url 'tamanhos_medidas' %}"><i
@@ -86,31 +86,31 @@
                                     <li><a class="dropdown-item" href="{% url 'professor_itens' %}"><i
                                             class="bi bi-box-seam me-2"></i>Gerenciar Itens</a></li>
                                     <li><a class="dropdown-item" href="{% url 'professor_pedidos' %}"><i
-                                            class="bi bi-cart me-2"></i>Gerenciar Pedidos</a></li>
+                                            class="bi bi-box me-2"></i>Gerenciar Pedidos</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li><a class="dropdown-item" href="{% url 'professor_planos_aula' %}"><i
-                                            class="bi bi-list-ul me-2"></i>Gerenciar Planos de Aula</a></li>
+                                            class="bi bi-journal-text me-2"></i>Gerenciar Planos de Aula</a></li>
                                     <li><a class="dropdown-item" href="{% url 'professor_plano_aula_novo' %}"><i
                                             class="bi bi-plus-circle me-2"></i>Novo Plano de Aula</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li><a class="dropdown-item" href="{% url 'professor_rankings' %}"><i
-                                            class="bi bi-list-ul me-2"></i>Gerenciar Rankings</a></li>
+                                            class="bi bi-bar-chart me-2"></i>Gerenciar Rankings</a></li>
                                     <li><a class="dropdown-item" href="{% url 'professor_ranking_novo' %}"><i
                                             class="bi bi-plus-circle me-2"></i>Novo Ranking</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li><a class="dropdown-item" href="{% url 'professor_metas' %}"><i
-                                            class="bi bi-graph-up-arrow me-2"></i>Metas de Aulas</a></li>
+                                            class="bi bi-bullseye me-2"></i>Metas de Aulas</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li><a class="dropdown-item" href="{% url 'professor_relatorios' %}"><i
-                                            class="bi bi-file-earmark-bar-graph me-2"></i>Relatórios</a></li>
+                                            class="bi bi-file-earmark-text me-2"></i>Relatórios</a></li>
                                 {% endif %}
                             </ul>
                         </li>

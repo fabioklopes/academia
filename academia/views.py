@@ -234,7 +234,8 @@ def dashboard(request):
     
     elif request.user.is_professor():
         context = {
-            'turmas_count': Turma.objects.filter(professor=request.user, ativa=True).count(),
+            #'turmas_count': Turma.objects.filter(professor=request.user, ativa=True).count(),
+            'turmas_count': Turma.objects.filter(ativa=True).count(),
             'solicitacoes_presenca': AttendanceRequest.objects.filter(status='PEN').count(),
             'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, status='ATIVO').distinct().count(),
             'alunos_pendentes': User.objects.filter(status='PENDENTE').count(),

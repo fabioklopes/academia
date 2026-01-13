@@ -8,8 +8,6 @@ from academia import views
 from academia.forms import CustomPasswordResetForm
 
 
-
-
 urlpatterns = [
     # Home/Index
     path('', views.dashboard, name='index'),
