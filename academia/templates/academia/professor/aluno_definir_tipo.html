@@ -1,0 +1,53 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Definir Tipo de Usuário - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Definir Tipo de Usuário</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Atenção!
+                    </h5>
+                    <p class="mb-0">Você está prestes a definir o tipo de acesso para o usuário <strong>{{ aluno.get_full_name }}</strong>.</p>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="group_role" class="form-label">Selecione o tipo de acesso:</label>
+                        <select name="group_role" id="group_role" class="form-select">
+                            <option value="STD" {% if aluno.group_role == 'STD' %}selected{% endif %}>Aluno</option>
+                            <option value="PRO" {% if aluno.group_role == 'PRO' %}selected{% endif %}>Professor</option>
+                            {% if user.is_admin %}
+                            <option value="ADM" {% if aluno.group_role == 'ADM' %}selected{% endif %}>Administrador</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Digite sua senha para confirmar:</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <div class="form-text">Esta ação requer confirmação da sua senha por segurança.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'professor_alunos' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-check-circle me-2"></i>Confirmar Alteração
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

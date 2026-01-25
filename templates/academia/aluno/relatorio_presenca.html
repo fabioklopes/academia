@@ -1,0 +1,126 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Relatório de Presenças{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Relatório de Presenças</h4>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="start_date">Data de Início</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="end_date">Data de Fim</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="order">Ordem</label>
+                                <select class="form-control" id="order" name="order">
+                                    <option value="desc" {% if order == 'desc' %}selected{% endif %}>Decrescente</option>
+                                    <option value="asc" {% if order == 'asc' %}selected{% endif %}>Crescente</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+                            <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-secondary">Voltar</a>
+                            <a href="?start_date={{ start_date }}&end_date={{ end_date }}&order={{ order }}&export=pdf" class="btn btn-outline-danger">Exportar para PDF</a>
+                            <a href="?start_date={{ start_date }}&end_date={{ end_date }}&order={{ order }}&export=xlsx" class="btn btn-outline-success">Exportar para XLSX</a>
+                        </div>
+                        <div class="form-inline">
+                            <label class="mr-2" for="items_per_page">Itens por página:</label>
+                            <select name="items_per_page" id="items_per_page" class="form-control form-control-sm" onchange="this.form.submit()">
+                                <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10</option>
+                                <option value="20" {% if items_per_page == 20 %}selected{% endif %}>20</option>
+                                <option value="30" {% if items_per_page == 30 %}selected{% endif %}>30</option>
+                                <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                {% if report_data %}
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Status</th>
+                                    <th>Motivo</th>
+                                    <th>Quantidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in report_data %}
+                                    <tr>
+                                        <td>{{ data.data|date:"d/m/Y (D)"|upper }}</td>
+                                        <td>{{ data.status|upper }}</td>
+                                        <td>{{ data.motivo }}</td>
+                                        <td>{{ data.qty }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-4">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}&order={{ order }}&items_per_page={{ items_per_page }}" aria-label="Anterior">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&laquo;</span>
+                                </li>
+                            {% endif %}
+
+                            {% for i in page_obj.paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}&start_date={{ start_date }}&end_date={{ end_date }}&order={{ order }}&items_per_page={{ items_per_page }}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}&order={{ order }}&items_per_page={{ items_per_page }}" aria-label="Próximo">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&raquo;</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                {% else %}
+                    <p class="text-muted mt-4">Nenhum dado encontrado para os filtros selecionados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

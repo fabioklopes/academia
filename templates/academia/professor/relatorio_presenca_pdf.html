@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <link rel="icon" href="{% static 'img/logotipo.ico' %}">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1cm;
+        }
+        body {
+            font-family: "Helvetica", sans-serif;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .student-section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        .student-header {
+            background-color: #f2f2f2;
+            padding: 10px;
+            border: 1px solid #dddddd;
+            margin-bottom: 10px;
+        }
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .belt-img {
+            height: 20px;
+            vertical-align: middle;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 6px;
+            font-size: 12px;
+        }
+        th {
+            background-color: #f9f9f9;
+        }
+        .stats-table {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .stats-table td {
+            border: none;
+            padding: 2px;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title }}</h1>
+    <p style="text-align: center;"><strong>Período:</strong> {{ start_date|date:"d/m/Y" }} a {{ end_date|date:"d/m/Y" }}</p>
+
+    {% for data in students_data %}
+        <div class="student-section">
+            <div class="student-header">
+                <div class="student-info">
+                    <strong>{{ data.student.get_full_name }}</strong>
+                    {% if data.graduacao %}
+                        <span>
+                            {{ data.graduacao.get_faixa_display }}
+                            {% if data.graduacao.grau > 0 %}({{ data.graduacao.grau }}º Grau){% endif %}
+                            <!-- Note: Image rendering in PDF might need absolute paths or base64 depending on setup.
+                                 Assuming static files are served correctly or xhtml2pdf handles it. -->
+                            <!-- <img src="{% static 'img/faixas/'|add:data.belt_image %}" class="belt-img"> -->
+                        </span>
+                    {% else %}
+                        <span>Sem Graduação</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if data.presencas %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="20%">Data</th>
+                            <th width="15%">Status</th>
+                            <th width="50%">Motivo</th>
+                            <th width="15%">Qtd</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in data.presencas %}
+                            <tr>
+                                <td>{{ p.data|date:"d/m/Y (D)" }}</td>
+                                <td>{{ p.status }}</td>
+                                <td>{{ p.motivo }}</td>
+                                <td>{{ p.qty }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="font-size: 12px; font-style: italic;">Nenhuma presença registrada no período.</p>
+            {% endif %}
+
+            <div style="background-color: #f9f9f9; padding: 5px; border: 1px solid #ddd;">
+                <strong>Resumo do Período:</strong>
+                <table class="stats-table">
+                    <tr>
+                        <td>Total de Aulas (Meta): {{ data.stats.total_aulas }}</td>
+                        <td>Presenças: {{ data.stats.total_presencas }}</td>
+                        <td>Ausências: {{ data.stats.total_ausencias }}</td>
+                        <td>Frequência: {{ data.stats.porcentagem }}%</td>
+                        <td>Situação: {{ data.stats.situacao }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="footer">
+        Gerado em {% now "d/m/Y H:i" %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,133 @@
+{% extends 'academia/base.html' %}
+{% load academia_tags %}
+
+{% block title %}Graduações - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Controle de Graduações</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-end mb-3">
+                    <form method="get" class="form-inline">
+                        <label class="mr-2 me-2" for="items_per_page">Itens por página:</label>
+                        <select name="items_per_page" id="items_per_page" class="form-control form-control-sm" onchange="this.form.submit()">
+                            <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10</option>
+                            <option value="20" {% if items_per_page == 20 %}selected{% endif %}>20</option>
+                            <option value="30" {% if items_per_page == 30 %}selected{% endif %}>30</option>
+                            <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50</option>
+                        </select>
+                    </form>
+                </div>
+
+                {% if alunos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Faixa</th>
+                                    <th>Grau</th>
+                                    <th>Data Graduação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for aluno in alunos %}
+                                    {% with graduacao=graduacoes|lookup:aluno.id %}
+                                    <tr>
+                                        <td>
+                                            {% if aluno.photo %}
+                                                <img src="{{ aluno.photo.url }}" alt="Foto" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle me-2 d-inline-block align-middle" style="width: 32px; height: 32px;">
+                                                    <i class="bi bi-person text-white" style="font-size: 20px; line-height: 32px;"></i>
+                                                </div>
+                                            {% endif %}
+                                            {{ aluno.first_name }} {{ aluno.last_name }}
+                                        </td>
+                                        <td>
+                                            {% if graduacao %}
+                                                {{ graduacao.get_faixa_display }}
+                                            {% else %}
+                                                <span class="text-muted">Não definido</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if graduacao %}
+                                                {{ graduacao.grau|format_grau }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if graduacao and graduacao.data_graduacao %}
+                                                {{ graduacao.data_graduacao|date:"d/m/Y" }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'professor_graduacao_editar' aluno.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    {% if alunos.has_other_pages %}
+                    <nav aria-label="Navegação de página">
+                        <ul class="pagination justify-content-center mt-4">
+                            {% if alunos.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ alunos.previous_page_number }}&items_per_page={{ items_per_page }}" aria-label="Anterior">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&laquo;</span>
+                                </li>
+                            {% endif %}
+
+                            {% for i in alunos.paginator.page_range %}
+                                {% if alunos.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}&items_per_page={{ items_per_page }}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if alunos.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ alunos.next_page_number }}&items_per_page={{ items_per_page }}" aria-label="Próximo">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&raquo;</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                {% else %}
+                    <p class="text-muted">Nenhum aluno cadastrado.</p>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

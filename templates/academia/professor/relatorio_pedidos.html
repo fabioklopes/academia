@@ -1,0 +1,176 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Relatório de Pedidos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Relatório de Pedidos</h4>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="start_date">Data de Início</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="end_date">Data de Fim</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group form-check">
+                                <input type="checkbox" class="form-check-input" id="group_by_aluno" name="group_by_aluno" {% if group_by_aluno %}checked{% endif %}>
+                                <label class="form-check-label" for="group_by_aluno">Agrupar por Aluno</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+                            <a href="{% url 'professor_relatorios' %}" class="btn btn-outline-secondary">Voltar</a>
+                            <a href="?start_date={{ start_date }}&end_date={{ end_date }}&group_by_aluno={{ group_by_aluno }}&export=pdf" class="btn btn-outline-danger">Exportar para PDF</a>
+                            <a href="?start_date={{ start_date }}&end_date={{ end_date }}&group_by_aluno={{ group_by_aluno }}&export=xlsx" class="btn btn-outline-success">Exportar para XLSX</a>
+                        </div>
+                        <div class="form-inline">
+                            <label class="mr-2" for="items_per_page">Itens por página:</label>
+                            <select name="items_per_page" id="items_per_page" class="form-control form-control-sm" onchange="this.form.submit()">
+                                <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10</option>
+                                <option value="20" {% if items_per_page == 20 %}selected{% endif %}>20</option>
+                                <option value="30" {% if items_per_page == 30 %}selected{% endif %}>30</option>
+                                <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                {% if group_by_aluno %}
+                    {% for aluno, pedidos_aluno in pedidos.items %}
+                        <h5 class="mt-4">{{ aluno }}</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Data do pedido</th>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Valor Total</th>
+                                        <th>Status</th>
+                                        <th>Desfecho</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pedido in pedidos_aluno %}
+                                        <tr>
+                                            <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                                            <td>{{ pedido.item.nome }}</td>
+                                            <td>{{ pedido.quantidade }}</td>
+                                            <td>R$ {{ pedido.final_value|default_if_none:"0.00" }}</td>
+                                            <td>{{ pedido.get_status_display }}</td>
+                                            <td>
+                                                {% if pedido.status == 'REJE' %}
+                                                    {{ pedido.rejection_reason }}
+                                                {% elif pedido.status == 'CANC' %}
+                                                    {{ pedido.cancellation_reason }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Data do pedido</th>
+                                    <th>Aluno</th>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Valor Total</th>
+                                    <th>Status</th>
+                                    <th>Desfecho</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pedido in pedidos %}
+                                    <tr>
+                                        <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ pedido.aluno.get_full_name }}</td>
+                                        <td>{{ pedido.item.nome }}</td>
+                                        <td>{{ pedido.quantidade }}</td>
+                                        <td>R$ {{ pedido.final_value|default_if_none:"0.00" }}</td>
+                                        <td>{{ pedido.get_status_display }}</td>
+                                        <td>
+                                            {% if pedido.status == 'REJE' %}
+                                                {{ pedido.rejection_reason }}
+                                            {% elif pedido.status == 'CANC' %}
+                                                {{ pedido.cancellation_reason }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+
+                <!-- Paginação -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mt-4">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}&group_by_aluno={{ group_by_aluno }}&items_per_page={{ items_per_page }}" aria-label="Anterior">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo;</span>
+                            </li>
+                        {% endif %}
+
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}&start_date={{ start_date }}&end_date={{ end_date }}&group_by_aluno={{ group_by_aluno }}&items_per_page={{ items_per_page }}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}&group_by_aluno={{ group_by_aluno }}&items_per_page={{ items_per_page }}" aria-label="Próximo">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&raquo;</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                {% if not pedidos %}
+                    <p class="text-muted mt-4">Nenhum pedido encontrado para os filtros selecionados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

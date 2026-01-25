@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <link rel="icon" href="{% static 'img/logotipo.ico' %}">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1cm;
+        }
+        body {
+            font-family: "Helvetica", sans-serif;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title }}</h1>
+    <p><strong>Período:</strong> {{ start_date|date:"d/m/Y" }} a {{ end_date|date:"d/m/Y" }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Aluno</th>
+                <th>Status</th>
+                <th>Motivo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in report_data %}
+                <tr>
+                    <td>{{ data.data|date:"d/m/Y" }}</td>
+                    <td>{{ data.aluno }}</td>
+                    <td>{{ data.status }}</td>
+                    <td>{{ data.motivo }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">Nenhum dado encontrado para o período selecionado.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="footer">
+        Gerado em {% now "d/m/Y H:i" %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Promover Aluno - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Promover Aluno a Professor</h4>
+            </div>
+            <div class="card-body">
+                <form id="search-form" method="GET" action="{% url 'promover_aluno' %}">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <input type="text" id="search-input" name="q" class="form-control" placeholder="Buscar por nome ou email..." value="{{ request.GET.q }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-inline justify-content-end">
+                                <label class="mr-2" for="items_per_page">Itens por página:</label>
+                                <select name="items_per_page" id="items_per_page" class="form-control form-control-sm" onchange="this.form.submit()">
+                                    <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10</option>
+                                    <option value="20" {% if items_per_page == 20 %}selected{% endif %}>20</option>
+                                    <option value="30" {% if items_per_page == 30 %}selected{% endif %}>30</option>
+                                    <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="aluno-list-container">
+            {% include 'academia/professor/partials/promover_aluno_list.html' %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Confirmar Promoção</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Para confirmar a promoção deste aluno a professor, por favor, insira sua senha:</p>
+                <form id="promoteForm" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Sua Senha</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Confirmar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form');
+    const container = document.getElementById('aluno-list-container');
+    const itemsPerPageSelect = document.getElementById('items_per_page');
+    let debounceTimer;
+
+    function fetchAlunos(url) {
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+            window.history.pushState({path: url}, '', url);
+        })
+        .catch(error => console.error('Error fetching alunos:', error));
+    }
+
+    searchInput.addEventListener('keyup', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const query = searchInput.value;
+            const itemsPerPage = itemsPerPageSelect.value;
+            const url = `${searchForm.action}?q=${encodeURIComponent(query)}&items_per_page=${itemsPerPage}`;
+            fetchAlunos(url);
+        }, 300);
+    });
+
+    itemsPerPageSelect.removeAttribute('onchange');
+    itemsPerPageSelect.addEventListener('change', function() {
+        const query = searchInput.value;
+        const itemsPerPage = itemsPerPageSelect.value;
+        const url = `${searchForm.action}?q=${encodeURIComponent(query)}&items_per_page=${itemsPerPage}`;
+        fetchAlunos(url);
+    });
+
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = searchInput.value;
+        const itemsPerPage = itemsPerPageSelect.value;
+        const url = `${searchForm.action}?q=${encodeURIComponent(query)}&items_per_page=${itemsPerPage}`;
+        fetchAlunos(url);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.matches('.pagination a')) {
+            e.preventDefault();
+            const url = e.target.href;
+            fetchAlunos(url);
+        }
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.path) {
+            fetchAlunos(e.state.path);
+        }
+    });
+
+    // Modal logic
+    var promoteModal = document.getElementById('staticBackdrop');
+    promoteModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var actionUrl = button.getAttribute('data-action-url');
+        var form = document.getElementById('promoteForm');
+        form.action = actionUrl;
+    });
+});
+</script>
+{% endblock %}

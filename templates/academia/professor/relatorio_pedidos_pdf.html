@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <link rel="icon" href="{% static 'img/logotipo.ico' %}">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1cm;
+        }
+        body {
+            font-family: "Helvetica", sans-serif;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+        }
+        .aluno-group {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title }}</h1>
+    <p><strong>Período:</strong> {{ start_date|date:"d/m/Y" }} a {{ end_date|date:"d/m/Y" }}</p>
+
+    {% if grouped %}
+        {% for aluno, pedidos_aluno in pedidos.items %}
+            <div class="aluno-group">
+                <h2>{{ aluno }}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data do pedido</th>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Valor Total</th>
+                            <th>Status</th>
+                            <th>Desfecho</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos_aluno %}
+                            <tr>
+                                <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                                <td>{{ pedido.item.nome }}</td>
+                                <td>{{ pedido.quantidade }}</td>
+                                <td>R$ {{ pedido.final_value|default_if_none:"0.00" }}</td>
+                                <td>{{ pedido.get_status_display }}</td>
+                                <td>
+                                    {% if pedido.status == 'REJE' %}{{ pedido.rejection_reason }}{% elif pedido.status == 'CANC' %}{{ pedido.cancellation_reason }}{% else %}-{% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6">Nenhum pedido encontrado para este aluno no período.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Data do pedido</th>
+                    <th>Aluno</th>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Valor Total</th>
+                    <th>Status</th>
+                    <th>Desfecho</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                    <tr>
+                        <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                        <td>{{ pedido.aluno.get_full_name }}</td>
+                        <td>{{ pedido.item.nome }}</td>
+                        <td>{{ pedido.quantidade }}</td>
+                        <td>R$ {{ pedido.final_value|default_if_none:"0.00" }}</td>
+                        <td>{{ pedido.get_status_display }}</td>
+                        <td>
+                            {% if pedido.status == 'REJE' %}{{ pedido.rejection_reason }}{% elif pedido.status == 'CANC' %}{{ pedido.cancellation_reason }}{% else %}-{% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7">Nenhum pedido encontrado para o período selecionado.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <div class="footer">
+        Gerado em {% now "d/m/Y H:i" %}
+    </div>
+</body>
+</html>

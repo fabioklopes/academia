@@ -1,0 +1,61 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Rankings - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Rankings</h4>
+                <a href="{% url 'professor_ranking_novo' %}" class="btn btn-outline-primary">Novo Ranking</a>
+            </div>
+            <div class="card-body">
+                {% if rankings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Tipo</th>
+                                    <th>Turma</th>
+                                    <th>Período</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ranking in rankings %}
+                                    <tr>
+                                        <td>{{ ranking.titulo }}</td>
+                                        <td>{{ ranking.get_tipo_display }}</td>
+                                        <td>{{ ranking.turma.nome|default:"Todas" }}</td>
+                                        <td>{{ ranking.data_inicio|date:"d/m/Y" }} - {{ ranking.data_fim|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if ranking.ativo %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inativo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-info">Ver Detalhes</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nenhum ranking cadastrado.</p>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,256 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Painel do Administrador - Academia de Jiu-Jitsu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex align-items-center mb-3">
+            {% if user.photo %}
+                <img src="{{ user.photo.url }}" alt="Foto" class="rounded-circle me-3" width="60" height="60">
+            {% else %}
+                <div class="bg-secondary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <i class="bi bi-person text-white fs-4"></i>
+                </div>
+            {% endif %}
+            <div>
+                <h4 class="mb-0">Olá, {{ user.first_name }}! <a href="{% url 'logout' %}" class="text-decoration-none">(sair)</a></h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mb-4">Painel do Administrador</h2>
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-people fs-1 text-secondary mb-3"></i>
+                <h5 class="card-title">Turmas</h5>
+                <p class="card-text">Gerenciar turmas ativas</p>
+                <a href="{% url 'professor_turmas' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-check fs-1 text-primary mb-3"></i>
+                <h5 class="card-title">Presenças</h5>
+                <p class="card-text">
+                    {%  if solicitacoes_presenca == 0 %}
+                        <span class="card-text">
+                            Nenhuma solicitação pendente
+                        </span>
+                    {% elif solicitacoes_presenca == 1 %}
+                        <span class="card-text text-warning">
+                            {{ solicitacoes_presenca }} presença pendente
+                        </span>
+                    {% elif solicitacoes_presenca > 1 %}
+                        <span class="card-text text-warning">
+                            {{ solicitacoes_presenca }} presenças pendentes
+                        </span>
+                    {% endif %}
+                </p>
+                <a href="{% url 'professor_presencas' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-person-gear fs-1 text-success mb-3"></i>
+                <h5 class="card-title">Alunos</h5>
+                <p class="card-text">
+                    {%  if alunos_pendentes == 0 %}
+                        <span class="card-text">
+                            Nenhuma aprovação pendente
+                        </span>
+                    {% elif alunos_pendentes == 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} aprovação pendente
+                        </span>
+                    {% elif alunos_pendentes > 1 %}
+                        <span class="card-text text-warning">
+                            {{ alunos_pendentes }} aprovações pendentes
+                        </span>
+                    {% endif %}
+                </p>
+                <a href="{% url 'professor_alunos' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-award fs-1 text-danger mb-3"></i>
+                <h5 class="card-title">Graduações</h5>
+                <p class="card-text">Gerenciar faixas e graus</p>
+                <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-book fs-1 text-info mb-3"></i>
+                <h5 class="card-title">Planos de Aula</h5>
+                <p class="card-text">Criar e editar planos</p>
+                <a href="{% url 'professor_planos_aula' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-trophy fs-1 text-warning mb-3"></i>
+                <h5 class="card-title">Rankings</h5>
+                <p class="card-text">Criar rankings internos</p>
+                <a href="{% url 'professor_rankings' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-person-gear fs-1 text-secondary mb-3"></i>
+                <h5 class="card-title">Pedidos</h5>
+                <p class="card-text">
+                    {%  if pedidos_pendentes == 0 %}
+                        <span class="card-text">
+                            Nenhuma pendência
+                        </span>
+                    {% elif pedidos_pendentes == 1 %}
+                        <span class="card-text text-warning">
+                            {{ pedidos_pendentes }} pendente {% elif pedidos_pendentes != 1 %}s
+                        </span>
+                    {% endif %}
+                </p>
+                <a href="{% url 'professor_pedidos' %}" class="btn btn-outline-primary">Gerenciar</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-file-earmark-bar-graph fs-1 text-primary mb-3"></i>
+                <h5 class="card-title">Relatórios</h5>
+                <p class="card-text">Visualizar relatórios</p>
+                <a href="{% url 'professor_relatorios' %}" class="btn btn-outline-primary">Acessar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-cake fs-1 text-success me-2"></i>
+                    <h6 class="mb-0">Aniversariantes</h6>
+                </div>
+                <form method="get" class="mb-2">
+                    <label for="month" class="form-label">Selecione o mês:</label>
+                    <select name="month" id="month" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
+                        {% for month in months %}
+                            <option value="{{ month.number }}" {% if selected_month == month.number %}selected{% endif %}>
+                                {{ month.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in aniversariantes %}
+                                <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ u.id }}">
+                                    <td>{{ u.get_full_name }}</td>
+                                    <td>{{ u.birthday|date:"d/m" }}</td>
+                                </tr>
+
+                                <!-- Modal Detalhes do Aluno -->
+                                <div class="modal fade" id="alunoDetalheModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Detalhes do Aluno</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <div class="card border-0">
+                                                    <div class="card-body">
+                                                        {% if u.photo %}
+                                                            <img src="{{ u.photo.url }}" alt="Foto de {{ u.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                                        {% else %}
+                                                            <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                                                                <i class="bi bi-person text-white" style="font-size: 100px;"></i>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        <h2 class="fw-bold mb-1">{{ u.first_name }}</h2>
+                                                        <h5 class="text-muted mb-4">{{ u.get_full_name }}</h5>
+
+                                                        <div class="mb-3">
+                                                            {% if u.graduacao %}
+                                                                {% with faixa_img="faixas/"|add:u.graduacao.faixa|lower|add:".png" %}
+                                                                    <img src="/media/{{ faixa_img }}" alt="{{ u.graduacao.get_faixa_display }}" style="max-width: 100%; height: auto; max-height: 50px;">
+                                                                {% endwith %}
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">Sem graduação</span>
+                                                            {% endif %}
+                                                        </div>
+
+                                                        <p class="card-text fs-5">
+                                                            <i class="bi bi-cake2 me-2 text-primary"></i>
+                                                            {% if u.birthday %}
+                                                                {{ u.birthday|date:"d/m/Y" }}
+                                                            {% else %}
+                                                                Não informado
+                                                            {% endif %}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <tr><td colspan="2" class="text-center">Nenhum aniversariante neste mês.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
