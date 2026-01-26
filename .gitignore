@@ -1,48 +1,20 @@
-# PASTAS DO SISTEMA
-__pycache__/
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.vscode/
+# diretórios
 .idea/
-/media
+__pycache__/
+media/
+venv/
 
-# ARQUIVOS
+# arquivos
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-Thumbs.db
-
-# EXTENSÕES
-*.log
+database.db
+*.example
 *.py[cod]
 *$py.class
-*.so
-.Python
-.installed.cfg
-*.egg
-*.swp
-*.swo
+
+# virtualização
+.env
+
+# outros
 *.bkp
-*.db.bkp
-*.docx
-
-# AMBIENTES
-*~
-/staticfiles
-
-# OS
-.DS_Store
