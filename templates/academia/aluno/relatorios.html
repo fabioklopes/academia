@@ -1,0 +1,47 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Central de Relatórios{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Central de Relatórios</h4>
+            </div>
+            <div class="card-body">
+                <form method="GET" id="report-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="report-type">Tipo de Relatório</label>
+                                <select class="form-control" id="report-type" name="report_type">
+                                    <option value="">Selecione um tipo de relatório</option>
+                                    <option value="presenca">Relatório de Presenças</option>
+                                    <option value="pedidos">Relatório de Pedidos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-outline-primary">Gerar Relatório</button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('report-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var reportType = document.getElementById('report-type').value;
+        if (reportType === 'presenca') {
+            window.location.href = "{% url 'aluno_relatorio_presenca' %}";
+        } else if (reportType === 'pedidos') {
+            window.location.href = "{% url 'aluno_relatorio_pedidos' %}";
+        }
+    });
+</script>
+{% endblock %}

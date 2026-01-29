@@ -1,0 +1,69 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Novo Ranking - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Novo Ranking</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="tipo" name="tipo" required>
+                            <option value="FALTAS">Menos Faltas</option>
+                            <option value="CAMPEONATO">Mini-Campeonato</option>
+                            <option value="ALUNO_DESTAQUE">Aluno Destaque</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="turma" class="form-label">Turma (opcional)</label>
+                        <select class="form-select" id="turma" name="turma">
+                            <option value="">Todas as turmas</option>
+                            {% for turma in turmas %}
+                                <option value="{{ turma.id }}">{{ turma.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_inicio" class="form-label">Data de Início</label>
+                                <input type="date" class="form-control" id="data_inicio" name="data_inicio" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_fim" class="form-label">Data de Término</label>
+                                <input type="date" class="form-control" id="data_fim" name="data_fim" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="ativo" name="ativo" checked>
+                        <label class="form-check-label" for="ativo">Ranking Ativo</label>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-outline-primary">Criar</button>
+                        <a href="{% url 'professor_rankings' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

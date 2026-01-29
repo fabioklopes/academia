@@ -1,0 +1,390 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Marcar Presença - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Marcar Presença</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="attendance-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="turma_id" class="form-label">Turma</label>
+                        <select name="turma_id" id="turma_id" class="form-select" required>
+                            <option value="">Selecione a turma</option>
+                            {% for turma_aluno in turmas_aluno %}
+                                <option value="{{ turma_aluno.turma.id }}">{{ turma_aluno.turma.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Selecione as datas no calendário:</h6>
+                        <div class="calendar-navigation d-flex justify-content-between align-items-center mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="prevMonth"><i class="bi bi-chevron-left"></i></button>
+                            <h5 id="currentMonthYear" class="mb-0"></h5>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="nextMonth"><i class="bi bi-chevron-right"></i></button>
+                        </div>
+                        <div id="calendar" class="calendar-grid"></div>
+                    </div>
+
+                    <div id="selected-dates-list" class="mb-3">
+                        <h6>Datas Solicitadas:</h6>
+                        <ul class="list-group"></ul>
+                    </div>
+                    <div id="selected-dates-inputs"></div>
+                    <button type="submit" class="btn btn-outline-primary">Solicitar Presenças</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalhes da presença -->
+<div class="modal fade" id="attendanceDetailModal" tabindex="-1" aria-labelledby="attendanceDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attendanceDetailModalLabel">Detalhes da Presença em <span id="modalDate"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="attendanceDetailsContent">
+                    <!-- Detalhes serão carregados aqui via AJAX -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        text-align: center;
+    }
+    .calendar-day {
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        cursor: pointer;
+        position: relative;
+        background-color: #f8f9fa;
+        min-height: 50px; /* Ensure enough height for icons */
+    }
+    .calendar-day.current-month {
+        background-color: #fff;
+    }
+    .calendar-day.selected {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+    .calendar-day.disabled {
+        background-color: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+    .calendar-day .day-number {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        text-align: left; /* Align number to left to make space for icons */
+    }
+    .calendar-header {
+        font-weight: bold;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+    }
+    .list-group-item {
+        /* display: flex;  Removed flex to allow block content for radio buttons */
+        /* justify-content: space-between; */
+        /* align-items: center; */
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    const today = new Date();
+    // Set time to 00:00:00 for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+
+    // Calculate limit date (15 days ago)
+    const limitDate = new Date(today);
+    limitDate.setDate(today.getDate() - 15);
+
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+    const selectedDates = new Set();
+    const attendanceData = {{ attendance_data_json|safe }}; // Data de presenças do Django
+
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+    function renderCalendar() {
+        const calendarEl = $('#calendar');
+        calendarEl.empty();
+        $('#currentMonthYear').text(`${monthNames[currentMonth]} ${currentYear}`);
+
+        // Add day headers
+        dayNames.forEach(day => {
+            calendarEl.append(`<div class="calendar-header">${day}</div>`);
+        });
+
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+        const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+        const daysInMonth = lastDayOfMonth.getDate();
+        const startDay = firstDayOfMonth.getDay(); // 0 for Sunday, 1 for Monday, etc.
+
+        // Fill leading empty days
+        for (let i = 0; i < startDay; i++) {
+            calendarEl.append('<div class="calendar-day disabled"></div>');
+        }
+
+        // Fill days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentYear, currentMonth, day);
+            date.setHours(0, 0, 0, 0);
+            const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            let dayClass = 'calendar-day current-month';
+            let isDisabled = false;
+            let iconHtml = '';
+            let isCancelled = false;
+
+            // Check for attendance data
+            if (attendanceData[dateString]) {
+                const dayAttendance = attendanceData[dateString];
+
+                let iconsHtml = '<div class="status-icons" style="position: absolute; top: 5px; right: 5px; display: flex; gap: 2px;">';
+
+                dayAttendance.forEach(att => {
+                    let iconClass = '';
+                    if (att.status === 'REJ') {
+                        iconClass = 'bi-x-circle-fill text-danger';
+                    } else if (att.status === 'APR') {
+                        iconClass = 'bi-check-circle-fill text-success';
+                    } else if (att.status === 'PEN') {
+                        iconClass = 'bi-info-circle-fill text-warning';
+                    } else if (att.status === 'CAN') {
+                        // Cancelled status
+                        isCancelled = true;
+                    }
+
+                    if (iconClass) {
+                        if (att.class_type === 'As duas aulas') {
+                            iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
+                            iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
+                        } else {
+                            iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
+                        }
+                    }
+                });
+                iconsHtml += '</div>';
+
+                // Only show icons if there are any non-cancelled statuses or if we want to show cancelled history
+                // Currently, cancelled requests don't show icons, but allow re-selection
+                if (iconsHtml.includes('bi-')) {
+                    iconHtml = iconsHtml;
+                }
+            }
+
+            // Disable future dates
+            if (date > today) {
+                dayClass += ' disabled';
+                isDisabled = true;
+            }
+            // Disable dates older than 15 days, UNLESS it was cancelled previously
+            else if (date < limitDate && !isCancelled) {
+                dayClass += ' disabled';
+                isDisabled = true;
+            }
+
+            if (selectedDates.has(dateString)) {
+                dayClass += ' selected';
+            }
+
+            const dayEl = $(`<div class="${dayClass}" data-date="${dateString}"><span class="day-number"></span>${iconHtml}</div>`);
+            dayEl.find('.day-number').text(day);
+
+            if (!isDisabled) {
+                dayEl.on('click', function() {
+                    if ($(this).find('.status-icons').length > 0) {
+                        // If there's an icon (meaning active request), show details modal
+                        showAttendanceDetails(dateString);
+                    } else {
+                        // Otherwise, select/deselect date for attendance request
+                        toggleDateSelection(dateString, dayEl);
+                    }
+                });
+            } else {
+                dayEl.css('cursor', 'not-allowed');
+                dayEl.attr('title', 'Data fora do período permitido (15 dias)');
+            }
+            calendarEl.append(dayEl);
+        }
+    }
+
+    function toggleDateSelection(dateString, dayEl) {
+        if (selectedDates.has(dateString)) {
+            selectedDates.delete(dateString);
+            dayEl.removeClass('selected');
+        } else {
+            selectedDates.add(dateString);
+            dayEl.addClass('selected');
+        }
+        updateSelectedDatesList();
+    }
+
+    function updateSelectedDatesList() {
+        const selectedDatesListEl = $('#selected-dates-list ul');
+        const selectedDatesInputsEl = $('#selected-dates-inputs');
+        selectedDatesListEl.empty();
+        selectedDatesInputsEl.empty();
+
+        const sortedDates = Array.from(selectedDates).sort();
+        
+        if (sortedDates.length === 0) {
+            selectedDatesListEl.append('<li class="list-group-item text-muted">Nenhuma data selecionada.</li>');
+        } else {
+            sortedDates.forEach(date => {
+                const dateObj = new Date(date + 'T00:00:00');
+                const displayDate = dateObj.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' });
+                const isTuesday = dateObj.getDay() === 2; // 0=Sun, 1=Mon, 2=Tue
+
+                let radioHtml = '';
+                if (isTuesday) {
+                    radioHtml = `
+                        <div class="mt-2">
+                            <label class="form-label">Selecione o tipo de aula:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="class_type_${date}" id="class_type_${date}_both" value="BOTH" checked>
+                                <label class="form-check-label" for="class_type_${date}_both">As duas aulas</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="class_type_${date}" id="class_type_${date}_gi" value="GI">
+                                <label class="form-check-label" for="class_type_${date}_gi">Primeira Aula (Gi)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="class_type_${date}" id="class_type_${date}_nogi" value="NOGI">
+                                <label class="form-check-label" for="class_type_${date}_nogi">Segunda Aula (No-Gi)</label>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const listItem = $(`
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>${displayDate}</span>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-date" data-date="${date}">Remover</button>
+                        </div>
+                        ${radioHtml}
+                    </li>
+                `);
+                selectedDatesListEl.append(listItem);
+
+                const input = $(`<input type="hidden" name="dates" value="${date}">`);
+                selectedDatesInputsEl.append(input);
+            });
+        }
+    }
+
+    // Handle remove button click for selected dates
+    $(document).on('click', '.remove-date', function() {
+        const dateToRemove = $(this).data('date');
+        selectedDates.delete(dateToRemove);
+        renderCalendar(); // Re-render to update selection visual
+        updateSelectedDatesList();
+    });
+
+    function showAttendanceDetails(dateString) {
+        $.ajax({
+            url: '{% url "get_attendance_details" %}',
+            data: { 'date': dateString },
+            dataType: 'json',
+            success: function(data) {
+                $('#modalDate').text(new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }));
+                const detailsContent = $('#attendanceDetailsContent');
+                detailsContent.empty();
+
+                if (data.details && data.details.length > 0) {
+                    data.details.forEach(detail => {
+                        let statusClass = '';
+                        let statusIcon = '';
+                        if (detail.status === 'Aprovado') {
+                            statusClass = 'text-success';
+                            statusIcon = '<i class="bi bi-check-circle-fill"></i>';
+                        } else if (detail.status === 'Rejeitado') {
+                            statusClass = 'text-danger';
+                            statusIcon = '<i class="bi bi-x-circle-fill"></i>';
+                        } else { // Pendente ou Cancelado
+                            statusClass = 'text-warning';
+                            statusIcon = '<i class="bi bi-info-circle-fill"></i>';
+                        }
+
+                        detailsContent.append(`
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    <h6 class="card-title">${statusIcon} <span class="${statusClass}">${detail.status}</span> - Turma: ${detail.turma}</h6>
+                                    <p class="card-text"><strong>Motivo:</strong> ${detail.reason}</p>
+                                    ${detail.class_type !== 'N/A' ? `<p class="card-text"><strong>Tipo de Aula:</strong> ${detail.class_type}</p>` : ''}
+                                    <p class="card-text"><strong>Processado por:</strong> ${detail.processed_by}</p>
+                                    <p class="card-text"><strong>Processado em:</strong> ${detail.processed_at}</p>
+                                    ${detail.rejection_reason !== 'N/A' ? `<p class="card-text"><strong>Motivo da Rejeição:</strong> ${detail.rejection_reason}</p>` : ''}
+                                </div>
+                            </div>
+                        `);
+                    });
+                } else {
+                    detailsContent.append('<p>Nenhum detalhe de presença encontrado para esta data.</p>');
+                }
+                $('#attendanceDetailModal').modal('show');
+            },
+            error: function(xhr, status, error) {
+                console.error("Erro ao buscar detalhes da presença:", error);
+                alert("Erro ao carregar detalhes da presença.");
+            }
+        });
+    }
+
+    // Navigation buttons
+    $('#prevMonth').on('click', function() {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar();
+    });
+
+    $('#nextMonth').on('click', function() {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar();
+    });
+
+    // Initial render
+    renderCalendar();
+    updateSelectedDatesList(); // Initialize the selected dates list
+});
+</script>
+{% endblock %}

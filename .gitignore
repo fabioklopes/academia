@@ -1,0 +1,17 @@
+# diretórios
+.idea/
+__pycache__/
+media/
+venv/
+
+# arquivos
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+database.db
+*.example
+*.py[cod]
+*$py.class
+
+# virtualização
+
