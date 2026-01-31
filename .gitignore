@@ -1,17 +1,10 @@
 # diretórios
 .idea/
 __pycache__/
-media/
 venv/
 
 # arquivos
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-database.db
-*.example
+settings.py
+.env
 *.py[cod]
 *$py.class
-
-# virtualização
-

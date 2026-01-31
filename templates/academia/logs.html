@@ -30,7 +30,7 @@
 {% if items_per_page > 10 and logs.has_other_pages %}
 <div class="card mb-4">
     <div class="card-footer d-flex justify-content-center">
-        {% include 'academia/partials/pagination.html' %}
+        {% include 'academia/partials/_pagination.html' with page_obj=logs %}
     </div>
 </div>
 {% endif %}
@@ -81,7 +81,7 @@
 
     {% if logs.has_other_pages %}
     <div class="card-footer d-flex justify-content-center">
-        {% include 'academia/partials/pagination.html' %}
+        {% include 'academia/partials/_pagination.html' with page_obj=logs %}
     </div>
     {% endif %}
 </div>

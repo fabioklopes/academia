@@ -53,38 +53,8 @@
     </table>
 </div>
 
-<div class="pagination-container">
-    <ul class="pagination justify-content-center">
-        {% if pedidos.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ pedidos.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" data-page="{{ pedidos.previous_page_number }}">&laquo;</a>
-            </li>
-        {% else %}
-            <li class="page-item disabled">
-                <span class="page-link">&laquo;</span>
-            </li>
-        {% endif %}
-
-        {% for i in pedidos.paginator.page_range %}
-            {% if pedidos.number == i %}
-                <li class="page-item active">
-                    <span class="page-link">{{ i }}</span>
-                </li>
-            {% else %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}" data-page="{{ i }}">{{ i }}</a>
-                </li>
-            {% endif %}
-        {% endfor %}
-
-        {% if pedidos.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ pedidos.next_page_number }}{% if query %}&q={{ query }}{% endif %}" data-page="{{ pedidos.next_page_number }}">&raquo;</a>
-            </li>
-        {% else %}
-            <li class="page-item disabled">
-                <span class="page-link">&raquo;</span>
-            </li>
-        {% endif %}
-    </ul>
-</div>
+{% if pedidos.has_other_pages %}
+    <div class="card-footer d-flex justify-content-center">
+        {% include 'academia/partials/_pagination.html' with page_obj=pedidos %}
+    </div>
+{% endif %}
