@@ -1,9 +1,8 @@
 # diretórios
 .idea/
 __pycache__/
-media/faixas
-media/photos
 venv/
 
 # arquivos
+jiujitsu_academy/settings.py
 .env
