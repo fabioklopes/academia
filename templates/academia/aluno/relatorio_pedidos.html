@@ -1,0 +1,78 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Relatório de Pedidos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Relatório de Pedidos</h4>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="start_date">Data de Início</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="end_date">Data de Fim</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+                        <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-secondary">Voltar</a>
+                        <a href="?start_date={{ start_date }}&end_date={{ end_date }}&export=pdf" class="btn btn-outline-danger">Exportar para PDF</a>
+                        <a href="?start_date={{ start_date }}&end_date={{ end_date }}&export=xlsx" class="btn btn-outline-success">Exportar para XLSX</a>
+                    </div>
+                </form>
+
+                {% if pedidos %}
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Data do pedido</th>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Valor Total</th>
+                                    <th>Status</th>
+                                    <th>Desfecho</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pedido in pedidos %}
+                                    <tr>
+                                        <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ pedido.item.nome }}</td>
+                                        <td>{{ pedido.quantidade }}</td>
+                                        <td>R$ {{ pedido.final_value|default_if_none:"0.00" }}</td>
+                                        <td>{{ pedido.get_status_display }}</td>
+                                        <td>
+                                            {% if pedido.status == 'REJE' %}
+                                                {{ pedido.rejection_reason }}
+                                            {% elif pedido.status == 'CANC' %}
+                                                {{ pedido.cancellation_reason }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted mt-4">Nenhum pedido encontrado para os filtros selecionados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

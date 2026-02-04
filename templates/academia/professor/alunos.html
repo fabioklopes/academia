@@ -1,0 +1,81 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Gerenciar Alunos - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Buscar Alunos</h4>
+            </div>
+            <div class="card-body">
+                <form id="search-form" method="GET" action="{% url 'professor_alunos' %}">
+                    <div class="input-group">
+                        <input type="text" id="search-input" name="q" class="form-control" placeholder="Buscar por nome ou email..." value="{{ request.GET.q }}">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="aluno-list-container">
+            {% include 'academia/professor/partials/aluno_list.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form');
+    const container = document.getElementById('aluno-list-container');
+    let debounceTimer;
+
+    function fetchAlunos(url) {
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+            window.history.pushState({path: url}, '', url);
+        })
+        .catch(error => console.error('Error fetching alunos:', error));
+    }
+
+    searchInput.addEventListener('keyup', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const query = searchInput.value;
+            const url = `${searchForm.action}?q=${encodeURIComponent(query)}`;
+            fetchAlunos(url);
+        }, 300);
+    });
+
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = searchInput.value;
+        const url = `${searchForm.action}?q=${encodeURIComponent(query)}`;
+        fetchAlunos(url);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.matches('.pagination a')) {
+            e.preventDefault();
+            const url = e.target.href;
+            fetchAlunos(url);
+        }
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.path) {
+            fetchAlunos(e.state.path);
+        }
+    });
+});
+</script>
+{% endblock %}

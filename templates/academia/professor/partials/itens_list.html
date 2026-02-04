@@ -1,0 +1,33 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Quantidade</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+                <tr>
+                    <td>{{ item.nome }}</td>
+                    <td>{{ item.get_tipo_display }}</td>
+                    <td>R$ {{ item.valor|default:"-" }}</td>
+                    <td>{{ item.quantidade|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'professor_item_editar' item.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="{% url 'professor_item_deletar' item.id %}" class="btn btn-sm btn-outline-danger">Deletar</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if itens.has_other_pages %}
+    <div class="card-footer d-flex justify-content-center">
+        {% include 'academia/partials/_pagination.html' with page_obj=itens %}
+    </div>
+{% endif %}

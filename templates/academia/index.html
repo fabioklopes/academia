@@ -1,0 +1,198 @@
+{% extends 'academia/base.html' %}
+{% load static %}
+
+{% block title %}CRTN Belém{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 50px;
+    }
+    
+    @media (min-width: 768px) {
+        .hero-section {
+            padding: 80px 0;
+        }
+    }
+
+    .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if not user.is_authenticated %}
+    <!-- Hero Section para usuários não autenticados -->
+    <div class="hero-section text-center rounded-3">
+        <div class="container-fluid">
+            <img src="{% static 'img/logotipo_transparente.png' %}" alt="Logo CRTN Belém" class="img-fluid mb-3" style="max-width: 120px;">
+            <h1 class="display-5 fw-bold mb-2">CRTN Belém</h1>
+            <p class="lead mb-4">Sistema gestor de alunos, controle de presenças e graduações</p>
+            
+            <div class="my-4 px-3">
+                <img src="{% static 'img/banner-jiujitsu-1.jpg' %}" class="img-fluid rounded-3 shadow-lg" alt="Banner da academia de Jiu-Jitsu">
+            </div>
+
+            <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Fazer Login
+                </a>
+                <a href="{% url 'solicitar_acesso' %}" class="btn btn-outline-light btn-lg px-4">
+                    <i class="bi bi-person-plus me-2"></i>Solicitar Acesso
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="mb-5">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card border-0 text-center p-4 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-calendar-check fs-1 text-primary mb-3"></i>
+                        <h5 class="card-title">Controle de Presenças</h5>
+                        <p class="card-text">Sistema completo para gerenciar presenças e faltas dos alunos.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card border-0 text-center p-4 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-people fs-1 text-success mb-3"></i>
+                        <h5 class="card-title">Gestão de Turmas</h5>
+                        <p class="card-text">Organize turmas e gerencie o acesso dos alunos de forma eficiente.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card border-0 text-center p-4 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-award fs-1 text-warning mb-3"></i>
+                        <h5 class="card-title">Sistema de Graduações</h5>
+                        <p class="card-text">Controle completo de faixas e graus de cada aluno.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Conteúdo para usuários autenticados -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4 text-center text-md-start">
+                <div class="d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0">
+                    {% if user.photo %}
+                        <img src="{{ user.photo.url }}" alt="Foto" class="rounded-circle me-md-3 mb-2 mb-md-0" width="70" height="70" style="object-fit: cover;">
+                    {% else %}
+                        <div class="bg-secondary rounded-circle me-md-3 mb-2 mb-md-0 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                            <i class="bi bi-person text-white fs-2"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h2 class="h3 mb-0">Bem-vindo, {{ user.first_name }}!</h2>
+                    </div>
+                </div>
+                <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                    <i class="bi bi-speedometer2 me-2"></i>Ir para Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards Informativos -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">Acesso Rápido</h4>
+        </div>
+        
+        {% if user.is_student %}
+        <div class="col-md-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-x fs-1 text-warning mb-3"></i>
+                    <h5 class="card-title">Minhas Presenças</h5>
+                    <p class="card-text">Visualize e cancele suas solicitações</p>
+                    <p>
+                        <span class="text-success small">Aprovadas: {{ presencas_aprovadas }}</span>
+                        | <span class="text-warning small mb-3">Pendentes: {{ presencas_pendentes }}</span>
+                    </p>
+                        <a href="{% url 'aluno_presencas' %}" class="btn btn-outline-primary">Acessar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center d-flex flex-column">
+                    <i class="bi bi-box-seam fs-1 text-primary mb-3"></i>
+                    <h5 class="card-title">Meus Pedidos</h5>
+                    <p class="card-text text-muted">Acompanhe seus pedidos de produtos.</p>
+                    <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-primary mt-auto">Acessar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center d-flex flex-column">
+                    <i class="bi bi-graph-up fs-1 text-info mb-3"></i>
+                    <h5 class="card-title">Relatórios</h5>
+                    <p class="card-text text-muted">Acompanhe seu desempenho e frequência.</p>
+                    <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-info mt-auto">Acessar</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if user.is_professor_or_admin %}
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center d-flex flex-column">
+                    <i class="bi bi-people fs-1 text-primary mb-3"></i>
+                    <h6 class="card-title">Turmas</h6>
+                    <a href="{% url 'professor_turmas' %}" class="btn btn-sm btn-outline-primary mt-auto">Gerenciar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center d-flex flex-column">
+                    <i class="bi bi-calendar-check fs-1 text-warning mb-3"></i>
+                    <h6 class="card-title">Aprovar Presenças</h6>
+                    <a href="{% url 'professor_presencas' %}" class="btn btn-sm btn-outline-primary mt-auto">Gerenciar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center d-flex flex-column">
+                    <i class="bi bi-award fs-1 text-danger mb-3"></i>
+                    <h6 class="card-title">Graduações</h6>
+                    <a href="{% url 'professor_graduacoes' %}" class="btn btn-sm btn-outline-primary mt-auto">Gerenciar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center d-flex flex-column">
+                    <i class="bi bi-file-earmark-bar-graph fs-1 text-info mb-3"></i>
+                    <h6 class="card-title">Relatórios</h6>
+                    <a href="{% url 'professor_relatorios' %}" class="btn btn-sm btn-outline-primary mt-auto">Acessar</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

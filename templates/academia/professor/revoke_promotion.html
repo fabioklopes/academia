@@ -1,0 +1,24 @@
+{% extends 'academia/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Revogar Promoção de {{ user_to_revoke.get_full_name }}</h2>
+    <p>Você está prestes a revogar a promoção de <strong>{{ user_to_revoke.get_full_name }}</strong>. Isso o reverterá para o status de "Aluno".</p>
+    <p>Para confirmar esta ação, por favor, insira sua senha.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_password" class="form-label">{{ form.password.label }}</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div class="alert alert-danger mt-2">
+                    {{ form.password.errors.as_text }}
+                </div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-danger">Revogar Promoção</button>
+        <a href="{% url 'promover_aluno' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Gerenciar Turmas - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Gerenciar Turmas</h4>
+                    <a href="{% url 'professor_turma_nova' %}" class="btn btn-outline-primary">Nova Turma</a>
+                </div>
+                <div class="card-body">
+                    {% if turmas %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Criado Por</th>
+                                    <th>Data Criação</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for turma in turmas %}
+                                    <tr>
+                                        <td>{{ turma.nome }}</td>
+                                        <td>
+                                            {% if turma.professor.photo %}
+                                                <img src="{{ turma.professor.photo.url }}" alt="Foto"
+                                                     class="rounded-circle me-2" width="32" height="32"
+                                                     style="object-fit: cover;">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle me-2 d-inline-block align-middle"
+                                                     style="width: 32px; height: 32px;">
+                                                    <i class="bi bi-person text-white"
+                                                       style="font-size: 20px; line-height: 32px;"></i>
+                                                </div>
+                                            {% endif %}
+                                            {{ turma.professor.first_name }} {{ turma.professor.last_name }}
+                                        </td>
+                                        <td>{{ turma.data_criacao|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if turma.ativa %}
+                                                <span class="badge bg-success">Ativa</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inativa</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'professor_turma_alunos' turma.id %}"
+                                               class="btn btn-sm btn-outline-success" title="Gerenciar Alunos">
+                                                <i class="bi bi-people"></i> Alunos
+                                            </a>
+                                            <a href="{% url 'professor_turma_editar' turma.id %}"
+                                               class="btn btn-sm btn-outline-primary" title="Editar Turma">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Nenhuma turma cadastrada.</p>
+                    {% endif %}
+
+                    <div class="mt-3">
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

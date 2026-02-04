@@ -1,0 +1,132 @@
+<div class="card">
+    <div class="card-header">
+        <h4>Gerenciar Alunos</h4>
+    </div>
+    <div class="card-body">
+        {% if alunos.object_list %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 5%;">Foto</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aluno in alunos %}
+                            <tr>
+                                <td>
+                                    {% if aluno.photo %}
+                                        <img src="{{ aluno.photo.url }}" alt="Foto de {{ aluno.first_name }}" class="rounded-circle" width="40" height="40" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ aluno.id }}">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle me-2 d-inline-block align-middle" style="width: 40px; height: 40px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ aluno.id }}">
+                                            <i class="bi bi-person text-white" style="font-size: 24px; line-height: 40px;"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="#" class="text-decoration-none text-dark" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ aluno.id }}">
+                                        {{ aluno.first_name }} {{ aluno.last_name }}
+                                    </a>
+                                </td>
+                                <td>{{ aluno.email }}</td>
+                                <td>
+                                    {% if aluno.status == 'ATIVO' %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% elif aluno.status == 'PENDENTE' %}
+                                        <span class="badge bg-warning">Pendente</span>
+                                    {% elif aluno.status == 'INATIVO' %}
+                                        <span class="badge bg-danger light-text">Inativo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ aluno.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if aluno.status == 'PENDENTE' %}
+                                        <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-outline-success">Aprovar</a>
+                                        <a href="{% url 'professor_aluno_excluir' aluno.id %}" class="btn btn-sm btn-outline-danger">Excluir</a>
+                                    {% elif aluno.status == 'ATIVO' %}
+                                        <a href="{% url 'professor_aluno_desativar' aluno.id %}" class="btn btn-sm btn-outline-danger">Desativar</a>
+                                    {% elif aluno.status == 'INATIVO' %}
+                                        <a href="{% url 'professor_aluno_ativar' aluno.id %}" class="btn btn-sm btn-outline-success">Ativar</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <!-- Modal Detalhes do Aluno -->
+                            <div class="modal fade" id="alunoDetalheModal{{ aluno.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Detalhes do Aluno</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body text-center">
+                                            <div class="card border-0">
+                                                <div class="card-body">
+                                                    {% if aluno.photo %}
+                                                        <img src="{{ aluno.photo.url }}" alt="Foto de {{ aluno.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                                                            <i class="bi bi-person text-white" style="font-size: 100px;"></i>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <h2 class="fw-bold mb-1">{{ aluno.first_name }}</h2>
+                                                    <h5 class="text-muted mb-4">{{ aluno.get_full_name }}</h5>
+
+                                                    <div class="mb-3">
+                                                        {% if aluno.graduacao %}
+                                                            <div class="mt-2">
+                                                                {% if aluno.graduacao.grau > 0 %}
+                                                                    <img src="/media/faixas/{{ aluno.graduacao.faixa }}_{{ aluno.graduacao.grau }}_DEGREES.png"
+                                                                         alt="{{ aluno.graduacao.get_faixa_display }}"
+                                                                         style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                {% else %}
+                                                                    <img src="/media/faixas/{{ aluno.graduacao.faixa }}.png"
+                                                                         alt="{{ aluno.graduacao.get_faixa_display }}"
+                                                                         style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                {% endif %}
+                                                            </div>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">Sem graduação</span>
+                                                        {% endif %}
+                                                    </div>
+
+                                                    <p class="card-text fs-5">
+                                                        {% if aluno.birthday %}
+                                                            {% if aluno.id != 1 and aluno.id != 2 and aluno.id != 7 and aluno.id != 39 and aluno.id != 110 %}
+                                                                <i class="bi bi-cake2 me-2 text-primary"></i> {{ aluno.birthday|date:"d/m/Y" }}
+                                                            {% endif %}
+                                                        {% else %}
+                                                            Não informado
+                                                        {% endif %}
+
+                                                    </p>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {# Controles de Paginação #}
+            {% include 'academia/partials/_pagination.html' with page_obj=alunos %}
+
+        {% else %}
+            <p class="text-muted">Nenhum aluno encontrado.</p>
+        {% endif %}
+        
+        <div class="mt-3">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+        </div>
+    </div>
+</div>

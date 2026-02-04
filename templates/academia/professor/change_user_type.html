@@ -1,0 +1,51 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Alterar Tipo de Usuário - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Alterar Tipo de Usuário</h4>
+                </div>
+                <div class="card-body">
+                    <p>Você está prestes a alterar o tipo do usuário <strong>{{ user_to_change.get_full_name }}</strong> de <strong>Aluno</strong> para <strong>Professor</strong>.</p>
+                    <p>Para confirmar esta ação, por favor, insira sua senha de administrador.</p>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Selecione a Ação</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="user_type" id="promote_to_professor" value="PRO" required>
+                                <label class="form-check-label text-danger" for="promote_to_professor">
+                                    <strong>Promover este aluno a professor</strong>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Sua Senha</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'professor_alunos' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-outline-primary">Confirmar e Alterar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+# diretórios
+.idea/
+__pycache__/
+media/faixas
+media/photos
+venv/
+
+# arquivos
+.env

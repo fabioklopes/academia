@@ -1,0 +1,438 @@
+{% extends 'academia/base.html' %}
+{% load static %}
+
+{% block title %}Solicitar Acesso - Academia de Jiu-Jitsu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+    .img-container {
+        max-height: 500px;
+        width: 100%;
+    }
+    .img-container img {
+        max-width: 100%;
+        display: block;
+    }
+    #registration-form-container {
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.7s ease-in-out, opacity 0.5s ease-in-out;
+        opacity: 0;
+    }
+    #registration-form-container.visible {
+        max-height: 2000px;
+        opacity: 1;
+    }
+    .registration-type-card {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .registration-type-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .registration-type-card.selected {
+        border-color: var(--bs-primary);
+        border-width: 2px;
+        box-shadow: 0 0 10px rgba(var(--bs-primary-rgb), 0.5);
+    }
+    #password-fields.hidden {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>Solicitar Acesso
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div id="registration-type-selection">
+                        <h5 class="card-title text-center">Qual tipo de cadastro você deseja fazer?</h5>
+                        <p class="text-muted text-center mb-4">Selecione uma das opções abaixo para começar.</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card h-100 registration-type-card" data-type="self">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-person-fill fs-1 text-primary"></i>
+                                        <h6 class="card-title mt-2">Cadastro Próprio</h6>
+                                        <p class="card-text small">Para você que vai treinar conosco.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 registration-type-card" data-type="dependent">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-people-fill fs-1 text-success"></i>
+                                        <h6 class="card-title mt-2">Cadastro de Dependente</h6>
+                                        <p class="card-text small">Para um filho, filha ou menor de idade pelo qual você é responsável.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                    <a class="btn btn-outline-primary mt-4 text-center" type="button" href="{% url 'index' %}">Voltar para o login</a>
+                    </div>
+
+                    <div id="registration-form-container">
+                        <p class="text-muted text-center mb-4">
+                            Preencha todos os campos abaixo para solicitar acesso ao sistema. <br />
+                            <span class="text-danger">Campos com * são obrigatórios</span>
+                        </p>
+
+                        <form method="post" enctype="multipart/form-data" id="solicitar-acesso-form">
+                            {% csrf_token %}
+
+                            <div style="display: none;">{{ form.has_responsible }}</div>
+
+                            <div id="responsible-email-field" class="mb-3" style="display: none;">
+                                <label for="{{ form.responsible_email.id_for_label }}" class="form-label">Email do Responsável <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    {{ form.responsible_email }}
+                                    <button class="btn btn-outline-secondary" type="button" id="verify-responsible-email">Verificar</button>
+                                </div>
+                                <small class="form-text text-muted">Informe o e-mail do seu cadastro já aprovado no sistema.</small>
+                                <div id="responsible-email-status" class="mt-1"></div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">Nome <span class="text-danger">*</span></label>
+                                    {{ form.first_name }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">Sobrenome <span class="text-danger">*</span></label>
+                                    {{ form.last_name }}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Email <span class="text-danger">*</span></label>
+                                    {{ form.email }}
+                                    <small class="form-text text-muted">Este será usado para fazer login.</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.whatsapp.id_for_label }}" class="form-label">WhatsApp <span class="text-danger">*</span></label>
+                                    {{ form.whatsapp }}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.birthday.id_for_label }}" class="form-label">Data de Nascimento <span class="text-danger">*</span></label>
+                                    {{ form.birthday }}
+                                </div>
+                            </div>
+
+                            <div class="row" id="password-fields">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.password.id_for_label }}" class="form-label">Senha <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        {{ form.password }}
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword"><i class="bi bi-eye-slash"></i></button>
+                                    </div>
+                                    <small class="form-text text-muted">Mínimo de 8 caracteres.</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.password_confirm.id_for_label }}" class="form-label">Confirmar Senha <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        {{ form.password_confirm }}
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordConfirm"><i class="bi bi-eye-slash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="photo" class="form-label">Foto <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#photo-modal">
+                                            <i class="bi bi-camera-fill me-2"></i> Adicionar Foto
+                                        </button>
+                                    </div>
+                                    <input type="file" class="form-control d-none" id="photo" name="photo" accept="image/*">
+                                    <div id="photo-error" class="text-danger mt-1" style="display: none;"></div>
+                                    <img id="photo-preview" src="" alt="Pré-visualização da foto" class="img-fluid mt-2" style="display: none; max-height: 150px;">
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Importante:</strong> Seu cadastro será analisado e você receberá uma notificação quando for aprovado.
+                            </div>
+
+                            <div class="d-flex gap-2 justify-content-between mt-4">
+                                <a href="{% url 'index' %}" class="btn btn-outline-success"> <i class="bi bi-house me-2"></i> Página Inicial </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>Enviar Solicitação
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="photo-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="photo-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photo-modal-label">Selecionar Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Escolha uma opção para adicionar sua foto:</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary" id="select-gallery-btn"><i class="bi bi-images me-2"></i>Selecionar da Galeria</button>
+                    <button type="button" class="btn btn-secondary" id="open-camera-btn"><i class="bi bi-camera-video me-2"></i>Usar a Câmera</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="crop-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crop-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crop-modal-label">Ajustar Foto (3x4)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container"><img id="image-to-crop" src="" alt="Foto para recortar"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="crop-btn">Confirmar Recorte</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('solicitar-acesso-form');
+    const hasResponsibleCheckbox = document.getElementById('{{ form.has_responsible.id_for_label }}');
+    const responsibleEmailField = document.getElementById('responsible-email-field');
+    const dependentEmailInput = document.getElementById('{{ form.email.id_for_label }}');
+    const registrationFormContainer = document.getElementById('registration-form-container');
+    const registrationTypeCards = document.querySelectorAll('.registration-type-card');
+    const passwordFields = document.getElementById('password-fields');
+    const passwordInput = document.getElementById('{{ form.password.id_for_label }}');
+    const passwordConfirmInput = document.getElementById('{{ form.password_confirm.id_for_label }}');
+
+    registrationTypeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const type = this.dataset.type;
+
+            registrationTypeCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+
+            if (type === 'self') {
+                hasResponsibleCheckbox.checked = false;
+                responsibleEmailField.style.display = 'none';
+                dependentEmailInput.value = '';
+                dependentEmailInput.readOnly = false;
+                passwordFields.classList.remove('hidden');
+                passwordInput.required = true;
+                passwordConfirmInput.required = true;
+            } else { // dependent
+                hasResponsibleCheckbox.checked = true;
+                responsibleEmailField.style.display = 'block';
+                dependentEmailInput.readOnly = true;
+                passwordFields.classList.add('hidden');
+                passwordInput.required = false;
+                passwordConfirmInput.required = false;
+            }
+
+            if (!registrationFormContainer.classList.contains('visible')) {
+                registrationFormContainer.classList.add('visible');
+            }
+        });
+    });
+
+    const verifyResponsibleEmailBtn = document.getElementById('verify-responsible-email');
+    const responsibleEmailInput = document.getElementById('{{ form.responsible_email.id_for_label }}');
+    const responsibleEmailStatus = document.getElementById('responsible-email-status');
+
+    if (verifyResponsibleEmailBtn) {
+        verifyResponsibleEmailBtn.addEventListener('click', function() {
+            const email = responsibleEmailInput.value;
+            if (!email) {
+                responsibleEmailStatus.innerHTML = `<span class="text-danger">Por favor, insira um email.</span>`;
+                return;
+            }
+
+            responsibleEmailStatus.innerHTML = `<span class="text-info">Verificando...</span>`;
+
+            fetch("{% url 'verificar_email_responsavel' %}", {
+                method: 'POST',
+                body: JSON.stringify({ email: email }),
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.isValid) {
+                    responsibleEmailStatus.innerHTML = `<span class="text-success">${data.message}</span>`;
+                    dependentEmailInput.value = data.dependent_email;
+                    dependentEmailInput.readOnly = true;
+                } else {
+                    responsibleEmailStatus.innerHTML = `<span class="text-danger">${data.message}</span>`;
+                    dependentEmailInput.value = '';
+                    dependentEmailInput.readOnly = true;
+                }
+            })
+            .catch(error => {
+                responsibleEmailStatus.innerHTML = `<span class="text-danger">Ocorreu um erro ao verificar o e-mail.</span>`;
+                console.error('Error:', error);
+            });
+        });
+    }
+
+    const whatsappInput = document.getElementById('{{ form.whatsapp.id_for_label }}');
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photo-preview');
+    const photoError = document.getElementById('photo-error');
+    const photoModal = new bootstrap.Modal(document.getElementById('photo-modal'));
+    const cropModal = new bootstrap.Modal(document.getElementById('crop-modal'));
+    const imageToCrop = document.getElementById('image-to-crop');
+    const addPhotoButton = document.querySelector('button[data-bs-target="#photo-modal"]');
+    let cropper;
+
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (photoInput.files.length === 0) {
+                event.preventDefault();
+                photoError.textContent = 'Por favor, adicione uma foto para o perfil.';
+                photoError.style.display = 'block';
+                photoError.classList.remove('text-warning', 'text-success');
+                photoError.classList.add('text-danger');
+                if (addPhotoButton) {
+                    addPhotoButton.classList.remove('btn-outline-secondary');
+                    addPhotoButton.classList.add('btn-danger');
+                    addPhotoButton.focus();
+                }
+            }
+        });
+    }
+
+    document.getElementById('select-gallery-btn').addEventListener('click', () => {
+        photoInput.removeAttribute('capture');
+        photoInput.click();
+    });
+
+    document.getElementById('open-camera-btn').addEventListener('click', () => {
+        photoInput.setAttribute('capture', 'camera');
+        photoInput.click();
+    });
+
+    photoInput.addEventListener('change', (event) => {
+        if (addPhotoButton) {
+            addPhotoButton.classList.remove('btn-danger');
+            addPhotoButton.classList.add('btn-outline-secondary');
+        }
+
+        const file = event.target.files[0];
+        photoError.style.display = 'none';
+        photoError.textContent = '';
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imageToCrop.src = e.target.result;
+                photoModal.hide();
+                cropModal.show();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('crop-modal').addEventListener('shown.bs.modal', function () {
+        cropper = new Cropper(imageToCrop, {
+            aspectRatio: 1 / 1, viewMode: 1, dragMode: 'move', autoCropArea: 1,
+            restore: false, guides: true, center: true, highlight: false,
+            cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
+        });
+    });
+
+    document.getElementById('crop-modal').addEventListener('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        if (photoInput.files.length > 0 && !photoPreview.src.startsWith('blob:')) {
+             photoInput.value = '';
+        }
+    });
+
+    document.getElementById('crop-btn').addEventListener('click', function() {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({
+            width: 200, height: 200, minWidth: 200, minHeight: 200,
+            fillColor: '#fff', imageSmoothingEnabled: true, imageSmoothingQuality: 'high',
+        });
+        canvas.toBlob(function(blob) {
+            if (!blob) return;
+            const newFile = new File([blob], "profile_photo.png", { type: 'image/png', lastModified: Date.now() });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(newFile);
+            photoInput.files = dataTransfer.files;
+            photoPreview.src = URL.createObjectURL(newFile);
+            photoPreview.style.display = 'block';
+            cropModal.hide();
+            photoError.textContent = 'Foto recortada e pronta para envio!';
+            photoError.style.display = 'block';
+            photoError.classList.remove('text-danger', 'text-warning');
+            photoError.classList.add('text-success');
+        }, 'image/png');
+    });
+
+    if (whatsappInput) {
+        whatsappInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            if (value.length > 2) value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
+            if (value.length > 9) value = value.substring(0, 9) + '-' + value.substring(9);
+            e.target.value = value;
+        });
+    }
+
+    function setupPasswordToggle(toggleId, passwordId) {
+        const toggleButton = document.getElementById(toggleId);
+        const passwordInput = document.getElementById(passwordId);
+        if (toggleButton && passwordInput) {
+            toggleButton.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('bi-eye');
+                this.querySelector('i').classList.toggle('bi-eye-slash');
+            });
+        }
+    }
+
+    setupPasswordToggle('togglePassword', '{{ form.password.id_for_label }}');
+    setupPasswordToggle('togglePasswordConfirm', '{{ form.password_confirm.id_for_label }}');
+});
+</script>
+
+
+{% endblock %}

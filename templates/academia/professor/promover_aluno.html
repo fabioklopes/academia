@@ -1,0 +1,116 @@
+{% extends 'academia/base.html' %}
+{% block title %}Promover Aluno{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Buscar Alunos</h4>
+            </div>
+            <div class="card-body">
+                <form id="search-form" method="GET" action="{% url 'promover_aluno' %}">
+                    <div class="input-group">
+                        <input type="text" id="search-input" name="q" class="form-control" placeholder="Buscar por nome ou email..." value="{{ request.GET.q }}">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="aluno-list-container">
+            {% include 'academia/professor/partials/promover_aluno_list.html' %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Static backdrop -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Confirmar Alteração de Tipo de Usuário</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Para alterar o tipo do usuário para <strong>Professor</strong>, por favor, confirme com sua senha de acesso.</p>
+                <form id="confirm-form" method="post" action="">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Confirmar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form');
+    const container = document.getElementById('aluno-list-container');
+    let debounceTimer;
+
+    function fetchAlunos(url) {
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+            window.history.pushState({path: url}, '', url);
+        })
+        .catch(error => console.error('Error fetching alunos:', error));
+    }
+
+    searchInput.addEventListener('keyup', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const query = searchInput.value;
+            const url = `${searchForm.action}?q=${encodeURIComponent(query)}`;
+            fetchAlunos(url);
+        }, 300);
+    });
+
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = searchInput.value;
+        const url = `${searchForm.action}?q=${encodeURIComponent(query)}`;
+        fetchAlunos(url);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.matches('.pagination a')) {
+            e.preventDefault();
+            const url = e.target.href;
+            fetchAlunos(url);
+        }
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.path) {
+            fetchAlunos(e.state.path);
+        }
+    });
+
+    const confirmModal = document.getElementById('staticBackdrop');
+    if (confirmModal) {
+        confirmModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const form = document.getElementById('confirm-form');
+            const actionUrl = button.getAttribute('data-action-url');
+            form.setAttribute('action', actionUrl);
+        });
+    }
+});
+</script>
+{% endblock %}

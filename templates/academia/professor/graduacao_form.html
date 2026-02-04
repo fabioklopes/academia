@@ -1,0 +1,67 @@
+{% extends 'academia/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-award"></i> Atualizar Graduação</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4 p-3 bg-light rounded">
+                        {% if aluno.photo %}
+                            <img src="{{ aluno.photo.url }}" alt="{{ aluno.get_full_name }}" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                {{ aluno.first_name|first }}{{ aluno.last_name|first }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h5 class="mb-0">{{ aluno.get_full_name }}</h5>
+                            <small class="text-muted">Aluno</small>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- O campo aluno é oculto pois já sabemos quem é -->
+                        <input type="hidden" name="aluno" value="{{ aluno.id }}">
+
+                        <div class="mb-3">
+                            <label for="{{ form.faixa.id_for_label }}" class="form-label">Faixa</label>
+                            {{ form.faixa }}
+                            {% if form.faixa.errors %}
+                                <div class="text-danger small">{{ form.faixa.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.grau.id_for_label }}" class="form-label">Grau</label>
+                            {{ form.grau }}
+                            <div class="form-text">0 a 4 graus.</div>
+                            {% if form.grau.errors %}
+                                <div class="text-danger small">{{ form.grau.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.data_graduacao.id_for_label }}" class="form-label">Data da Graduação</label>
+                            {{ form.data_graduacao }}
+                            {% if form.data_graduacao.errors %}
+                                <div class="text-danger small">{{ form.data_graduacao.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'professor_graduacoes' %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Salvar Graduação</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

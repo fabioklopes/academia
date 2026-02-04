@@ -1,0 +1,136 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Incluir Alunos na Turma {{ turma.nome }} - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-start">
+        <div>
+            <h4>Incluir Alunos na Turma: {{ turma.nome }}</h4>
+            <p class="text-muted mb-0">Professor: {{ turma.professor.get_full_name }}</p>
+        </div>
+        <span class="badge bg-primary">{{ turma.alunos.count }} alunos</span>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Formulário para adicionar novos alunos -->
+            <div class="col-md-6">
+                <h5>Adicionar Novos Alunos</h5>
+                <hr>
+                {% if alunos_disponiveis %}
+                    <form action="{% url 'professor_turma_solicitacoes' turma.id %}" method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label for="alunos" class="form-label mb-0">Selecione os alunos para adicionar:</label>
+                                <input type="text" id="filtro-alunos" class="form-control form-control-sm w-50" placeholder="Filtrar alunos...">
+                            </div>
+                            <select name="alunos" id="alunos" class="form-select" multiple size="15" style="max-height: 400px;">
+                                {% for aluno in alunos_disponiveis %}
+                                    <option value="{{ aluno.id }}" data-search="{{ aluno.get_full_name|lower }} {{ aluno.email|lower }}">
+                                        {{ aluno.get_full_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Segure Ctrl (ou Cmd em Mac) para selecionar múltiplos alunos
+                                </small>
+                                <small class="text-muted">
+                                    <span id="alunos-selecionados">0</span> aluno(s) selecionado(s)
+                                </small>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-adicionar">
+                            <i class="bi bi-plus-circle me-2"></i>Adicionar Selecionados
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Todos os alunos ativos já estão nesta turma ou não há alunos disponíveis para adição.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Lista de alunos já na turma -->
+            <div class="col-md-6">
+                <h5>Alunos Atualmente na Turma ({{ alunos_na_turma.count }})</h5>
+                <hr>
+                {% if alunos_na_turma %}
+                    <ul class="list-group">
+                        {% for turma_aluno in alunos_na_turma %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ turma_aluno.aluno.get_full_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ turma_aluno.aluno.email }}</small>
+                                </div>
+                                {% if turma_aluno.status == 'APRO' %}
+                                    <span class="badge bg-success">Aprovado</span>
+                                {% elif turma_aluno.status == 'PEND' %}
+                                    <span class="badge bg-warning">Pendente</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Rejeitado</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nenhum aluno nesta turma ainda.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'professor_turmas' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Voltar para Turmas
+        </a>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAlunos = document.getElementById('alunos');
+    const filtroAlunos = document.getElementById('filtro-alunos');
+    const contadorSelecionados = document.getElementById('alunos-selecionados');
+    const btnAdicionar = document.getElementById('btn-adicionar');
+    const allOptions = [...selectAlunos.options];
+
+    // Atualiza o contador de selecionados
+    function atualizarContador() {
+        const selecionados = [...selectAlunos.selectedOptions].length;
+        contadorSelecionados.textContent = selecionados;
+        btnAdicionar.disabled = selecionados === 0;
+    }
+
+    // Filtra os alunos baseado no texto de busca
+    function filtrarAlunos() {
+        const termo = filtroAlunos.value.toLowerCase();
+        allOptions.forEach(option => {
+            const searchText = option.getAttribute('data-search');
+            if (searchText.includes(termo)) {
+                if (!selectAlunos.contains(option)) {
+                    selectAlunos.appendChild(option);
+                }
+            } else {
+                if (selectAlunos.contains(option)) {
+                    selectAlunos.removeChild(option);
+                }
+            }
+        });
+    }
+
+    // Event Listeners
+    selectAlunos.addEventListener('change', atualizarContador);
+    filtroAlunos.addEventListener('input', filtrarAlunos);
+
+    // Inicialização
+    atualizarContador();
+    btnAdicionar.disabled = true;
+});
+</script>
+{% endblock %}
+{% endblock %}

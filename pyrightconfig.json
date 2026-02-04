@@ -1,0 +1,17 @@
+{
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    "pythonVersion": "3.14",
+    "typeCheckingMode": "basic",
+    "reportAttributeAccessIssue": false,
+    "executionEnvironments": [
+        {
+            "root": ".",
+            "python": "python"
+        }
+    ],
+    "include": [
+        "academia",
+        "jiujitsu_academy"
+    ]
+}

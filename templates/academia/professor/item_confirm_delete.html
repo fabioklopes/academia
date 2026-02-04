@@ -1,0 +1,23 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Confirmar Deleção - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Confirmar Deleção</h4>
+            </div>
+            <div class="card-body">
+                <p>Você tem certeza que deseja deletar o item <strong>{{ item.nome }}</strong>?</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger">Confirmar</button>
+                    <a href="{% url 'professor_itens' %}" class="btn btn-outline-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

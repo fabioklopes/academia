@@ -1,0 +1,36 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Rejeitar Presença - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Rejeitar Presença</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Aluno:</strong> {{ presenca.aluno.first_name }} {{ presenca.aluno.last_name }}</p>
+                <p><strong>Turma:</strong> {{ presenca.turma.nome }}</p>
+                <p><strong>Data:</strong> {{ presenca.data_presenca|date:"d/m/Y" }}</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="motivo_rejeicao" class="form-label">Motivo da Rejeição</label>
+                        <textarea class="form-control" id="motivo_rejeicao" name="motivo_rejeicao" rows="3" required></textarea>
+                        <small class="form-text text-muted">Informe o motivo da rejeição para o aluno.</small>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-outline-danger">Rejeitar</button>
+                        <a href="{% url 'professor_presencas' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

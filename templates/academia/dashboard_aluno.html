@@ -1,0 +1,223 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Painel do Aluno - Academia de Jiu-Jitsu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex align-items-center mb-3">
+            {% if user.photo %}
+                <img src="{{ user.photo.url }}" alt="Foto" class="rounded-circle me-3" width="60" height="60">
+            {% else %}
+                <div class="bg-secondary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <i class="bi bi-person text-white fs-4"></i>
+                </div>
+            {% endif %}
+            <div>
+                <h4 class="mb-0">Olá, {{ user.first_name }}! <a href="{% url 'logout' %}" class="text-decoration-none">(sair)</a></h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mb-4">Painel do Aluno</h2>
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-check fs-1 text-primary mb-3"></i>
+                <h5 class="card-title">Minhas Presenças</h5>
+                <p class="card-text">
+                    {% if presencas_pendentes > 0 %}
+                        <span class="text-warning">{{ presencas_pendentes }} pendente(s)</span>
+                    {% else %}
+                        {{ presencas_aprovadas }} aprovada(s)
+                    {% endif %}
+                </p>
+                <a href="{% url 'aluno_presencas' %}" class="btn btn-outline-primary">Ver Presenças</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-award fs-1 text-danger mb-3"></i>
+                <h5 class="card-title">Minhas Graduações</h5>
+                <p class="card-text">Histórico de faixas e graus</p>
+                <a href="{% url 'aluno_graduacoes' %}" class="btn btn-outline-primary">Ver Graduações</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-cart fs-1 text-success mb-3"></i>
+                <h5 class="card-title">Meus Pedidos</h5>
+                <p class="card-text">Acompanhar pedidos</p>
+                <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-primary">Ver Pedidos</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body text-center">
+                <i class="bi bi-file-earmark-bar-graph fs-1 text-info mb-3"></i>
+                <h5 class="card-title">Relatórios</h5>
+                <p class="card-text">Meus relatórios</p>
+                <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-primary">Acessar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if meta_ativa %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Meta: {{ meta_ativa.titulo }}</h5>
+                <p class="text-muted mb-2"><b>Período:</b> de {{ meta_ativa.data_inicio|date:"d/m/Y" }} à {{ meta_ativa.data_fim|date:"d/m/Y" }}</p>
+
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{ cor_classificacao_meta }}" role="progressbar" style="width: {{ percentual_meta }}%;" aria-valuenow="{{ percentual_meta }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ percentual_meta }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-{{ cor_classificacao_meta }} fs-6">{{ classificacao_meta }}</span>
+                        <p class="mb-0 mt-1">
+                            <strong>{{ presencas_meta }}</strong> de <strong>{{ meta_ativa.meta_aulas }}</strong> aulas
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <span class="me-3">Mínimo exigido: {{ meta_ativa.minimo_aulas }} aulas</span>
+                    <span>Frequência mínima: {{ meta_ativa.minimo_frequencia }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-cake fs-1 text-success me-2"></i>
+                    <h6 class="mb-0">Aniversariantes</h6>
+                </div>
+                <form method="get" class="mb-2">
+                    <label for="month" class="form-label">Selecione o mês:</label>
+                    <select name="month" id="month" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
+                        {% for month in months %}
+                            <option value="{{ month.number }}" {% if selected_month == month.number %}selected{% endif %}>
+                                {{ month.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in aniversariantes %}
+                                {% if u.id != 1 and u.id != 2 and u.id != 7 and u.id != 39 and u.id != 110 %}
+                                <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ u.id }}">
+                                    <td>{{ u.get_full_name }}</td>
+                                    <td>{{ u.birthday|date:"d/m" }}</td>
+                                </tr>
+                                {% endif %}
+
+                                <!-- Modal Detalhes do Aluno -->
+                                <div class="modal fade" id="alunoDetalheModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Detalhes do Aluno</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <div class="card border-0">
+                                                    <div class="card-body">
+                                                        {% if u.photo %}
+                                                            <img src="{{ u.photo.url }}" alt="Foto de {{ u.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                                        {% else %}
+                                                            <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                                                                <i class="bi bi-person text-white" style="font-size: 100px;"></i>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        <h2 class="fw-bold mb-1">{{ u.first_name }}</h2>
+                                                        <h5 class="text-muted mb-4">{{ u.get_full_name }}</h5>
+
+                                                        <div class="mb-3">
+                                                            {% if u.graduacao %}
+                                                                <div class="mt-2">
+                                                                    {% if u.graduacao.grau > 0 %}
+                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}_{{ u.graduacao.grau }}_DEGREES.png"
+                                                                             alt="{{ u.graduacao.get_faixa_display }}"
+                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                    {% else %}
+                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}.png"
+                                                                             alt="{{ u.graduacao.get_faixa_display }}"
+                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">Sem graduação</span>
+                                                            {% endif %}
+                                                        </div>
+
+                                                        <p class="card-text fs-5">
+                                                            <i class="bi bi-cake2 me-2 text-primary"></i>
+                                                            {% if u.birthday %}
+                                                                {{ u.birthday|date:"d/m/Y" }}
+                                                            {% else %}
+                                                                Não informado
+                                                            {% endif %}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <tr><td colspan="2" class="text-center">Nenhum aniversariante neste mês.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

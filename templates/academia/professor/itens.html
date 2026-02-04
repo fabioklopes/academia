@@ -1,0 +1,79 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Gerenciar Itens - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Gerenciar Itens</h4>
+                <a href="{% url 'professor_item_novo' %}" class="btn btn-outline-primary">Novo Item</a>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <form id="search-form" method="get" action="{% url 'professor_itens' %}">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="q" placeholder="Pesquisar itens..." value="{{ query|default:'' }}">
+                            <button class="btn btn-outline-secondary" type="submit">Pesquisar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="item-list">
+                    {% include 'academia/professor/partials/itens_list.html' %}
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('search-form');
+    const itemListContainer = document.getElementById('item-list');
+    const queryInput = searchForm.querySelector('input[name="q"]');
+
+    function fetchItens(url) {
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            itemListContainer.innerHTML = html;
+            window.history.pushState({path: url}, '', url);
+        })
+        .catch(error => console.error('Erro ao carregar os itens:', error));
+    }
+
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = queryInput.value;
+        const url = `{% url 'professor_itens' %}?q=${encodeURIComponent(query)}`;
+        fetchItens(url);
+    });
+
+    itemListContainer.addEventListener('click', function(e) {
+        if (e.target.matches('.pagination a')) {
+            e.preventDefault();
+            const url = e.target.href;
+            fetchItens(url);
+        }
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.path) {
+            fetchItens(e.state.path);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+<div class="table-responsive mb-4">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Data de Matrícula</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for turma_aluno in alunos_turma %}
+                <tr>
+                    <td>
+                        {% if turma_aluno.aluno.photo %}
+                            <img src="{{ turma_aluno.aluno.photo.url }}" alt="Foto" class="rounded-circle" width="40" height="40" style="object-fit: cover; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ turma_aluno.aluno.id }}">
+                        {% else %}
+                            <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ turma_aluno.aluno.id }}">
+                                <i class="bi bi-person text-white"></i>
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="#" class="text-decoration-none text-dark" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ turma_aluno.aluno.id }}">
+                            {{ turma_aluno.aluno.get_full_name }}
+                        </a>
+                    </td>
+                    <td>{{ turma_aluno.aluno.email }}</td>
+                    <td>{{ turma_aluno.data_solicitacao|date:"d/m/Y" }}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#removeModal{{ turma_aluno.aluno.id }}">
+                            <i class="bi bi-trash"></i> Remover
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Modal Detalhes do Aluno -->
+                <div class="modal fade" id="alunoDetalheModal{{ turma_aluno.aluno.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalhes do Aluno</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <div class="card border-0">
+                                    <div class="card-body">
+                                        {% if turma_aluno.aluno.photo %}
+                                            <img src="{{ turma_aluno.aluno.photo.url }}" alt="Foto de {{ turma_aluno.aluno.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                                                <i class="bi bi-person text-white" style="font-size: 100px;"></i>
+                                            </div>
+                                        {% endif %}
+
+                                        <h2 class="fw-bold mb-1">{{ turma_aluno.aluno.first_name }}</h2>
+                                        <h5 class="text-muted mb-4">{{ turma_aluno.aluno.get_full_name }}</h5>
+
+                                        <div class="mb-3">
+                                            {% if turma_aluno.aluno.graduacao %}
+                                                <div class="mt-2">
+                                                    {% if turma_aluno.aluno.graduacao.grau > 0 %}
+                                                        <img src="/media/faixas/{{ turma_aluno.aluno.graduacao.faixa }}_{{ turma_aluno.aluno.graduacao.grau }}_DEGREES.png"
+                                                             alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}"
+                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                    {% else %}
+                                                        <img src="/media/faixas/{{ turma_aluno.aluno.graduacao.faixa }}.png"
+                                                             alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}"
+                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Sem graduação</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <p class="card-text fs-5">
+                                            <i class="bi bi-cake2 me-2 text-primary"></i>
+                                            {% if turma_aluno.aluno.birthday %}
+                                                {{ turma_aluno.aluno.birthday|date:"d/m/Y" }}
+                                            {% else %}
+                                                Não informado
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal de Confirmação de Remoção -->
+                <div class="modal fade" id="removeModal{{ turma_aluno.aluno.id }}" tabindex="-1" aria-labelledby="removeModalLabel{{ turma_aluno.aluno.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title" id="removeModalLabel{{ turma_aluno.aluno.id }}">Confirmar Remoção</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Tem certeza que deseja remover o aluno <strong>{{ turma_aluno.aluno.get_full_name }}</strong> da turma <strong>{{ turma.nome }}</strong>?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <a href="{% url 'professor_turma_remover_aluno' turma.id turma_aluno.aluno.id %}" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash"></i> Remover
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if alunos_turma.has_other_pages %}
+    <div class="card-footer d-flex justify-content-center">
+        {% include 'academia/partials/_pagination.html' with page_obj=alunos_turma %}
+    </div>
+{% endif %}

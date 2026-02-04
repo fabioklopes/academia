@@ -1,0 +1,108 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Logs do Sistema{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Logs do Sistema</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label for="start_date" class="form-label">Data Inicial:</label>
+                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date|default:'' }}">
+            </div>
+            <div class="col-md-2">
+                <label for="end_date" class="form-label">Data Final:</label>
+                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date|default:'' }}">
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status:</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="SUCESSO" {% if status_filter == 'SUCESSO' %}selected{% endif %}>Sucesso</option>
+                    <option value="FALHA" {% if status_filter == 'FALHA' %}selected{% endif %}>Falha</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="items_per_page" class="form-label">Itens por página:</label>
+                <select name="items_per_page" id="items_per_page" class="form-select">
+                    <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10</option>
+                    <option value="20" {% if items_per_page == 20 %}selected{% endif %}>20</option>
+                    <option value="30" {% if items_per_page == 30 %}selected{% endif %}>30</option>
+                    <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'logs' %}" class="btn btn-secondary w-100">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if items_per_page > 10 and logs.has_other_pages %}
+<div class="card mb-4">
+    <div class="card-footer d-flex justify-content-center">
+        {% include 'academia/partials/_pagination.html' with page_obj=logs %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-center">#</th>
+                        <th class="text-center">Data Hora</th>
+                        <th class="text-center">Conta</th>
+                        <th class="text-center">Ação</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="small text-muted text-center">{{ log.id }}</td>
+                        <td class="small text-muted text-center">{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                        <td class="small text-muted">
+                            {% if log.user %}
+                                {{ log.user.email }}
+                            {% else %}
+                                <span class="text-primary">Sistema</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ log.action }}</td>
+                        <td class="text-center">
+                            {% if log.status == 'SUCESSO' %}
+                                <span class="badge bg-success">SUCESSO</span>
+                            {% elif log.status == 'FALHA' %}
+                                <span class="badge bg-danger">FALHA</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="small text-muted text-center py-4">Nenhum log encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if logs.has_other_pages %}
+    <div class="card-footer d-flex justify-content-center">
+        {% include 'academia/partials/_pagination.html' with page_obj=logs %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

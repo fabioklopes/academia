@@ -1,0 +1,60 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Aluno</th>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Quantidade</th>
+                <th>Status</th>
+                <th>Data da Solicitação</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+                <tr>
+                    <td>{{ pedido.aluno.get_full_name }}</td>
+                    <td>{{ pedido.item.get_tipo_display }}</td>
+                    <td>{{ pedido.item.nome }}</td>
+                    <td>{{ pedido.quantidade }}</td>
+                    <td>
+                        {% if pedido.status == 'PEND' %}
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        {% elif pedido.status == 'APRO' %}
+                            <span class="badge bg-primary">Aprovado</span>
+                        {% elif pedido.status == 'CANC' %}
+                            <span class="badge bg-secondary">Cancelado</span>
+                        {% elif pedido.status == 'REJE' %}
+                            <span class="badge bg-danger">Rejeitado</span>
+                        {% elif pedido.status == 'ENTR' %}
+                            <span class="badge bg-info text-dark">Aguardando Entrega</span>
+                        {% elif pedido.status == 'FINA' %}
+                            <span class="badge bg-success">Finalizado</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ pedido.data_solicitacao|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if pedido.status == 'PEND' %}
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#approveModal{{ pedido.id }}">Atender</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ pedido.id }}">Rejeitar</button>
+                        {% elif pedido.status == 'APRO' %}
+                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#deliverModal{{ pedido.id }}">Entregar</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cancelModal{{ pedido.id }}">Cancelar</button>
+                        {% elif pedido.status == 'ENTR' %}
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#finalizeModal{{ pedido.id }}">Finalizar</button>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pedidos.has_other_pages %}
+    <div class="card-footer d-flex justify-content-center">
+        {% include 'academia/partials/_pagination.html' with page_obj=pedidos %}
+    </div>
+{% endif %}

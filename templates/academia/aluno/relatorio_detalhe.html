@@ -1,0 +1,92 @@
+{% extends 'academia/base.html' %}
+{% block title %}Relatório - {{ report_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <h4 class="mb-4">{{ report_title }}</h4>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                Detalhes do Relatório
+            </div>
+            <div class="card-body">
+                <p><strong>Aluno:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                <p><strong>Período:</strong> 
+                    {% if start_date and end_date %}
+                        {{ start_date|date:"d/m/Y" }} a {{ end_date|date:"d/m/Y" }}
+                    {% else %}
+                        Todo o período
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% if report_data %}
+            {% if report_type == 'frequencia' %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Data da Aula</th>
+                                <th>Turma</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in report_data %}
+                                <tr>
+                                    <td>{{ record.attendance_date|date:"d/m/Y" }}</td>
+                                    <td>{{ record.turma.nome }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if record.status == 'APR' %}bg-success
+                                            {% elif record.status == 'PEN' %}bg-warning text-dark
+                                            {% elif record.status == 'REJ' %}bg-danger
+                                            {% elif record.status == 'CAN' %}bg-secondary
+                                            {% endif %}">
+                                            {{ record.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% elif report_type == 'pagamentos' %}
+                <p class="alert alert-info">{{ no_data_message }}</p>
+                {# Future implementation for payments report #}
+            {% elif report_type == 'graduacao' %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Data da Graduação</th>
+                                <th>Faixa</th>
+                                <th>Grau</th>
+                                <th>Professor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in report_data %}
+                                <tr>
+                                    <td>{{ record.data_graduacao|date:"d/m/Y" }}</td>
+                                    <td>{{ record.get_faixa_display }}</td>
+                                    <td>{{ record.grau }}º grau</td>
+                                    <td>{{ record.professor.get_full_name|default:"N/A" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="alert alert-info">{{ no_data_message }}</p>
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-secondary">Voltar</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

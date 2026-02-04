@@ -1,0 +1,65 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}{% if plano %}Editar{% else %}Novo{% endif %} Plano de Aula - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>{% if plano %}Editar{% else %}Novo{% endif %} Plano de Aula</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" value="{% if plano %}{{ plano.titulo }}{% endif %}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="5">{% if plano %}{{ plano.descricao }}{% endif %}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="turma" class="form-label">Turma (opcional)</label>
+                        <select class="form-select" id="turma" name="turma">
+                            <option value="">Todas as turmas</option>
+                            {% for turma in turmas %}
+                                <option value="{{ turma.id }}" {% if plano and plano.turma and plano.turma.id == turma.id %}selected{% endif %}>{{ turma.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_inicio" class="form-label">Data de Início</label>
+                                <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="{% if plano %}{{ plano.data_inicio|date:'Y-m-d' }}{% endif %}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_fim" class="form-label">Data de Término (opcional)</label>
+                                <input type="date" class="form-control" id="data_fim" name="data_fim" value="{% if plano and plano.data_fim %}{{ plano.data_fim|date:'Y-m-d' }}{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="ativo" name="ativo" {% if plano and plano.ativo %}checked{% elif not plano %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Plano Ativo</label>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-outline-primary">Salvar</button>
+                        <a href="{% url 'professor_planos_aula' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

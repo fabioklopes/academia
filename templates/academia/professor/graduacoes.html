@@ -1,0 +1,119 @@
+{% extends 'academia/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-award"></i> Gerenciamento de Graduações</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Faixa</th>
+                            <th>Grau</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aluno in alunos %}
+                            {% with grad=graduacoes|get_item:aluno.id %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if aluno.photo %}
+                                            <img src="{{ aluno.photo.url }}" alt="{{ aluno.get_full_name }}" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-2" style="width: 40px; height: 40px;">
+                                                {{ aluno.first_name|first }}{{ aluno.last_name|first }}
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-bold">{{ aluno.get_full_name }}</div>
+                                            <div class="text-muted small">{{ aluno.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if grad %}
+                                        {{ grad.get_faixa_display }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if grad %}
+                                        {{ grad.grau }}º Grau
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if grad %}
+                                        {{ grad.data_graduacao|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'professor_graduacao_editar' aluno.id %}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Nenhum aluno encontrado.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Paginação -->
+        {% if alunos.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Navegação de página">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if alunos.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ alunos.previous_page_number }}&items_per_page={{ items_per_page }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                    {% endif %}
+
+                    {% for i in alunos.paginator.page_range %}
+                        {% if alunos.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}&items_per_page={{ items_per_page }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if alunos.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ alunos.next_page_number }}&items_per_page={{ items_per_page }}" aria-label="Próximo">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

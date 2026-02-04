@@ -1,0 +1,271 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Editar Perfil - Academia de Jiu-Jitsu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+    .img-container {
+        max-height: 500px;
+        width: 100%;
+    }
+    .img-container img {
+        max-width: 100%;
+        display: block; /* This rule is very important, please do not ignore this */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Editar Perfil</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">Nome</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Sobrenome</label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="whatsapp" class="form-label">WhatsApp</label>
+                            {{ form.whatsapp }}
+                            <small class="form-text text-muted">Apenas números são permitidos (xx) xxxxx-xxxx</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="birthday" class="form-label">Data de Nascimento</label>
+                            {{ form.birthday }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="faixa" class="form-label">Faixa</label>
+                            {{ form.faixa }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="grau" class="form-label">Número de Graus</label>
+                            {{ form.grau }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Foto</label>
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#photo-modal">
+                                <i class="bi bi-camera-fill me-2"></i> Adicionar/Alterar Foto
+                            </button>
+                        </div>
+                        <input type="file" class="form-control d-none" id="photo" name="photo" accept="image/*">
+                        <div id="photo-error" class="text-danger mt-1" style="display: none;"></div>
+                        <img id="photo-preview" src="{% if user.photo %}{{ user.photo.url }}{% endif %}" alt="Pré-visualização da foto" class="img-fluid mt-2" style="{% if user.photo %}display: block;{% else %}display: none;{% endif %} max-height: 150px;">
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-outline-primary">Salvar Alterações</button>
+                        <a href="{% url 'perfil' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Seleção de Foto -->
+<div class="modal fade" id="photo-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="photo-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photo-modal-label">Selecionar Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Escolha uma opção para adicionar sua foto:</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary" id="select-gallery-btn">
+                        <i class="bi bi-images me-2"></i>Selecionar da Galeria
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="open-camera-btn">
+                        <i class="bi bi-camera-video me-2"></i>Usar a Câmera
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Recorte -->
+<div class="modal fade" id="crop-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="crop-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crop-modal-label">Ajustar Foto (3x4)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container">
+                    <img id="image-to-crop" src="" alt="Foto para recortar">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="crop-btn">Confirmar Recorte</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica do Modal e da Foto
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photo-preview');
+    const photoError = document.getElementById('photo-error');
+    const photoModal = new bootstrap.Modal(document.getElementById('photo-modal'));
+    const cropModal = new bootstrap.Modal(document.getElementById('crop-modal'));
+    const imageToCrop = document.getElementById('image-to-crop');
+    let cropper;
+
+    document.getElementById('select-gallery-btn').addEventListener('click', () => {
+        photoInput.removeAttribute('capture');
+        photoInput.click();
+    });
+
+    document.getElementById('open-camera-btn').addEventListener('click', () => {
+        photoInput.setAttribute('capture', 'camera');
+        photoInput.click();
+    });
+
+    photoInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        photoError.style.display = 'none';
+        photoError.textContent = '';
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imageToCrop.src = e.target.result;
+                photoModal.hide();
+                cropModal.show();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('crop-modal').addEventListener('shown.bs.modal', function () {
+        cropper = new Cropper(imageToCrop, {
+            {#aspectRatio: 3 / 4,#}
+            aspectRatio: 1 / 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+        });
+    });
+
+    document.getElementById('crop-modal').addEventListener('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        // Se o usuário cancelar o modal de crop e não tiver uma imagem válida no preview (ou seja, cancelou a seleção inicial), limpa o input
+        // Mas se ele já tinha uma imagem selecionada antes, talvez queira manter.
+        // Aqui vamos limpar para forçar uma nova seleção se ele cancelou o crop da imagem atual.
+        if (photoInput.files.length > 0 && !photoPreview.src.startsWith('blob:')) {
+             photoInput.value = '';
+        }
+    });
+
+    document.getElementById('crop-btn').addEventListener('click', function() {
+        if (!cropper) return;
+
+        // Obter o canvas recortado com as dimensões desejadas (354x472)
+        const canvas = cropper.getCroppedCanvas({
+            {#width: 354,#}
+            {#height: 472,#}
+            {#minWidth: 354,#}
+            {#minHeight: 472,#}
+            width: 200,
+            height: 200,
+            minWidth: 200,
+            minHeight: 200,
+            fillColor: '#fff',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        canvas.toBlob(function(blob) {
+            if (!blob) return;
+
+            // Criar um novo arquivo a partir do blob
+            const newFile = new File([blob], "profile_photo.png", {
+                type: 'image/png',
+                lastModified: Date.now()
+            });
+
+            // Substituir o arquivo no input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(newFile);
+            photoInput.files = dataTransfer.files;
+
+            // Atualizar preview
+            photoPreview.src = URL.createObjectURL(newFile);
+            photoPreview.style.display = 'block';
+
+            cropModal.hide();
+
+            photoError.textContent = 'Foto recortada e pronta para envio!';
+            photoError.style.display = 'block';
+            photoError.classList.remove('text-danger', 'text-warning');
+            photoError.classList.add('text-success');
+
+        }, 'image/png');
+    });
+
+    // Máscara para o campo WhatsApp
+    const whatsappInput = document.getElementById('id_whatsapp');
+    if (whatsappInput) {
+        whatsappInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+            if (value.length > 11) {
+                value = value.slice(0, 11);
+            }
+
+            if (value.length > 2) {
+                value = '(' + value.substring(0, 2) + ') ' + value.substring(2);
+            }
+            if (value.length > 9) {
+                value = value.substring(0, 9) + '-' + value.substring(9);
+            }
+
+            e.target.value = value;
+        });
+    }
+});
+</script>
+{% endblock %}

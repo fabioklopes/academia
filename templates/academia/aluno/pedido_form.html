@@ -1,0 +1,103 @@
+{% extends 'academia/base.html' %}
+
+{% block title %}Novo Pedido - Academia de Jiu-Jitsu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Novo Pedido</h4>
+            </div>
+            <div class="card-body">
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Por favor, corrija os erros abaixo:</strong>
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_item" class="form-label">{{ form.item.label }}</label>
+                        {{ form.item }}
+                        <div class="form-text" id="estoque-disponivel"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_quantidade" class="form-label">{{ form.quantidade.label }}</label>
+                        {{ form.quantidade }}
+                    </div>
+
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Valor Unitário:</strong> <span id="valor-unitario">R$ 0,00</span></p>
+                        <h5 class="mb-0"><strong>Valor Total:</strong> <span id="valor-total">R$ 0,00</span></h5>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-outline-primary">Fazer Pedido</button>
+                        <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemData = JSON.parse('{{ item_data_json|escapejs }}');
+    const itemSelect = document.getElementById('id_item');
+    const quantidadeInput = document.getElementById('id_quantidade');
+    const valorUnitarioSpan = document.getElementById('valor-unitario');
+    const valorTotalSpan = document.getElementById('valor-total');
+    const estoqueDisponivelDiv = document.getElementById('estoque-disponivel');
+
+    function formatCurrency(value) {
+        return parseFloat(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function updateValues() {
+        const selectedItemId = itemSelect.value;
+        const item = itemData[selectedItemId];
+        
+        if (!item) {
+            valorUnitarioSpan.textContent = formatCurrency(0);
+            valorTotalSpan.textContent = formatCurrency(0);
+            estoqueDisponivelDiv.textContent = '';
+            quantidadeInput.max = null;
+            return;
+        }
+
+        const quantidade = parseInt(quantidadeInput.value) || 0;
+        const unitPrice = parseFloat(item.valor) || 0;
+        const estoque = parseInt(item.quantidade) || 0;
+
+        const totalValue = unitPrice * quantidade;
+
+        valorUnitarioSpan.textContent = formatCurrency(unitPrice);
+        valorTotalSpan.textContent = formatCurrency(totalValue);
+        estoqueDisponivelDiv.textContent = `Estoque disponível: ${estoque}`;
+        
+        // Define o máximo do campo de quantidade para o estoque disponível
+        quantidadeInput.max = estoque;
+    }
+
+    itemSelect.addEventListener('change', updateValues);
+    quantidadeInput.addEventListener('input', updateValues);
+
+    // Initialize values on page load
+    updateValues();
+});
+</script>
+{% endblock %}
