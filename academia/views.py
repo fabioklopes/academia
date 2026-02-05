@@ -11,8 +11,8 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q, Case, When, Count
-from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item, Meta as MetaModel, Log
-from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm, MetaForm
+from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item, Meta as MetaModel, Log, SolicitacaoAlteracaoGraduacao
+from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm, MetaForm, SolicitacaoAlteracaoGraduacaoForm, AlunoNovaGraduacaoForm
 import calendar
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -361,6 +361,7 @@ def dashboard(request):
             'alunos_ativos': User.objects.filter(group_role='STD', turmas__professor=request.user, status='ATIVO').distinct().count(),
             'alunos_pendentes': User.objects.filter(status='PENDENTE').count(),
             'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
+            'solicitacoes_graduacao_pendentes': SolicitacaoAlteracaoGraduacao.objects.filter(status='PEND').count(),
         }
         context.update(base_context)
         return render(request, 'academia/dashboard_professor.html', context)
@@ -374,6 +375,7 @@ def dashboard(request):
             'solicitacoes_presenca': AttendanceRequest.objects.filter(status='PEN').count(),
             'alunos_pendentes': User.objects.filter(status='PENDENTE').count(),
             'pedidos_pendentes': Pedido.objects.filter(status='PEND').count(),
+            'solicitacoes_graduacao_pendentes': SolicitacaoAlteracaoGraduacao.objects.filter(status='PEND').count(),
         }
         context.update(base_context)
         return render(request, 'academia/dashboard_administrador.html', context)
@@ -651,7 +653,47 @@ def aluno_graduacoes(request):
     Graduacao.objects.filter(aluno=request.user, notified=False).update(notified=True)
     
     graduacoes = Graduacao.objects.filter(aluno=request.user).order_by('-data_graduacao')
-    return render(request, 'academia/aluno/graduacoes.html', {'graduacoes': graduacoes})
+    graduacao_atual = graduacoes.first()
+    
+    solicitacoes = []
+    if graduacao_atual:
+        solicitacoes = SolicitacaoAlteracaoGraduacao.objects.filter(graduacao__aluno=request.user).order_by('-data_solicitacao')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'alterar_data':
+            form = SolicitacaoAlteracaoGraduacaoForm(request.POST)
+            if form.is_valid():
+                if not graduacao_atual:
+                    messages.error(request, 'Você não possui graduação registrada para solicitar alteração.')
+                    return redirect('aluno_graduacoes')
+                
+                solicitacao = form.save(commit=False)
+                solicitacao.graduacao = graduacao_atual
+                solicitacao.save()
+                create_log(request.user, f'solicitou alteração da data de graduação para {solicitacao.nova_data}')
+                messages.success(request, 'Solicitação de alteração de data enviada com sucesso!')
+                return redirect('aluno_graduacoes')
+        elif action == 'nova_graduacao':
+            form = AlunoNovaGraduacaoForm(request.POST)
+            if form.is_valid():
+                nova_graduacao = form.save(commit=False)
+                nova_graduacao.aluno = request.user
+                nova_graduacao.save()
+                create_log(request.user, f'lançou nova graduação: {nova_graduacao.get_faixa_display()} {nova_graduacao.grau}º grau')
+                messages.success(request, 'Nova graduação registrada com sucesso!')
+                return redirect('aluno_graduacoes')
+    
+    alteracao_form = SolicitacaoAlteracaoGraduacaoForm()
+    nova_graduacao_form = AlunoNovaGraduacaoForm()
+
+    return render(request, 'academia/aluno/graduacoes.html', {
+        'graduacoes': graduacoes,
+        'alteracao_form': alteracao_form,
+        'nova_graduacao_form': nova_graduacao_form,
+        'solicitacoes': solicitacoes,
+        'graduacao_atual': graduacao_atual
+    })
 
 @login_required
 def aluno_pedidos(request):
@@ -1286,12 +1328,12 @@ def professor_aluno_ativar(request, aluno_id):
     aluno.status = 'ATIVO'
     aluno.save()
     if previous_status == 'PENDENTE':
-        action_text = f'aprovou o cadastro de {aluno.get_full_name()}'
+        action = 'aprovou o cadastro de'
         messages.success(request, f'O cadastro de {aluno.get_full_name()} foi aprovado.')
     else:
-        action_text = f'ativou o usuário {aluno.get_full_name()}'
+        action = 'ativou o usuário'
         messages.success(request, f'O usuário {aluno.get_full_name()} foi ativado.')
-    create_log(request.user, action_text)
+    create_log(request.user, f'{action} {aluno.get_full_name()}')
     return redirect('professor_alunos')
 
 @login_required
@@ -1494,10 +1536,13 @@ def professor_graduacoes(request):
 
     graduacoes = Graduacao.objects.filter(aluno__in=alunos).distinct()
     
+    solicitacoes_pendentes = SolicitacaoAlteracaoGraduacao.objects.filter(status='PEND').order_by('data_solicitacao')
+
     context = {
         'alunos': alunos,
         'graduacoes': {grad.aluno.id: grad for grad in graduacoes},
-        'items_per_page': items_per_page
+        'items_per_page': items_per_page,
+        'solicitacoes_pendentes': solicitacoes_pendentes
     }
     return render(request, 'academia/professor/graduacoes.html', context)
 
@@ -1522,6 +1567,53 @@ def professor_graduacao_editar(request, aluno_id):
         form = GraduacaoForm(instance=graduacao)
 
     return render(request, 'academia/professor/graduacao_form.html', {'form': form, 'aluno': aluno})
+
+@login_required
+def professor_solicitacao_graduacao_aprovar(request, solicitacao_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    solicitacao = get_object_or_404(SolicitacaoAlteracaoGraduacao, id=solicitacao_id)
+    
+    if request.method == 'POST':
+        solicitacao.status = 'APRO'
+        solicitacao.processado_por = request.user
+        solicitacao.data_processamento = timezone.now()
+        solicitacao.save()
+        
+        # Atualiza a data da graduação
+        graduacao = solicitacao.graduacao
+        graduacao.data_graduacao = solicitacao.nova_data
+        graduacao.save()
+        
+        create_log(request.user, f'aprovou solicitação de alteração de data de graduação de {graduacao.aluno.get_full_name()}')
+        messages.success(request, 'Solicitação aprovada e data atualizada.')
+        
+    return redirect('professor_graduacoes')
+
+@login_required
+def professor_solicitacao_graduacao_rejeitar(request, solicitacao_id):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+    
+    solicitacao = get_object_or_404(SolicitacaoAlteracaoGraduacao, id=solicitacao_id)
+    
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo_rejeicao')
+        if not motivo:
+            messages.error(request, 'O motivo da rejeição é obrigatório.')
+            return redirect('professor_graduacoes')
+            
+        solicitacao.status = 'REJE'
+        solicitacao.motivo_rejeicao = motivo
+        solicitacao.processado_por = request.user
+        solicitacao.data_processamento = timezone.now()
+        solicitacao.save()
+        
+        create_log(request.user, f'rejeitou solicitação de alteração de data de graduação de {solicitacao.graduacao.aluno.get_full_name()}')
+        messages.success(request, 'Solicitação rejeitada.')
+        
+    return redirect('professor_graduacoes')
 
 @login_required
 def professor_planos_aula(request):

@@ -111,7 +111,13 @@
             <div class="card-body text-center">
                 <i class="bi bi-award text-warning fs-1"></i>
                 <h5 class="card-title">Graduações</h5>
-                <p class="card-text">Gerenciar faixas e graus</p>
+                <p class="card-text">
+                    {% if solicitacoes_graduacao_pendentes > 0 %}
+                        <span class="text-warning">{{ solicitacoes_graduacao_pendentes }} solicitação(ões) pendente(s)</span>
+                    {% else %}
+                        Gerenciar faixas e graus
+                    {% endif %}
+                </p>
                 <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-primary">Gerenciar</a>
             </div>
         </div>

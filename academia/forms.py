@@ -1,5 +1,5 @@
 from django import forms
-from .models import Graduacao, Item, Pedido, Turma, User, Meta as MetaModel
+from .models import Graduacao, Item, Pedido, Turma, User, Meta as MetaModel, SolicitacaoAlteracaoGraduacao
 from django.contrib.auth.forms import PasswordResetForm
 import datetime
 
@@ -72,7 +72,7 @@ class PerfilEditForm(forms.ModelForm):
     )
     
     faixa = forms.ChoiceField(choices=Graduacao.FAIXA_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-select'}))
-    grau = forms.IntegerField(min_value=0, max_value=4, required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    grau = forms.IntegerField(min_value=0, max_value=6, required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
@@ -147,6 +147,25 @@ class GraduacaoForm(forms.ModelForm):
         fields = ['aluno', 'faixa', 'grau', 'data_graduacao']
         widgets = {
             'aluno': forms.Select(attrs={'class': 'form-select'}),
+            'faixa': forms.Select(attrs={'class': 'form-select'}),
+            'grau': forms.NumberInput(attrs={'class': 'form-control'}),
+            'data_graduacao': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+class SolicitacaoAlteracaoGraduacaoForm(forms.ModelForm):
+    class Meta:
+        model = SolicitacaoAlteracaoGraduacao
+        fields = ['nova_data', 'motivo_solicitacao']
+        widgets = {
+            'nova_data': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+            'motivo_solicitacao': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '50'}),
+        }
+
+class AlunoNovaGraduacaoForm(forms.ModelForm):
+    class Meta:
+        model = Graduacao
+        fields = ['faixa', 'grau', 'data_graduacao']
+        widgets = {
             'faixa': forms.Select(attrs={'class': 'form-select'}),
             'grau': forms.NumberInput(attrs={'class': 'form-control'}),
             'data_graduacao': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),

@@ -3,35 +3,224 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4"><i class="bi bi-award"></i> Minhas Graduações</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-award"></i> Minhas Graduações</h2>
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalNovaGraduacao">
+            Lançar Nova Graduação
+        </button>
+    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Data</th>
-                            <th>Faixa</th>
-                            <th>Grau</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for graduacao in graduacoes %}
-                        <tr>
-                            <td>{{ graduacao.data_graduacao|date:"d/m/Y" }}</td>
-                            <td>{{ graduacao.get_faixa_display }}</td>
-                            <td>{{ graduacao.grau }}º Grau</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center py-4 text-muted">Nenhuma graduação registrada.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="row">
+        <div class="col-12">
+            <!-- Card Histórico -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Histórico de Graduações</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Faixa</th>
+                                    <th>Grau</th>
+                                    <th>Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for graduacao in graduacoes %}
+                                <tr>
+                                    <td>
+                                        {% if graduacao_atual and graduacao.id == graduacao_atual.id %}
+                                            <!-- Data Clicável para a Graduação Atual -->
+                                            <span class="text-primary fw-bold" style="cursor: pointer; text-decoration: underline;"
+                                                  data-bs-toggle="modal" data-bs-target="#modalAlterarData"
+                                                  title="Clique para solicitar alteração da data">
+                                                <i class="bi bi-calendar-event"></i>
+                                            </span>
+                                            {{ graduacao.data_graduacao|date:"d/m/Y" }}
+                                        {% else %}
+                                            <!-- Data Normal para Histórico Antigo -->
+                                            <span class="text-muted">
+                                                <i class="bi bi-calendar-event"></i> {{ graduacao.data_graduacao|date:"d/m/Y" }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ graduacao.get_faixa_display }}</td>
+                                    <td>
+                                        {% if graduacao.grau == 0 %}
+                                            <i class="bi bi-reception-0"></i> 0 Grau
+                                        {% elif graduacao.grau == 1 %}
+                                            <i class="bi bi-reception-1"></i> 1 Grau
+                                        {% elif graduacao.grau == 2 %}
+                                            <i class="bi bi-reception-2"></i> 2 Graus
+                                        {% elif graduacao.grau == 3 %}
+                                            <i class="bi bi-reception-3"></i> 3 Graus
+                                        {% elif graduacao.grau == 4 %}
+                                            <i class="bi bi-reception-4"></i> 4 Graus
+                                        {% elif graduacao.grau == 5 %}
+                                            <i class="bi bi-reception-4"></i> 5 Graus
+                                        {% elif graduacao.grau == 6 %}
+                                            <i class="bi bi-reception-4"></i> 6 Graus
+                                        {% else %}
+                                            {{ graduacao.grau }} Graus
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if graduacao.grau == 0 %}
+                                            <i class="bi bi-stars text-warning"></i> Troca de Faixa
+                                        {% else %}
+                                            <i class="bi bi-arrow-up-circle text-success"></i> Grau
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">Nenhuma graduação registrada.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
+            <!-- Lista de Solicitações (Reposicionada) -->
+            {% if solicitacoes %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Minhas Solicitações de Alteração</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for sol in solicitacoes %}
+                        <li class="list-group-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    <span class="badge {% if sol.status == 'PEND' %}bg-warning text-dark{% elif sol.status == 'APRO' %}bg-success{% else %}bg-danger{% endif %} w-100">
+                                        {{ sol.get_status_display }}
+                                    </span>
+                                </div>
+                                <div class="col-md-2 text-muted small">
+                                    <i class="bi bi-clock"></i> {{ sol.data_solicitacao|date:"d/m/Y" }}
+                                </div>
+                                <div class="col-md-8">
+                                    <small>
+                                        <strong>Nova Data:</strong> {{ sol.nova_data|date:"d/m/Y" }} |
+                                        <strong>Motivo:</strong> {{ sol.motivo_solicitacao }}
+                                        {% if sol.status == 'REJE' and sol.motivo_rejeicao %}
+                                            <br><span class="text-danger"><i class="bi bi-exclamation-circle"></i> <strong>Motivo Rejeição:</strong> {{ sol.motivo_rejeicao }}</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Modal de Solicitação de Alteração -->
+{% if graduacao_atual %}
+<div class="modal fade" id="modalAlterarData" tabindex="-1" aria-labelledby="modalAlterarDataLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalAlterarDataLabel"><i class="bi bi-pencil-square"></i> Solicitar Alteração de Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="alterar_data">
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        Você está solicitando a alteração da data da sua graduação atual (<strong>{{ graduacao_atual.get_faixa_display }} - {{ graduacao_atual.grau }}º Grau</strong>).
+                        Esta solicitação passará por aprovação do professor.
+                    </p>
+
+                    <div class="mb-3">
+                        <label for="{{ alteracao_form.nova_data.id_for_label }}" class="form-label fw-bold">Nova Data</label>
+                        {{ alteracao_form.nova_data }}
+                        {% if alteracao_form.nova_data.errors %}
+                            <div class="text-danger small">{{ alteracao_form.nova_data.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ alteracao_form.motivo_solicitacao.id_for_label }}" class="form-label fw-bold">Motivo da Alteração</label>
+                        {{ alteracao_form.motivo_solicitacao }}
+                        <div class="form-text">Descreva brevemente o motivo (máx. 50 caracteres).</div>
+                        {% if alteracao_form.motivo_solicitacao.errors %}
+                            <div class="text-danger small">{{ alteracao_form.motivo_solicitacao.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Enviar Solicitação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal Nova Graduação -->
+<div class="modal fade" id="modalNovaGraduacao" tabindex="-1" aria-labelledby="modalNovaGraduacaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="modalNovaGraduacaoLabel">
+                    Lançar Nova Graduação
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="nova_graduacao">
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        <span class="text-danger">ATENÇÃO:</span> faça o lançamento dos dados com atenção para evitar
+                        solicitações de alteração desnecessariamente.
+                    </p>
+
+                    <div class="mb-3">
+                        <label for="{{ nova_graduacao_form.faixa.id_for_label }}" class="form-label fw-bold">Faixa</label>
+                        {{ nova_graduacao_form.faixa }}
+                        {% if nova_graduacao_form.faixa.errors %}
+                            <div class="text-danger small">{{ nova_graduacao_form.faixa.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ nova_graduacao_form.grau.id_for_label }}" class="form-label fw-bold">Grau</label>
+                        {{ nova_graduacao_form.grau }}
+                        <div class="form-text">0 a 4 graus para faixas coloridas, até 6 graus para faixa preta.</div>
+                        {% if nova_graduacao_form.grau.errors %}
+                            <div class="text-danger small">{{ nova_graduacao_form.grau.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ nova_graduacao_form.data_graduacao.id_for_label }}" class="form-label fw-bold">Data da Graduação</label>
+                        {{ nova_graduacao_form.data_graduacao }}
+                        {% if nova_graduacao_form.data_graduacao.errors %}
+                            <div class="text-danger small">{{ nova_graduacao_form.data_graduacao.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-outline-success">Salvar Graduação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

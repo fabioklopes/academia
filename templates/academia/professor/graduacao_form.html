@@ -40,7 +40,9 @@
                         <div class="mb-3">
                             <label for="{{ form.grau.id_for_label }}" class="form-label">Grau</label>
                             {{ form.grau }}
-                            <div class="form-text">0 a 4 graus.</div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> 0 a 4 graus para faixas coloridas, até 6 graus para faixa preta.
+                            </div>
                             {% if form.grau.errors %}
                                 <div class="text-danger small">{{ form.grau.errors }}</div>
                             {% endif %}
