@@ -47,6 +47,7 @@
                         {% endif %}
                         <div class="mb-2"><strong>Perfil:</strong> {{ user.get_group_role_display }}</div>
                         <div class="mb-2"><strong>Status:</strong> {{ user.get_status_display }} </div>
+                        <div class="mb-2"><strong>UUID:</strong> {{ user.id }} </div>
 
                         <hr>
                         <div class="d-grid gap-2">
@@ -78,7 +79,7 @@
             </div>
 
             <!-- Coluna Direita: Meu Kimono -->
-            <div class="col-12 col-lg-8">
+            <div class="col-12 col-lg-8 mb-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">Meu Kimono</h5>
