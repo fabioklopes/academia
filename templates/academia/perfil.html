@@ -146,31 +146,7 @@
                     </div>
                 </div>
 
-                <!-- Item 3: Alterar Foto do Perfil -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingPhotoChange">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapsePhotoChange" aria-expanded="false"
-                                aria-controls="collapsePhotoChange">
-                            Alterar Foto do Perfil
-                        </button>
-                    </h2>
-                    <div id="collapsePhotoChange" class="accordion-collapse collapse"
-                         aria-labelledby="headingPhotoChange" data-bs-parent="#accordionPerfil">
-                        <div class="accordion-body">
-                            <form method="post" action="{% url 'perfil_photo_update' %}" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="photo" class="form-label">Selecione uma nova foto</label>
-                                    <input type="file" class="form-control" id="photo" name="photo" accept="image/*" required>
-                                </div>
-                                <button type="submit" class="btn btn-outline-primary">Salvar Nova Foto</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Item 4: Alterar Senha -->
+                <!-- Item 3: Alterar Senha -->
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingPasswordChange">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
