@@ -10,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q, Case, When, Count
+from django.db.models import Q, Case, When, Count, OuterRef, Subquery
 from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item, Meta as MetaModel, Log, SolicitacaoAlteracaoGraduacao
 from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm, MetaForm, SolicitacaoAlteracaoGraduacaoForm, AlunoNovaGraduacaoForm
 import calendar
@@ -905,6 +905,8 @@ def aluno_relatorio_presenca(request):
 
         report_data.append({
             'data': date_key,
+            'aluno': student.get_full_name(),
+            'student_obj': student,
             'status': dict(AttendanceRequest.STATUS_CHOICES).get(status_final, status_final),
             'motivo': motivo_final,
             'qty': qty_final
@@ -943,11 +945,11 @@ def aluno_relatorio_presenca(request):
         create_log(request.user, 'exportou relatório de presenças (XLSX)')
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="relatorio_presencas.xlsx"'
-        
+
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
         worksheet.title = 'Relatório de Presenças'
-        
+
         headers = ["Data", "Status", "Motivo", "Quantidade"]
         for col_num, header_title in enumerate(headers, 1):
             cell = worksheet.cell(row=1, column=col_num)
@@ -1513,10 +1515,9 @@ def professor_graduacoes(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
 
-    if request.user.is_admin():
-        alunos_list = User.objects.filter(group_role='STD')
-    else:
-        alunos_list = User.objects.filter(group_role='STD', turmas__professor=request.user).distinct()
+    # Alteração aqui: Permitir que professores vejam todos os alunos ativos, não apenas os de suas turmas.
+    # Isso resolve o problema de lista vazia se o professor não estiver vinculado a turmas.
+    alunos_list = User.objects.filter(group_role='STD', status='ATIVO').order_by('first_name', 'last_name')
     
     items_per_page = request.GET.get('items_per_page', 10)
     try:
@@ -1534,13 +1535,28 @@ def professor_graduacoes(request):
     except EmptyPage:
         alunos = paginator.page(paginator.num_pages)
 
-    graduacoes = Graduacao.objects.filter(aluno__in=alunos).distinct()
+    # Buscar a graduação mais recente para cada aluno na página atual
+    # Usando Subquery para garantir que pegamos a mais recente
+    latest_graduacao = Graduacao.objects.filter(
+        aluno=OuterRef('pk')
+    ).order_by('-data_graduacao')
+
+    alunos_com_graduacao = User.objects.filter(pk__in=[a.pk for a in alunos]).annotate(
+        latest_grad_id=Subquery(latest_graduacao.values('id')[:1])
+    )
+    
+    graduacoes_dict = {}
+    for aluno in alunos_com_graduacao:
+        if aluno.latest_grad_id:
+            graduacoes_dict[aluno.id] = Graduacao.objects.get(id=aluno.latest_grad_id)
+        else:
+            graduacoes_dict[aluno.id] = None
     
     solicitacoes_pendentes = SolicitacaoAlteracaoGraduacao.objects.filter(status='PEND').order_by('data_solicitacao')
 
     context = {
         'alunos': alunos,
-        'graduacoes': {grad.aluno.id: grad for grad in graduacoes},
+        'graduacoes': graduacoes_dict,
         'items_per_page': items_per_page,
         'solicitacoes_pendentes': solicitacoes_pendentes
     }
@@ -1552,14 +1568,21 @@ def professor_graduacao_editar(request, aluno_id):
         raise PermissionDenied
         
     aluno = get_object_or_404(User, id=aluno_id)
-    graduacao, created = Graduacao.objects.get_or_create(aluno=aluno)
+    
+    # Busca a graduação mais recente ou cria uma nova instância (não salva)
+    graduacao = Graduacao.objects.filter(aluno=aluno).order_by('-data_graduacao').first()
+    if not graduacao:
+        graduacao = Graduacao(aluno=aluno)
 
     if request.method == 'POST':
         form = GraduacaoForm(request.POST, instance=graduacao)
         if form.is_valid():
-            graduacao = form.save(commit=False)
-            graduacao.notified = False
-            graduacao.save()
+            # Se for uma nova instância, precisamos garantir que o aluno esteja associado
+            nova_graduacao = form.save(commit=False)
+            nova_graduacao.aluno = aluno
+            nova_graduacao.notified = False
+            nova_graduacao.save()
+            
             create_log(request.user, f'atualizou a graduação de {aluno.get_full_name()}')
             messages.success(request, 'Graduação salva com sucesso!')
             return redirect('professor_graduacoes')
