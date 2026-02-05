@@ -12,7 +12,7 @@
     <link rel="icon" href="{% static 'img/logotipo.ico' %}">
 
     <!-- iOS Compatibility -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     <link rel="apple-touch-icon" href="{% static 'img/logotipo_transparente.png' %}">
@@ -219,7 +219,7 @@
                                     Administrador</a></li>
                             {% endif %}
 
-                            <!-- Account Switching Logic -->
+                            <!-- Sistema de Troca de Contas -->
                             {% if original_user_id or dependents_list %}
                                 <li>
                                     <hr class="dropdown-divider">
@@ -227,14 +227,14 @@
                                 <li><h6 class="dropdown-header">Gerenciar Contas</h6></li>
 
                                 {% if original_user_id %}
-                                    {# User is logged in as a dependent, show the link to go back #}
+                                    {# Se a conta dependente estiver sendo usada, apresentar o link de voltar para minha conta #}
                                     <li>
                                         <a class="dropdown-item" href="{% url 'switch_account_back' %}">
                                             <i class="bi bi-arrow-left-circle me-2"></i>Voltar para minha conta
                                         </a>
                                     </li>
                                 {% else %}
-                                    {# User is the main account holder, show links to dependents #}
+                                    {# Se a conta principal estiver logada, exibir as contas dependentes #}
                                     {% for dependent in dependents_list %}
                                         {% if user.group_role == "STD" %}
                                             {% if dependent.status != 'PENDENTE' and dependent.status != 'INATIVO' %}
@@ -276,7 +276,7 @@
 {% endif %}
 
 <!-- Toast Container -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11">
     {% if has_pending_tasks %}
         {% for notification in notifications %}
             <div class="toast notification-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">

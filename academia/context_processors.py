@@ -99,17 +99,17 @@ def notifications_context(request):
             total_count += 1
             notifications.append({
                 'title': 'Dados do Perfil',
-                'text': 'Informe sua Faixa e Grau.',
+                'text': 'Informe sua faixa e grau.',
                 'url': 'perfil_editar',
                 'type': 'danger'
             })
 
         # Meu Kimono
         kimono_fields = [
-            ('height', 'Altura'),
-            ('weight', 'Peso'),
-            ('kimono_size', 'Tamanho do Kimono'),
-            ('belt_size', 'Tamanho da Faixa')
+            ('height', 'a sua altura'),
+            ('weight', 'o seu peso'),
+            ('kimono_size', 'o tamanho do seu kimono'),
+            ('belt_size', 'o tamanho da sua faixa')
         ]
 
         for field_name, label in kimono_fields:
@@ -117,7 +117,7 @@ def notifications_context(request):
                 total_count += 1
                 notifications.append({
                     'title': 'Meu Kimono',
-                    'text': f'Informe sua {label}.',
+                    'text': f'Informe {label}.',
                     'url': 'perfil',
                     'type': 'danger'
                 })
