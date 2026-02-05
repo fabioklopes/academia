@@ -1,6 +1,7 @@
 # diretórios
 .idea/
 __pycache__/
+media/
 venv/
 
 # arquivos
