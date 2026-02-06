@@ -27,6 +27,8 @@ from .logs import create_log
 from PIL import Image
 from django.core.files.base import ContentFile
 from django.views.decorators.http import require_POST
+from django.contrib.auth.views import PasswordResetConfirmView
+from django.urls import reverse_lazy
 
 # --- HELPERS ---
 
@@ -114,6 +116,20 @@ def get_class_description(class_type):
     return '-'
 
 # --- VIEWS GERAIS ---
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'academia/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+    def form_valid(self, form):
+        # The form's save method will hash the password and save the user.
+        form.save()
+        
+        # Log the successful password reset.
+        if hasattr(form, 'user') and form.user is not None:
+            create_log(form.user, 'redefiniu a senha com sucesso')
+
+        return super().form_valid(form)
 
 def index(request):
     if request.user.is_authenticated:

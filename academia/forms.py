@@ -10,6 +10,31 @@ class CustomPasswordResetForm(PasswordResetForm):
         widget=forms.EmailInput(attrs={'class': 'form-control', 'autocomplete': 'email'})
     )
 
+    def get_users(self, email):
+        """
+        Override to handle cases where an email is shared by a responsible user
+        and their dependents. In such cases, only send the reset link to the
+        responsible user.
+        """
+        email_field_name = User.get_email_field_name()
+        active_users = User._default_manager.filter(**{
+            '%s__iexact' % email_field_name: email,
+            'status': 'ATIVO',
+        })
+        
+        users_list = list(active_users)
+
+        # If more than one user shares this email, it's likely a responsible
+        # user and their dependents. We should only target the responsible user.
+        if len(users_list) > 1:
+            # A responsible user is one who is not a dependent of anyone,
+            # i.e., their `responsible` field is None.
+            responsible_users = [u for u in users_list if u.responsible is None]
+            return responsible_users
+        
+        # If only one user was found, return them in a list.
+        return users_list
+
 class SolicitacaoAcessoForm(forms.Form):
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(max_length=150, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
