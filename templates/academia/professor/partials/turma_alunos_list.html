@@ -26,7 +26,6 @@
                             {{ turma_aluno.aluno.get_full_name }}
                         </a>
                     </td>
-                    <td>{{ turma_aluno.aluno.email }}</td>
                     <td>{{ turma_aluno.data_solicitacao|date:"d/m/Y" }}</td>
                     <td>
                         <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#removeModal{{ turma_aluno.aluno.id }}">
@@ -58,21 +57,23 @@
                                         <h5 class="text-muted mb-4">{{ turma_aluno.aluno.get_full_name }}</h5>
 
                                         <div class="mb-3">
-                                            {% if turma_aluno.aluno.graduacao %}
-                                                <div class="mt-2">
-                                                    {% if turma_aluno.aluno.graduacao.grau > 0 %}
-                                                        <img src="/media/faixas/{{ turma_aluno.aluno.graduacao.faixa }}_{{ turma_aluno.aluno.graduacao.grau }}_DEGREES.png"
-                                                             alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}"
-                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                    {% else %}
-                                                        <img src="/media/faixas/{{ turma_aluno.aluno.graduacao.faixa }}.png"
-                                                             alt="{{ turma_aluno.aluno.graduacao.get_faixa_display }}"
-                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                    {% endif %}
-                                                </div>
-                                            {% else %}
-                                                <span class="badge bg-secondary">Sem graduação</span>
-                                            {% endif %}
+                                            {% with current_graduacao=turma_aluno.aluno.graduacoes.first %}
+                                                {% if current_graduacao %}
+                                                    <div class="mt-2">
+                                                        {% if current_graduacao.grau > 0 %}
+                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}_{{ current_graduacao.grau }}_DEGREES.png"
+                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                        {% else %}
+                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}.png"
+                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Sem graduação</span>
+                                                {% endif %}
+                                            {% endwith %}
                                         </div>
 
                                         <p class="card-text fs-5">

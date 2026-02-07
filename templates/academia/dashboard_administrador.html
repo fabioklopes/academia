@@ -226,13 +226,23 @@
                                                         <h5 class="text-muted mb-4">{{ u.get_full_name }}</h5>
 
                                                         <div class="mb-3">
-                                                            {% if u.graduacao %}
-                                                                {% with faixa_img="faixas/"|add:u.graduacao.faixa|lower|add:".png" %}
-                                                                    <img src="/media/{{ faixa_img }}" alt="{{ u.graduacao.get_faixa_display }}" style="max-width: 100%; height: auto; max-height: 50px;">
-                                                                {% endwith %}
-                                                            {% else %}
-                                                                <span class="badge bg-secondary">Sem graduação</span>
-                                                            {% endif %}
+                                                            {% with current_graduacao=u.graduacoes.first %}
+                                                                {% if current_graduacao %}
+                                                                    <div class="mt-2">
+                                                                        {% if current_graduacao.grau > 0 %}
+                                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}_{{ current_graduacao.grau }}_DEGREES.png"
+                                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                        {% else %}
+                                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}.png"
+                                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">Sem graduação</span>
+                                                                {% endif %}
+                                                            {% endwith %}
                                                         </div>
 
                                                         <p class="card-text fs-5">

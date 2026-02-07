@@ -241,21 +241,23 @@
                                                         <h5 class="text-muted mb-4">{{ u.get_full_name }}</h5>
 
                                                         <div class="mb-3">
-                                                            {% if u.graduacao %}
-                                                                <div class="mt-2">
-                                                                    {% if u.graduacao.grau > 0 %}
-                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}_{{ u.graduacao.grau }}_DEGREES.png"
-                                                                             alt="{{ u.graduacao.get_faixa_display }}"
-                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                                    {% else %}
-                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}.png"
-                                                                             alt="{{ u.graduacao.get_faixa_display }}"
-                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                                    {% endif %}
-                                                                </div>
-                                                            {% else %}
-                                                                <span class="badge bg-secondary">Sem graduação</span>
-                                                            {% endif %}
+                                                            {% with current_graduacao=u.graduacoes.first %}
+                                                                {% if current_graduacao %}
+                                                                    <div class="mt-2">
+                                                                        {% if current_graduacao.grau > 0 %}
+                                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}_{{ current_graduacao.grau }}_DEGREES.png"
+                                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                        {% else %}
+                                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}.png"
+                                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">Sem graduação</span>
+                                                                {% endif %}
+                                                            {% endwith %}
                                                         </div>
 
                                                         <p class="card-text fs-5">

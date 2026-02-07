@@ -26,14 +26,12 @@
                             {% endif %}
                             <h5>{{ user.first_name }} {{ user.last_name }}</h5>
                             <p class="text-muted mb-1">{{ user.email }}</p>
-                            {% if user.graduacoes.exists %}
-                                {% with grad=user.graduacoes.first %}
-                                    {% if grad.grau > 0 %}
-                                        <img src="/media/faixas/{{ grad.faixa }}_{{ grad.grau }}_DEGREES.png" alt="{{ grad.get_faixa_display }} {{ grad.grau }}º grau" class="img-fluid mt-2" style="max-height: 40px;">
-                                    {% else %}
-                                        <img src="/media/faixas/{{ grad.faixa }}.png" alt="{{ grad.get_faixa_display }}" class="img-fluid mt-2" style="max-height: 40px;">
-                                    {% endif %}
-                                {% endwith %}
+                            {% if graduacao %}
+                                {% if graduacao.grau > 0 %}
+                                    <img src="/media/faixas/{{ graduacao.faixa }}_{{ graduacao.grau }}_DEGREES.png" alt="{{ graduacao.get_faixa_display }} {{ graduacao.grau }}º grau" class="img-fluid mt-2" style="max-height: 40px;">
+                                {% else %}
+                                    <img src="/media/faixas/{{ graduacao.faixa }}.png" alt="{{ graduacao.get_faixa_display }}" class="img-fluid mt-2" style="max-height: 40px;">
+                                {% endif %}
                             {% else %}
                                 <span class="badge bg-secondary">Sem graduação</span>
                             {% endif %}
