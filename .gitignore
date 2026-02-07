@@ -3,7 +3,9 @@
 __pycache__/
 media/
 venv/
+virtual/
 
 # arquivos
 jiujitsu_academy/settings.py
 .env
+*.sql

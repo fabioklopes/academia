@@ -9,9 +9,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='attendancerequest',
-            name='class_type',
-            field=models.CharField(choices=[('GI', 'Gi'), ('NOGI', 'No-Gi'), ('BOTH', 'Ambas')], default='BOTH', max_length=4, verbose_name='Tipo de Aula'),
-        ),
+        # migrations.AddField(
+        #     model_name='attendancerequest',
+        #     name='class_type',
+        #     field=models.CharField(choices=[('GI', 'Gi'), ('NOGI', 'No-Gi'), ('BOTH', 'Ambas')], default='BOTH', max_length=4, verbose_name='Tipo de Aula'),
+        # ),
     ]
