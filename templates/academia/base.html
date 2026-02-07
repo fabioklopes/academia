@@ -187,20 +187,21 @@
                                         <div>
                                             <div class="fw-bold">{{ user.first_name }} {{ user.last_name }}</div>
                                             <small class="text-muted">{{ user.email }}</small>
-                                            {% if user.graduacao %}
-                                                <div class="mt-2">
-                                                    {% if user.graduacao.grau > 0 %}
-                                                        <img src="/media/faixas/{{ user.graduacao.faixa }}_{{ user.graduacao.grau }}_DEGREES.png"
-                                                             alt="{{ user.graduacao.get_faixa_display }}"
-                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                    {% else %}
-                                                        <img src="/media/faixas/{{ user.graduacao.faixa }}.png"
-                                                             alt="{{ user.graduacao.get_faixa_display }}"
-                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                    {% endif %}
-
-                                                </div>
-                                            {% endif %}
+                                            {% with current_graduacao=user.graduacoes.first %}
+                                                {% if current_graduacao %}
+                                                    <div class="mt-2">
+                                                        {% if current_graduacao.grau > 0 %}
+                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}_{{ current_graduacao.grau }}_DEGREES.png"
+                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                        {% else %}
+                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}.png"
+                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            {% endwith %}
                                         </div>
                                     </div>
                                 </div>
