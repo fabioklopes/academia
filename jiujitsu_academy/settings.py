@@ -136,6 +136,15 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1048576  # 1 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1048576  # 1 MB
 
+# Configurações de compatibilidade iOS 25/26
+SESSION_COOKIE_SECURE = True        # seção de cookies
+SESSION_COOKIE_SAMESITE = 'None'    # necessário para a compatibilidade com Safari/Chrome
+SESSION_COOKIE_HTTPONLY = True      # Protege contra acesso via Javascript
+
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_HTTPONLY = True
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
