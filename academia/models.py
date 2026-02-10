@@ -199,7 +199,7 @@ class Graduacao(models.Model):
     
     aluno = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'group_role': 'STD'}, related_name='graduacoes')
     faixa = models.CharField('Faixa', max_length=20, choices=FAIXA_CHOICES)
-    grau = models.IntegerField('Grau', validators=[MinValueValidator(0), MaxValueValidator(6)])
+    grau = models.IntegerField('Grau', validators=[MinValueValidator(0), MaxValueValidator(4)])
     data_graduacao = models.DateField('Data da Graduação')
     notified = models.BooleanField(default=False)
     
@@ -209,26 +209,6 @@ class Graduacao(models.Model):
     
     def __str__(self):
         return f"{self.aluno} - {self.get_faixa_display()} {self.grau}º grau"
-
-class SolicitacaoAlteracaoGraduacao(models.Model):
-    STATUS_CHOICES = [('PEND', 'Pendente'), ('APRO', 'Aprovado'), ('REJE', 'Rejeitado')]
-    
-    graduacao = models.ForeignKey(Graduacao, on_delete=models.CASCADE, related_name='solicitacoes_alteracao')
-    nova_data = models.DateField('Nova Data')
-    motivo_solicitacao = models.CharField('Motivo da Solicitação', max_length=50)
-    status = models.CharField('Status', max_length=4, choices=STATUS_CHOICES, default='PEND')
-    motivo_rejeicao = models.TextField('Motivo da Rejeição', blank=True, null=True)
-    data_solicitacao = models.DateTimeField(auto_now_add=True)
-    processado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='solicitacoes_graduacao_processadas')
-    data_processamento = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        verbose_name = 'Solicitação de Alteração de Graduação'
-        verbose_name_plural = 'Solicitações de Alteração de Graduação'
-        ordering = ['-data_solicitacao']
-
-    def __str__(self):
-        return f"Solicitação de {self.graduacao.aluno} - {self.status}"
 
 class PlanoAula(models.Model):
     titulo = models.CharField('Título', max_length=200)
