@@ -55,13 +55,12 @@
                             {{ form.birthday }}
                         </div>
                         <div class="col-md-4">
-                            <label for="{{ form.faixa.id_for_label }}" class="form-label">Faixa</label>
+                            <label for="faixa" class="form-label">Faixa</label>
                             {{ form.faixa }}
                         </div>
                         <div class="col-md-4">
-                            <label for="{{ form.grau.id_for_label }}" class="form-label">Número de Graus</label>
+                            <label for="grau" class="form-label">Número de Graus</label>
                             {{ form.grau }}
-                            <div id="grau-help" class="form-text"></div>
                         </div>
                     </div>
                     
@@ -136,41 +135,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Lógica para restrição de graus
-    const faixaSelect = document.getElementById('{{ form.faixa.id_for_label }}');
-    const grauInput = document.getElementById('{{ form.grau.id_for_label }}');
-    const grauHelp = document.getElementById('grau-help');
-
-    function updateGrauConstraints() {
-        if (!faixaSelect || !grauInput) return;
-
-        const selectedFaixa = faixaSelect.value;
-        let maxGrau = 4;
-        let helpText = '0 a 4 graus para faixas coloridas.';
-
-        if (selectedFaixa === 'BLACK') {
-            maxGrau = 6;
-            helpText = '0 a 6 graus para faixa preta.';
-        }
-
-        grauInput.setAttribute('max', maxGrau);
-        grauInput.setAttribute('min', 0);
-        if (grauHelp) {
-            grauHelp.textContent = helpText;
-        }
-
-        // Ajusta valor atual se exceder o novo máximo
-        if (parseInt(grauInput.value) > maxGrau) {
-            grauInput.value = maxGrau;
-        }
-    }
-
-    if (faixaSelect) {
-        faixaSelect.addEventListener('change', updateGrauConstraints);
-        // Inicializa
-        updateGrauConstraints();
-    }
-
     // Lógica do Modal e da Foto
     const photoInput = document.getElementById('photo');
     const photoPreview = document.getElementById('photo-preview');

@@ -1,87 +1,10 @@
 {% extends 'academia/base.html' %}
-{% load academia_tags %}
 
 {% block content %}
 <div class="container mt-4">
     <h2 class="mb-4"><i class="bi bi-award"></i> Gerenciamento de Graduações</h2>
 
-    <!-- Seção de Solicitações Pendentes -->
-    {% if solicitacoes_pendentes %}
-    <div class="card shadow-sm mb-4 border-warning">
-        <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="bi bi-exclamation-circle"></i> Solicitações de Alteração de Data Pendentes</h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Aluno</th>
-                            <th>Data Atual</th>
-                            <th>Nova Data Solicitada</th>
-                            <th>Motivo</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for sol in solicitacoes_pendentes %}
-                        <tr>
-                            <td>{{ sol.graduacao.aluno.get_full_name }}</td>
-                            <td>{{ sol.graduacao.data_graduacao|date:"d/m/Y" }}</td>
-                            <td><strong>{{ sol.nova_data|date:"d/m/Y" }}</strong></td>
-                            <td>{{ sol.motivo_solicitacao }}</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <form method="post" action="{% url 'professor_solicitacao_graduacao_aprovar' sol.id %}" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-success" title="Aprovar">
-                                            <i class="bi bi-check-lg"></i>
-                                        </button>
-                                    </form>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ sol.id }}" title="Rejeitar">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Modal de Rejeição -->
-                                <div class="modal fade" id="rejectModal{{ sol.id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form method="post" action="{% url 'professor_solicitacao_graduacao_rejeitar' sol.id %}">
-                                                {% csrf_token %}
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Rejeitar Solicitação</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p>Informe o motivo da rejeição para o aluno <strong>{{ sol.graduacao.aluno.get_full_name }}</strong>:</p>
-                                                    <div class="mb-3">
-                                                        <label for="motivo_rejeicao" class="form-label">Motivo</label>
-                                                        <textarea class="form-control" name="motivo_rejeicao" required rows="3"></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                    <button type="submit" class="btn btn-danger">Confirmar Rejeição</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Lista de Alunos e Graduações</h5>
-        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
@@ -122,26 +45,14 @@
                                 </td>
                                 <td>
                                     {% if grad %}
-                                        {% if grad.grau == 0 %}
-                                            <i class="bi bi-reception-0"></i> 0
-                                        {% elif grad.grau == 1 %}
-                                            <i class="bi bi-reception-1"></i> 1
-                                        {% elif grad.grau == 2 %}
-                                            <i class="bi bi-reception-2"></i> 2
-                                        {% elif grad.grau == 3 %}
-                                            <i class="bi bi-reception-3"></i> 3
-                                        {% elif grad.grau == 4 %}
-                                            <i class="bi bi-reception-4"></i> 4
-                                        {% else %}
-                                            {{ grad.grau }}
-                                        {% endif %}
+                                        {{ grad.grau }}º Grau
                                     {% else %}
                                         -
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if grad %}
-                                        <i class="bi bi-calendar-event"></i> {{ grad.data_graduacao|date:"d/m/Y" }}
+                                        {{ grad.data_graduacao|date:"d/m/Y" }}
                                     {% else %}
                                         -
                                     {% endif %}

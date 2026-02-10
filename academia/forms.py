@@ -1,5 +1,5 @@
 from django import forms
-from .models import Graduacao, Item, Pedido, Turma, User, Meta as MetaModel, SolicitacaoAlteracaoGraduacao
+from .models import Graduacao, Item, Pedido, Turma, User, Meta as MetaModel
 from django.contrib.auth.forms import PasswordResetForm
 import datetime
 
@@ -97,7 +97,7 @@ class PerfilEditForm(forms.ModelForm):
     )
     
     faixa = forms.ChoiceField(choices=Graduacao.FAIXA_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-select'}))
-    grau = forms.IntegerField(min_value=0, max_value=6, required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    grau = forms.IntegerField(min_value=0, max_value=4, required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
@@ -130,20 +130,6 @@ class PerfilEditForm(forms.ModelForm):
             else:
                 return digits_only
         return whatsapp
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        faixa = cleaned_data.get('faixa')
-        grau = cleaned_data.get('grau')
-
-        if faixa and grau is not None:
-            if faixa == 'BLACK':
-                if grau > 6:
-                    self.add_error('grau', 'Para a faixa Preta, o grau máximo é 6.')
-            else:
-                if grau > 4:
-                    self.add_error('grau', 'Para faixas coloridas, o grau máximo é 4.')
-        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -190,53 +176,6 @@ class GraduacaoForm(forms.ModelForm):
             'grau': forms.NumberInput(attrs={'class': 'form-control'}),
             'data_graduacao': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
         }
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        faixa = cleaned_data.get('faixa')
-        grau = cleaned_data.get('grau')
-
-        if faixa and grau is not None:
-            if faixa == 'BLACK':
-                if grau > 6:
-                    self.add_error('grau', 'Para a faixa Preta, o grau máximo é 6.')
-            else:
-                if grau > 4:
-                    self.add_error('grau', 'Para faixas coloridas, o grau máximo é 4.')
-        return cleaned_data
-
-class SolicitacaoAlteracaoGraduacaoForm(forms.ModelForm):
-    class Meta:
-        model = SolicitacaoAlteracaoGraduacao
-        fields = ['nova_data', 'motivo_solicitacao']
-        widgets = {
-            'nova_data': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
-            'motivo_solicitacao': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '50'}),
-        }
-
-class AlunoNovaGraduacaoForm(forms.ModelForm):
-    class Meta:
-        model = Graduacao
-        fields = ['faixa', 'grau', 'data_graduacao']
-        widgets = {
-            'faixa': forms.Select(attrs={'class': 'form-select'}),
-            'grau': forms.NumberInput(attrs={'class': 'form-control'}),
-            'data_graduacao': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
-        }
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        faixa = cleaned_data.get('faixa')
-        grau = cleaned_data.get('grau')
-
-        if faixa and grau is not None:
-            if faixa == 'BLACK':
-                if grau > 6:
-                    self.add_error('grau', 'Para a faixa Preta, o grau máximo é 6.')
-            else:
-                if grau > 4:
-                    self.add_error('grau', 'Para faixas coloridas, o grau máximo é 4.')
-        return cleaned_data
 
 class ItemForm(forms.ModelForm):
     class Meta:

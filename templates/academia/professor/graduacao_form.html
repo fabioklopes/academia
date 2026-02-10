@@ -40,9 +40,7 @@
                         <div class="mb-3">
                             <label for="{{ form.grau.id_for_label }}" class="form-label">Grau</label>
                             {{ form.grau }}
-                            <div id="grau-help" class="form-text">
-                                <i class="bi bi-info-circle"></i> 0 a 4 graus para faixas coloridas, até 6 graus para faixa preta.
-                            </div>
+                            <div class="form-text">0 a 4 graus.</div>
                             {% if form.grau.errors %}
                                 <div class="text-danger small">{{ form.grau.errors }}</div>
                             {% endif %}
@@ -57,8 +55,8 @@
                         </div>
 
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-outline-success"><i class="bi bi-check-lg"></i> Salvar Graduação</button>
+                            <a href="{% url 'professor_graduacoes' %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Salvar Graduação</button>
                         </div>
                     </form>
                 </div>
@@ -66,42 +64,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const faixaSelect = document.getElementById('{{ form.faixa.id_for_label }}');
-    const grauInput = document.getElementById('{{ form.grau.id_for_label }}');
-    const grauHelp = document.getElementById('grau-help');
-
-    function updateGrauConstraints() {
-        if (!faixaSelect || !grauInput) return;
-
-        const selectedFaixa = faixaSelect.value;
-        let maxGrau = 4;
-        let helpText = '<i class="bi bi-info-circle"></i> 0 a 4 graus para faixas coloridas.';
-
-        if (selectedFaixa === 'BLACK') {
-            maxGrau = 6;
-            helpText = '<i class="bi bi-info-circle"></i> 0 a 6 graus para faixa preta.';
-        }
-
-        grauInput.setAttribute('max', maxGrau);
-        grauInput.setAttribute('min', 0);
-        if (grauHelp) {
-            grauHelp.innerHTML = helpText;
-        }
-
-        if (parseInt(grauInput.value) > maxGrau) {
-            grauInput.value = maxGrau;
-        }
-    }
-
-    if (faixaSelect) {
-        faixaSelect.addEventListener('change', updateGrauConstraints);
-        updateGrauConstraints();
-    }
-});
-</script>
 {% endblock %}

@@ -1,7 +1,5 @@
 # Força arquivos de texto a usar LF no repositório
-* text=auto eol=lf
-
-# Arquivos específicos que precisam de CRLF (ex: scripts batch do Windows)
+* text=auto
+*.py text eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
-

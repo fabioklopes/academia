@@ -80,8 +80,6 @@ urlpatterns = [
     # Painel do Professor - Graduacoes
     path('professor/graduacoes/', views.professor_graduacoes, name='professor_graduacoes'),
     path('professor/graduacao/<int:aluno_id>/editar/', views.professor_graduacao_editar, name='professor_graduacao_editar'),
-    path('professor/graduacao/solicitacao/<int:solicitacao_id>/aprovar/', views.professor_solicitacao_graduacao_aprovar, name='professor_solicitacao_graduacao_aprovar'),
-    path('professor/graduacao/solicitacao/<int:solicitacao_id>/rejeitar/', views.professor_solicitacao_graduacao_rejeitar, name='professor_solicitacao_graduacao_rejeitar'),
 
     # Painel do Professor - Itens
     path('professor/itens/', views.professor_itens, name='professor_itens'),
