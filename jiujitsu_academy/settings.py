@@ -22,7 +22,7 @@ dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'crtnbelem-adpm')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG')
 
 ALLOWED_HOSTS = [
     '*',
@@ -140,6 +140,10 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 1048576  # 1 MB
 SESSION_COOKIE_SECURE = True        # seção de cookies
 SESSION_COOKIE_SAMESITE = 'None'    # necessário para a compatibilidade com Safari/Chrome
 SESSION_COOKIE_HTTPONLY = True      # Protege contra acesso via Javascript
+
+# Configuração de sessão expirada (todas as plataformas)
+SESSION_COOKIE_AGE = 3600               # 60 minutos
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # expira ao fechar navegador
 
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
