@@ -1,0 +1,474 @@
+{% extends 'academia/base.html' %}
+{% load static %}
+
+{% block title %}Minhas Graduações{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+<style>
+    .belt-display {
+        width: 100%;
+        height: 40px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        margin-bottom: 5px;
+        border: 1px solid #ccc;
+    }
+    .belt-white { background-color: #f8f9fa; color: #333; border: 1px solid #ddd; }
+    .belt-grey { background-color: #858796; }
+    .belt-yellow { background-color: #f6c23e; }
+    .belt-orange { background-color: #fd7e14; }
+    .belt-green { background-color: #1cc88a; }
+    .belt-blue { background-color: #4e73df; }
+    .belt-purple { background-color: #6f42c1; }
+    .belt-brown { background-color: #5a5c69; }
+    .belt-black { background-color: #000; border: 1px solid #333; }
+    .belt-red { background-color: #e74a3b; }
+
+    .belt-badge {
+        padding: 5px 10px;
+        font-size: 0.9em;
+    }
+    /* Added !important to override Bootstrap defaults */
+    .belt-badge.belt-white { background-color: #fff !important; color: #333 !important; border: 1px solid #ccc !important; }
+    .belt-badge.belt-grey { background-color: #858796 !important; color: white !important; }
+    .belt-badge.belt-yellow { background-color: #f6c23e !important; color: white !important; }
+    .belt-badge.belt-orange { background-color: #fd7e14 !important; color: white !important; }
+    .belt-badge.belt-green { background-color: #1cc88a !important; color: white !important; }
+    .belt-badge.belt-blue { background-color: #4e73df !important; color: white !important; }
+    .belt-badge.belt-purple { background-color: #6f42c1 !important; color: white !important; }
+    .belt-badge.belt-brown { background-color: #5a5c69 !important; color: white !important; }
+    .belt-badge.belt-black { background-color: #000 !important; color: white !important; }
+    .belt-badge.belt-red { background-color: #e74a3b !important; color: white !important; }
+
+    .degree-locked {
+        opacity: 0.3;
+        border: 1px solid currentColor;
+    }
+
+    .grayscale {
+        filter: grayscale(100%);
+        opacity: 0.5;
+    }
+    .status-icon {
+        position: absolute;
+        top: -5px;
+        right: 5px;
+        font-size: 1.2em;
+        background: white;
+        border-radius: 50%;
+    }
+    .current-indicator {
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 1s infinite;
+    }
+    @keyframes bounce {
+        0%, 100% { top: -25px; }
+        50% { top: -30px; }
+    }
+
+    /* Cropper styles */
+    .img-container {
+        max-height: 400px;
+        margin-bottom: 20px;
+    }
+    .img-container img {
+        max-width: 100%;
+    }
+    .preview-container {
+        overflow: hidden;
+        width: 200px;
+        height: 200px;
+        margin: 10px auto;
+        border: 1px solid #ddd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Minhas Graduações</h1>
+        <button type="button" class="btn btn-outline-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addGraduationModal">
+            <i class="bi bi-plus-circle me-1"></i> Nova Graduação
+        </button>
+    </div>
+
+    <!-- Game-like Progress Bar -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary text-center">SUA JORNADA</h6>
+        </div>
+        <div class="card-body">
+            <div class="row text-center justify-content-center">
+                {% for item in progress_data %}
+                <div class="col-md-1 col-sm-3 mb-3 position-relative">
+                    <div class="belt-icon-container {% if item.is_completed or item.is_current %}unlocked{% else %}locked{% endif %}">
+                        {% if item.is_current %}
+                            <div class="current-indicator"><i class="bi bi-arrow-down-circle-fill text-primary"></i></div>
+                        {% endif %}
+
+                        <div class="belt-display belt-{{ item.belt|lower }} {% if not item.is_completed and not item.is_current %}grayscale{% endif %}">
+                            <span class="belt-name">{{ item.name }}</span>
+                        </div>
+
+                        {% if item.is_completed %}
+                            <i class="bi bi-check-circle-fill text-success status-icon"></i>
+                        {% elif item.is_current %}
+                            <i class="bi bi-star-fill text-warning status-icon fa-spin"></i>
+                        {% else %}
+                            <i class="bi bi-lock-fill text-secondary status-icon"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if current_graduation %}
+            <div class="mt-4">
+                <h4 class="small font-weight-bold">Progresso na Faixa Atual: {{ current_graduation.get_belt_display }} <span class="float-end">{{ current_graduation.degree }}º Grau</span></h4>
+                <div class="progress mb-4" style="height: 25px;">
+                    {% with max_degree=4 %}
+                        {% if current_graduation.belt == 'Black' %}{% with max_degree=6 %}{% endwith %}{% endif %}
+                        {% widthratio current_graduation.degree 4 100 as width_percent %}
+                        {% if current_graduation.belt == 'Black' %}
+                            {% widthratio current_graduation.degree 6 100 as width_percent %}
+                        {% endif %}
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ width_percent }}%" aria-valuenow="{{ current_graduation.degree }}" aria-valuemin="0" aria-valuemax="{% if current_graduation.belt == 'Black' %}6{% else %}4{% endif %}"></div>
+                    {% endwith %}
+                </div>
+                <div class="text-center">
+                    {% if current_graduation.belt == 'Black' %}
+                        {% for i in "0123456"|make_list %}
+                            <span class="badge rounded-pill belt-badge belt-{{ current_graduation.belt|lower }} {% if forloop.counter0 > current_graduation.degree %}degree-locked{% endif %} me-1" style="width: 30px; height: 30px; line-height: 20px; font-size: 14px;">{{ forloop.counter0 }}</span>
+                        {% endfor %}
+                    {% else %}
+                        {% for i in "01234"|make_list %}
+                            <span class="badge rounded-pill belt-badge belt-{{ current_graduation.belt|lower }} {% if forloop.counter0 > current_graduation.degree %}degree-locked{% endif %} me-1" style="width: 30px; height: 30px; line-height: 20px; font-size: 14px;">{{ forloop.counter0 }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary text-center">HISTÓRICO DAS SUAS CONQUISTAS</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Faixa</th>
+                            <th>Grau</th>
+                            <th>Data da Conquista</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grad in graduations %}
+                        <tr>
+                            <td>
+                                <span class="badge belt-badge belt-{{ grad.belt|lower }}">{{ grad.get_belt_display }}</span>
+                            </td>
+                            <td>
+                                {% if grad.degree == 0 %}
+                                    ✨ Troca de Faixa
+                                {% elif grad.degree == 1 %}
+                                    <i class="bi bi-reception-1"></i> {{ grad.degree }}º Grau
+                                {% elif grad.degree == 2 %}
+                                    <i class="bi bi-reception-2"></i> {{ grad.degree }}º Grau
+                                {% elif grad.degree == 3 %}
+                                    <i class="bi bi-reception-3"></i> {{ grad.degree }}º Grau
+                                {% elif grad.degree == 4 %}
+                                    <i class="bi bi-reception-4"></i> {{ grad.degree }}º Grau
+                                {% endif %}
+
+                                {% if grad.photo1 or grad.photo2 or grad.photo3 %}
+                                    <a href="#" class="text-decoration-none ms-2" data-bs-toggle="modal" data-bs-target="#viewPhotosModal{{ grad.id }}">
+                                        <i class="bi bi-images text-primary"></i>
+                                    </a>
+
+                                    <!-- View Photos Modal -->
+                                    <div class="modal fade" id="viewPhotosModal{{ grad.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Recordações - {{ grad.get_belt_display }} ({{ grad.degree }}º Grau)</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div id="carouselPhotos{{ grad.id }}" class="carousel slide" data-bs-ride="carousel">
+                                                        <div class="carousel-inner">
+                                                            {% if grad.photo1 %}
+                                                            <div class="carousel-item active">
+                                                                <img src="{{ grad.photo1.url }}" class="d-block w-100" alt="Foto 1">
+                                                            </div>
+                                                            {% endif %}
+                                                            {% if grad.photo2 %}
+                                                            <div class="carousel-item {% if not grad.photo1 %}active{% endif %}">
+                                                                <img src="{{ grad.photo2.url }}" class="d-block w-100" alt="Foto 2">
+                                                            </div>
+                                                            {% endif %}
+                                                            {% if grad.photo3 %}
+                                                            <div class="carousel-item {% if not grad.photo1 and not grad.photo2 %}active{% endif %}">
+                                                                <img src="{{ grad.photo3.url }}" class="d-block w-100" alt="Foto 3">
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselPhotos{{ grad.id }}" data-bs-slide="prev">
+                                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                            <span class="visually-hidden">Anterior</span>
+                                                        </button>
+                                                        <button class="carousel-control-next" type="button" data-bs-target="#carouselPhotos{{ grad.id }}" data-bs-slide="next">
+                                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                            <span class="visually-hidden">Próximo</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ grad.date|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">Nenhuma graduação registrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Graduation Modal -->
+<div class="modal fade" id="addGraduationModal" tabindex="-1" aria-labelledby="addGraduationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addGraduationModalLabel">Nova Graduação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'graduation_add' %}" method="POST" enctype="multipart/form-data" id="graduationForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="belt" class="form-label">Faixa</label>
+                                <select class="form-select" id="belt" name="belt" required onchange="updateDegreeOptions()">
+                                    {% for code, name in belt_choices %}
+                                    <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="degree" class="form-label">Grau</label>
+                                <select class="form-select" id="degree" name="degree" required>
+                                    <!-- Options populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="date" class="form-label">Data da Graduação</label>
+                                <input type="date" class="form-control" id="date" name="date" required value="{% now 'Y-m-d' %}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3">Recordações (Máx. 3 fotos)</h6>
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i> Selecione as fotos e faça o enquadramento (200x200). O upload só será feito após confirmar o corte.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <label class="form-label">Foto 1</label>
+                                <input type="file" class="form-control form-control-sm photo-input" id="photo1_input" name="photo1" accept="image/*" data-target="1">
+                                <div id="preview1" class="preview-container mt-2 d-none"></div>
+                                <div id="status1" class="text-success small d-none"><i class="bi bi-check-circle"></i> Pronta para envio</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <label class="form-label">Foto 2</label>
+                                <input type="file" class="form-control form-control-sm photo-input" id="photo2_input" name="photo2" accept="image/*" data-target="2">
+                                <div id="preview2" class="preview-container mt-2 d-none"></div>
+                                <div id="status2" class="text-success small d-none"><i class="bi bi-check-circle"></i> Pronta para envio</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <label class="form-label">Foto 3</label>
+                                <input type="file" class="form-control form-control-sm photo-input" id="photo3_input" name="photo3" accept="image/*" data-target="3">
+                                <div id="preview3" class="preview-container mt-2 d-none"></div>
+                                <div id="status3" class="text-success small d-none"><i class="bi bi-check-circle"></i> Pronta para envio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Crop Modal -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Enquadrar Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container">
+                    <img id="imageToCrop" src="" alt="Picture">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="cropBtn">Cortar e Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    function updateDegreeOptions() {
+        const belt = document.getElementById('belt').value;
+        const degreeSelect = document.getElementById('degree');
+        degreeSelect.innerHTML = '';
+
+        let maxDegree = 4;
+        if (belt === 'Black') {
+            maxDegree = 6;
+        }
+
+        for (let i = 0; i <= maxDegree; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            if (i === 0) {
+                option.text = 'Troca de Faixa';
+            } else {
+                option.text = i + 'º Grau';
+            }
+            degreeSelect.appendChild(option);
+        }
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDegreeOptions();
+
+        // Cropper Logic
+        let cropper;
+        let currentInputId;
+        let currentTargetId;
+        const image = document.getElementById('imageToCrop');
+        const cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
+
+        document.querySelectorAll('.photo-input').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    const file = files[0];
+
+                    if (file.size > 1048576) {
+                        alert('A imagem deve ter no máximo 1MB.');
+                        this.value = '';
+                        return;
+                    }
+
+                    currentInputId = this.id;
+                    currentTargetId = this.getAttribute('data-target');
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        image.src = e.target.result;
+                        cropModal.show();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        document.getElementById('cropModal').addEventListener('shown.bs.modal', function () {
+            cropper = new Cropper(image, {
+                aspectRatio: 1,
+                viewMode: 1,
+                autoCropArea: 1,
+            });
+        });
+
+        document.getElementById('cropModal').addEventListener('hidden.bs.modal', function () {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            // Clear input if cancelled without cropping (optional logic, keeping simple for now)
+        });
+
+        document.getElementById('cropBtn').addEventListener('click', function() {
+            if (!cropper) return;
+
+            const canvas = cropper.getCroppedCanvas({
+                width: 200,
+                height: 200,
+            });
+
+            canvas.toBlob(function(blob) {
+                // Create a new File object
+                const fileInput = document.getElementById(currentInputId);
+                const fileName = fileInput.files[0].name;
+                const newFile = new File([blob], fileName, { type: 'image/png' });
+
+                // We can't programmatically set file input value to a File object due to security
+                // So we'll use a DataTransfer object to simulate it, or use a hidden input with base64
+                // Using DataTransfer is cleaner for form submission
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(newFile);
+                fileInput.files = dataTransfer.files;
+
+                // Show preview
+                const previewContainer = document.getElementById('preview' + currentTargetId);
+                previewContainer.innerHTML = '';
+                const previewImg = document.createElement('img');
+                previewImg.src = canvas.toDataURL();
+                previewImg.style.maxWidth = '100%';
+                previewContainer.appendChild(previewImg);
+                previewContainer.classList.remove('d-none');
+
+                // Show status
+                document.getElementById('status' + currentTargetId).classList.remove('d-none');
+
+                cropModal.hide();
+            }, 'image/png');
+        });
+    });
+</script>
+{% endblock %}

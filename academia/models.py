@@ -18,6 +18,12 @@ def photo_upload_to(instance, filename):
     # Temporary path for new users, will be renamed in save()
     return f'photos/temp/{timestamp}_{filename}'
 
+def graduation_photo_upload_to(instance, filename):
+    timestamp = str(int(time.time()))
+    ext = '.png'
+    # Use a specific folder for graduation photos
+    return f'photos/graduations/{instance.student.pk}_{instance.belt}_{instance.degree}_{timestamp}_{filename}'
+
 class User(AbstractUser):
     STATUS_CHOICES = [('ATIVO', 'Ativo'), ('INATIVO', 'Inativo'), ('PENDENTE', 'Pendente')]
     GROUP_ROLE_CHOICES = [('STD', 'Aluno'), ('PRO', 'Professor'), ('ADM', 'Administrador')]
@@ -176,40 +182,6 @@ class AttendanceRequest(models.Model):
     def __str__(self):
         return f"{self.student} - {self.attendance_date} - {self.get_status_display()}"
 
-class Graduacao(models.Model):
-    FAIXA_CHOICES = [
-        ('WHITE', 'Branca'),
-        ('GRAY_WHITE', 'Cinza e Branca'),
-        ('GRAY', 'Cinza'),
-        ('GRAY_BLACK', 'Cinza e Preta'),
-        ('YELLOW_WHITE', 'Amarela e Branca'),
-        ('YELLOW', 'Amarela'),
-        ('YELLOW_BLACK', 'Amarela e Preta'),
-        ('ORANGE_WHITE', 'Laranja e Branca'),
-        ('ORANGE', 'Laranja'),
-        ('ORANGE_BLACK', 'Laranja e Preta'),
-        ('GREEN_WHITE', 'Verde e Branca'),
-        ('GREEN', 'Verde'),
-        ('GREEN_BLACK', 'Verde e Preta'),
-        ('BLUE', 'Azul'),
-        ('PURPLE', 'Roxa'),
-        ('BROWN', 'Marrom'),
-        ('BLACK', 'Preta'),
-    ]
-    
-    aluno = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'group_role': 'STD'}, related_name='graduacoes')
-    faixa = models.CharField('Faixa', max_length=20, choices=FAIXA_CHOICES)
-    grau = models.IntegerField('Grau', validators=[MinValueValidator(0), MaxValueValidator(4)])
-    data_graduacao = models.DateField('Data da Graduação')
-    notified = models.BooleanField(default=False)
-    
-    class Meta:
-        verbose_name, verbose_name_plural = 'Graduação', 'Graduações'
-        ordering = ['-data_graduacao']
-    
-    def __str__(self):
-        return f"{self.aluno} - {self.get_faixa_display()} {self.grau}º grau"
-
 class PlanoAula(models.Model):
     titulo = models.CharField('Título', max_length=200)
     descricao = models.TextField('Descrição')
@@ -341,3 +313,88 @@ class Log(models.Model):
     def __str__(self):
         user_name = self.user.get_full_name() if self.user else 'Sistema'
         return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} {user_name} executou {self.action}"
+
+class Graduation(models.Model):
+    BELT_CHOICES = [
+        ('White', 'Branca'),
+        ('Grey', 'Cinza'),
+        ('Yellow', 'Amarela'),
+        ('Orange', 'Laranja'),
+        ('Green', 'Verde'),
+        ('Blue', 'Azul'),
+        ('Purple', 'Roxa'),
+        ('Brown', 'Marrom'),
+        ('Black', 'Preta'),
+        ('Red', 'Vermelha')
+    ]
+
+    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'group_role': 'STD'}, related_name='graduations')
+    belt = models.CharField('Faixa', max_length=20, choices=BELT_CHOICES)
+    degree = models.IntegerField('Grau', default=0)
+    date = models.DateField('Data da Graduação')
+    
+    photo1 = models.ImageField('Foto 1', upload_to=graduation_photo_upload_to, null=True, blank=True)
+    photo2 = models.ImageField('Foto 2', upload_to=graduation_photo_upload_to, null=True, blank=True)
+    photo3 = models.ImageField('Foto 3', upload_to=graduation_photo_upload_to, null=True, blank=True)
+    
+    class Meta:
+        verbose_name, verbose_name_plural = 'Graduação', 'Graduações'
+        ordering = ['-date']
+        unique_together = ['student', 'belt', 'degree']
+
+    def __str__(self):
+        return f"{self.student} - {self.get_belt_display()} - {self.degree}º Grau"
+    
+    def save(self, *args, **kwargs):
+        # Process photos
+        for field_name in ['photo1', 'photo2', 'photo3']:
+            photo_field = getattr(self, field_name)
+            if not photo_field:
+                continue
+                
+            try:
+                # Check if it's a new upload or changed
+                old_instance = None
+                if self.pk:
+                    try:
+                        old_instance = Graduation.objects.get(pk=self.pk)
+                    except Graduation.DoesNotExist:
+                        pass
+                
+                old_photo = getattr(old_instance, field_name) if old_instance else None
+                
+                if photo_field != old_photo:
+                    if hasattr(photo_field, 'open'):
+                        photo_field.open()
+                    if hasattr(photo_field, 'seek'):
+                        photo_field.seek(0)
+                        
+                    img = Image.open(photo_field)
+                    
+                    if img.mode != 'RGB':
+                        img = img.convert('RGB')
+
+                    target_width = 200
+                    target_height = 200
+                    
+                    img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+
+                    output = BytesIO()
+                    
+                    img.save(output, format='PNG', optimize=True)
+                    
+                    if output.tell() > 1048576:
+                        output = BytesIO()
+                        img.save(output, format='PNG', quality=85, optimize=True)
+
+                    new_content = ContentFile(output.getvalue())
+                    
+                    timestamp = str(int(time.time()))
+                    new_name = f'{self.student.pk}_{self.belt}_{self.degree}_{field_name}_{timestamp}.png'
+                    new_content.name = new_name
+                    
+                    setattr(self, field_name, new_content)
+            except Exception as e:
+                print(f"Error processing graduation image {field_name}: {e}")
+
+        super().save(*args, **kwargs)

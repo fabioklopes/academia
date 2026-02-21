@@ -19,6 +19,7 @@
                                     <option value="">Selecione um tipo de relatório</option>
                                     <option value="presenca">Relatório de Presenças</option>
                                     <option value="pedidos">Relatório de Pedidos</option>
+                                    <option value="graduacoes">Relatório de Graduações</option>
                                 </select>
                             </div>
                         </div>
@@ -41,6 +42,8 @@
             window.location.href = "{% url 'professor_relatorio_presenca' %}";
         } else if (reportType === 'pedidos') {
             window.location.href = "{% url 'relatorio_pedidos' %}";
+        } else if (reportType === 'graduacoes') {
+            window.location.href = "{% url 'graduations_report' %}";
         }
     });
 </script>

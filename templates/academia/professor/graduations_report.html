@@ -1,0 +1,156 @@
+{% extends 'academia/base.html' %}
+{% load static %}
+
+{% block title %}Relatório de Graduações{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Relatório de Graduações</h1>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'graduations_report' %}">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="belt">Faixa</label>
+                        <select class="form-control" id="belt" name="belt">
+                            <option value="">Todas</option>
+                            {% for code, name in belt_choices %}
+                            <option value="{{ code }}" {% if request.GET.belt == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="student">Aluno</label>
+                        <select class="form-control" id="student" name="student">
+                            <option value="">Todos</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}" {% if request.GET.student == student.id|stringformat:"s" %}selected{% endif %}>{{ student.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="start_date">Data Início</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="end_date">Data Fim</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+                    </div>
+                    <div class="form-group col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-block">Filtrar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="row">
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Distribuição por Faixa</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4">
+                        <canvas id="myPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Resultados</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Exportar:</div>
+                            <a class="dropdown-item" href="{{ request.get_full_path }}&export=pdf"><i class="fas fa-file-pdf mr-2"></i>PDF</a>
+                            <a class="dropdown-item" href="{{ request.get_full_path }}&export=xlsx"><i class="fas fa-file-excel mr-2"></i>Excel</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Faixa</th>
+                                    <th>Grau</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for grad in graduations %}
+                                <tr>
+                                    <td>{{ grad.student.get_full_name }}</td>
+                                    <td>{{ grad.get_belt_display }}</td>
+                                    <td>{{ grad.degree }}º</td>
+                                    <td>{{ grad.date|date:"d/m/Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Nenhum registro encontrado.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page level plugins -->
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+
+<script>
+    // Set new default font family and font color to mimic Bootstrap's default styling
+    Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+    Chart.defaults.global.defaultFontColor = '#858796';
+
+    // Pie Chart Example
+    var ctx = document.getElementById("myPieChart");
+    var myPieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+          data: {{ chart_data|safe }},
+          backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#f8f9fa', '#000'],
+          hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#60616f', '#373840', '#d1d3e2', '#1a1a1a'],
+          hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        tooltips: {
+          backgroundColor: "rgb(255,255,255)",
+          bodyFontColor: "#858796",
+          borderColor: '#dddfeb',
+          borderWidth: 1,
+          xPadding: 15,
+          yPadding: 15,
+          displayColors: false,
+          caretPadding: 10,
+        },
+        legend: {
+          display: true,
+          position: 'bottom'
+        },
+        cutoutPercentage: 80,
+      },
+    });
+</script>
+{% endblock %}

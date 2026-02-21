@@ -48,12 +48,13 @@ urlpatterns = [
     path('aluno/cancelar-presenca/<int:request_id>/', views.aluno_cancelar_presenca, name='aluno_cancelar_presenca'),
     path('aluno/presencas/', views.aluno_presencas, name='aluno_presencas'),
     path('aluno/relatorios/', views.aluno_relatorios, name='aluno_relatorios'),
-    path('aluno/graduacoes/', views.aluno_graduacoes, name='aluno_graduacoes'),
     path('aluno/pedidos/', views.aluno_pedidos, name='aluno_pedidos'),
     path('aluno/pedidos/novo/', views.aluno_pedido_novo, name='aluno_pedido_novo'),
     path('aluno/pedidos/<int:pedido_id>/cancelar/', views.aluno_pedido_cancelar, name='aluno_pedido_cancelar'),
     path('aluno/relatorios/presenca/', views.aluno_relatorio_presenca, name='aluno_relatorio_presenca'),
     path('aluno/relatorios/pedidos/', views.aluno_relatorio_pedidos, name='aluno_relatorio_pedidos'),
+    path('aluno/graduacoes/', views.graduations_student, name='graduations_student'),
+    path('aluno/graduacoes/adicionar/', views.graduation_add, name='graduation_add'),
     
     # Painel do Professor - Turmas
     path('professor/turmas/', views.professor_turmas, name='professor_turmas'),
@@ -76,10 +77,6 @@ urlpatterns = [
     path('professor/presencas/', views.professor_presencas, name='professor_presencas'),
     path('professor/presenca/<int:request_id>/aprovar/', views.professor_presenca_aprovar, name='professor_presenca_aprovar'),
     path('professor/presenca/<int:request_id>/rejeitar/', views.professor_presenca_rejeitar, name='professor_presenca_rejeitar'),
-
-    # Painel do Professor - Graduacoes
-    path('professor/graduacoes/', views.professor_graduacoes, name='professor_graduacoes'),
-    path('professor/graduacao/<int:aluno_id>/editar/', views.professor_graduacao_editar, name='professor_graduacao_editar'),
 
     # Painel do Professor - Itens
     path('professor/itens/', views.professor_itens, name='professor_itens'),
@@ -114,6 +111,7 @@ urlpatterns = [
     path('professor/relatorios/', views.professor_relatorios, name='professor_relatorios'),
     path('professor/relatorios/pedidos/', views.relatorio_pedidos, name='relatorio_pedidos'),
     path('professor/relatorios/presenca/', views.relatorio_presenca, name='professor_relatorio_presenca'),
+    path('professor/relatorios/graduacoes/', views.graduations_report, name='graduations_report'),
 ]
 
 # Página padrão para erros no aplicativo

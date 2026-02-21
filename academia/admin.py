@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
-    User, Turma, TurmaAluno, Graduacao,
+    User, Turma, TurmaAluno,
     PlanoAula, ItemPlanoAula, Ranking, PosicaoRanking, Pedido, Item, Log
 )
 
@@ -34,13 +34,6 @@ class TurmaAlunoAdmin(admin.ModelAdmin):
     list_display = ['aluno', 'turma', 'status', 'data_solicitacao']
     list_filter = ['status', 'data_solicitacao']
     search_fields = ['aluno__first_name', 'aluno__last_name', 'turma__nome']
-
-
-@admin.register(Graduacao)
-class GraduacaoAdmin(admin.ModelAdmin):
-    list_display = ['aluno', 'faixa', 'grau', 'data_graduacao']
-    list_filter = ['faixa', 'grau']
-    search_fields = ['aluno__first_name', 'aluno__last_name']
 
 
 @admin.register(PlanoAula)

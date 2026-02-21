@@ -11,8 +11,8 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q, Case, When, Count
-from .models import User, Turma, AttendanceRequest, TurmaAluno, Graduacao, PlanoAula, Pedido, Item, Meta as MetaModel, Log
-from .forms import GraduacaoForm, ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm, MetaForm
+from .models import User, Turma, AttendanceRequest, TurmaAluno, PlanoAula, Pedido, Item, Meta as MetaModel, Log, Graduation
+from .forms import ItemForm, PedidoForm, TurmaForm, SolicitacaoAcessoForm, PerfilEditForm, MetaForm
 import calendar
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -31,26 +31,6 @@ from django.contrib.auth.views import PasswordResetConfirmView
 from django.urls import reverse_lazy
 
 # --- HELPERS ---
-
-BELT_IMAGES = {
-    'WHITE': 'faixa_branca.png',
-    'GRAY_WHITE': 'faixa_cinza_branca.png',
-    'GRAY': 'faixa_cinza.png',
-    'GRAY_BLACK': 'faixa_cinza_preta.png',
-    'YELLOW_WHITE': 'faixa_amarela_branca.png',
-    'YELLOW': 'faixa_amarela.png',
-    'YELLOW_BLACK': 'faixa_amarela_preta.png',
-    'ORANGE_WHITE': 'faixa_laranja_branca.png',
-    'ORANGE': 'faixa_laranja.png',
-    'ORANGE_BLACK': 'faixa_laranja_preta.png',
-    'GREEN_WHITE': 'faixa_verde_branca.png',
-    'GREEN': 'faixa_verde.png',
-    'GREEN_BLACK': 'faixa_verde_preta.png',
-    'BLUE': 'faixa_azul.png',
-    'PURPLE': 'faixa_roxa.png',
-    'BROWN': 'faixa_marrom.png',
-    'BLACK': 'faixa_preta.png',
-}
 
 WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
@@ -439,7 +419,6 @@ def perfil(request):
         return redirect('perfil')
 
     context = {
-        'graduacao': Graduacao.objects.filter(aluno=user_to_display).first(),
         'pedidos': Pedido.objects.filter(aluno=user_to_display).order_by('-data_solicitacao'),
         'user': user_to_display,
         'is_switched_account': original_user_id is not None,
@@ -660,16 +639,6 @@ def aluno_presencas(request):
     return render(request, 'academia/aluno/presencas.html', {'attendance_requests': attendance_requests})
 
 @login_required
-def aluno_graduacoes(request):
-    if not request.user.is_student():
-        raise PermissionDenied
-    
-    Graduacao.objects.filter(aluno=request.user, notified=False).update(notified=True)
-    
-    graduacoes = Graduacao.objects.filter(aluno=request.user).order_by('-data_graduacao')
-    return render(request, 'academia/aluno/graduacoes.html', {'graduacoes': graduacoes})
-
-@login_required
 def aluno_pedidos(request):
     if not request.user.is_student():
         raise PermissionDenied
@@ -768,15 +737,6 @@ def gerar_relatorio_aluno(request):
         context['report_data'] = query.order_by('attendance_date').select_related('turma')
         if not context['report_data'].exists():
             context['no_data_message'] = 'Nenhuma presença aprovada encontrada.'
-
-    elif report_type == 'graduacao':
-        context['report_title'] = 'Relatório de Progresso de Graduação'
-        query = Graduacao.objects.filter(aluno=request.user)
-        if start_date: query = query.filter(data_graduacao__gte=start_date)
-        if end_date: query = query.filter(data_graduacao__lte=end_date)
-        context['report_data'] = query.order_by('data_graduacao')
-        if not context['report_data'].exists():
-            context['no_data_message'] = 'Nenhum registro de graduação encontrado.'
 
     else:
         messages.error(request, "Tipo de relatório inválido.")
@@ -890,8 +850,6 @@ def aluno_relatorio_presenca(request):
     if export_format == 'pdf':
         create_log(request.user, 'exportou relatório de presenças (PDF)')
         
-        graduacao = Graduacao.objects.filter(aluno=request.user).first()
-        belt_image = BELT_IMAGES.get(graduacao.faixa, 'faixa_branca.png') if graduacao else 'faixa_branca.png'
         stats = get_student_stats(request.user, start_date, end_date)
         
         template = get_template('academia/aluno/relatorio_presenca_pdf.html')
@@ -901,8 +859,6 @@ def aluno_relatorio_presenca(request):
             'start_date': start_date,
             'end_date': end_date,
             'user': request.user,
-            'graduacao': graduacao,
-            'belt_image': belt_image,
             'stats': stats
         }
         html = template.render(context)
@@ -917,11 +873,11 @@ def aluno_relatorio_presenca(request):
         create_log(request.user, 'exportou relatório de presenças (XLSX)')
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="relatorio_presencas.xlsx"'
-        
+
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
         worksheet.title = 'Relatório de Presenças'
-        
+
         headers = ["Data", "Status", "Motivo", "Quantidade"]
         for col_num, header_title in enumerate(headers, 1):
             cell = worksheet.cell(row=1, column=col_num)
@@ -1483,63 +1439,6 @@ def professor_presenca_rejeitar(request, request_id):
     return redirect('professor_presencas')
 
 @login_required
-def professor_graduacoes(request):
-    if not request.user.is_professor_or_admin():
-        raise PermissionDenied
-
-    if request.user.is_admin():
-        alunos_list = User.objects.filter(group_role='STD')
-    else:
-        alunos_list = User.objects.filter(group_role='STD', turmas__professor=request.user).distinct()
-    
-    items_per_page = request.GET.get('items_per_page', 10)
-    try:
-        items_per_page = int(items_per_page)
-    except ValueError:
-        items_per_page = 10
-
-    paginator = Paginator(alunos_list, items_per_page)
-    page = request.GET.get('page')
-    
-    try:
-        alunos = paginator.page(page)
-    except PageNotAnInteger:
-        alunos = paginator.page(1)
-    except EmptyPage:
-        alunos = paginator.page(paginator.num_pages)
-
-    graduacoes = Graduacao.objects.filter(aluno__in=alunos).distinct()
-    
-    context = {
-        'alunos': alunos,
-        'graduacoes': {grad.aluno.id: grad for grad in graduacoes},
-        'items_per_page': items_per_page
-    }
-    return render(request, 'academia/professor/graduacoes.html', context)
-
-@login_required
-def professor_graduacao_editar(request, aluno_id):
-    if not request.user.is_professor_or_admin():
-        raise PermissionDenied
-        
-    aluno = get_object_or_404(User, id=aluno_id)
-    graduacao, created = Graduacao.objects.get_or_create(aluno=aluno)
-
-    if request.method == 'POST':
-        form = GraduacaoForm(request.POST, instance=graduacao)
-        if form.is_valid():
-            graduacao = form.save(commit=False)
-            graduacao.notified = False
-            graduacao.save()
-            create_log(request.user, f'atualizou a graduação de {aluno.get_full_name()}')
-            messages.success(request, 'Graduação salva com sucesso!')
-            return redirect('professor_graduacoes')
-    else:
-        form = GraduacaoForm(instance=graduacao)
-
-    return render(request, 'academia/professor/graduacao_form.html', {'form': form, 'aluno': aluno})
-
-@login_required
 def professor_planos_aula(request):
     if not request.user.is_professor_or_admin():
         raise PermissionDenied
@@ -2028,45 +1927,16 @@ def relatorio_presenca(request):
     if export_format == 'pdf':
         create_log(request.user, 'exportou relatório de presenças (PDF)')
         
-        students_data = {}
+        stats = get_student_stats(request.user, start_date, end_date)
         
-        if aluno_id:
-            student = get_object_or_404(User, id=aluno_id)
-            students_data[student.id] = {
-                'student': student,
-                'presencas': [],
-                'graduacao': Graduacao.objects.filter(aluno=student).first(),
-                'stats': get_student_stats(student, start_date, end_date)
-            }
-            grad = students_data[student.id]['graduacao']
-            students_data[student.id]['belt_image'] = BELT_IMAGES.get(grad.faixa, 'faixa_branca.png') if grad else 'faixa_branca.png'
-
-        for item in report_data:
-            s_id = item['student_obj'].id
-            if s_id not in students_data:
-                grad = Graduacao.objects.filter(aluno=item['student_obj']).first()
-                students_data[s_id] = {
-                    'student': item['student_obj'],
-                    'presencas': [],
-                    'graduacao': grad,
-                    'belt_image': BELT_IMAGES.get(grad.faixa, 'faixa_branca.png') if grad else 'faixa_branca.png',
-                    'stats': get_student_stats(item['student_obj'], start_date, end_date)
-                }
-            
-            students_data[s_id]['presencas'].append({
-                'data': item['data'],
-                'status': item['status'],
-                'motivo': item['motivo'],
-                'qty': item['qty']
-            })
-
         template = get_template('academia/professor/relatorio_presenca_pdf.html')
         context = {
-            'students_data': list(students_data.values()),
+            'report_data': report_data,
             'report_title': 'Relatório de Presenças',
             'start_date': start_date,
             'end_date': end_date
         }
+
         html = template.render(context)
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="relatorio_presencas.pdf"'
@@ -2281,3 +2151,170 @@ def error_413(request, exception):
         'error_code': '413',
         'error_message': 'Arquivo muito grande ou dados excedendo limites.'
     }, status=413)
+
+# --- GRADUATIONS ---
+
+@login_required
+def graduations_student(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+    
+    graduations = Graduation.objects.filter(student=request.user).order_by('-date')
+    
+    current_graduation = graduations.first()
+    
+    belt_order = ['White', 'Grey', 'Yellow', 'Orange', 'Green', 'Blue', 'Purple', 'Brown', 'Black', 'Red']
+    belt_names = {
+        'White': 'Branca', 'Grey': 'Cinza', 'Yellow': 'Amarela', 'Orange': 'Laranja',
+        'Green': 'Verde', 'Blue': 'Azul', 'Purple': 'Roxa', 'Brown': 'Marrom',
+        'Black': 'Preta', 'Red': 'Vermelha'
+    }
+    
+    current_belt_index = -1
+    if current_graduation:
+        try:
+            current_belt_index = belt_order.index(current_graduation.belt)
+        except ValueError:
+            pass
+            
+    progress_data = []
+    for i, belt in enumerate(belt_order):
+        is_completed = i < current_belt_index
+        is_current = i == current_belt_index
+        
+        progress_data.append({
+            'belt': belt,
+            'name': belt_names[belt],
+            'is_completed': is_completed,
+            'is_current': is_current,
+            'icon': f'img/belts/{belt.lower()}.png' # Assuming icons exist or will be created
+        })
+
+    context = {
+        'graduations': graduations,
+        'current_graduation': current_graduation,
+        'progress_data': progress_data,
+        'belt_choices': Graduation.BELT_CHOICES,
+    }
+    return render(request, 'academia/aluno/graduations.html', context)
+
+@login_required
+def graduation_add(request):
+    if not request.user.is_student():
+        raise PermissionDenied
+        
+    if request.method == 'POST':
+        belt = request.POST.get('belt')
+        degree = request.POST.get('degree')
+        date_str = request.POST.get('date')
+        
+        # Handle photos
+        photo1 = request.FILES.get('photo1')
+        photo2 = request.FILES.get('photo2')
+        photo3 = request.FILES.get('photo3')
+        
+        try:
+            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+            degree = int(degree)
+            
+            # Check file sizes
+            for p in [photo1, photo2, photo3]:
+                if p and p.size > 1048576:
+                    messages.error(request, 'Uma ou mais fotos excedem o tamanho máximo de 1MB.')
+                    return redirect('graduations_student')
+            
+            Graduation.objects.create(
+                student=request.user,
+                belt=belt,
+                degree=degree,
+                date=date,
+                photo1=photo1,
+                photo2=photo2,
+                photo3=photo3
+            )
+            messages.success(request, 'Graduação adicionada com sucesso!')
+            create_log(request.user, f'adicionou graduação: {belt} - {degree}º grau')
+        except Exception as e:
+            messages.error(request, f'Erro ao adicionar graduação: {str(e)}')
+            
+    return redirect('graduations_student')
+
+@login_required
+def graduations_report(request):
+    if not request.user.is_professor_or_admin():
+        raise PermissionDenied
+        
+    belt_filter = request.GET.get('belt')
+    student_filter = request.GET.get('student')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    export_format = request.GET.get('export')
+    
+    graduations = Graduation.objects.all().select_related('student').order_by('-date')
+    
+    if belt_filter:
+        graduations = graduations.filter(belt=belt_filter)
+    if student_filter:
+        graduations = graduations.filter(student__id=student_filter)
+    if start_date_str:
+        graduations = graduations.filter(date__gte=start_date_str)
+    if end_date_str:
+        graduations = graduations.filter(date__lte=end_date_str)
+        
+    # Chart Data
+    belt_counts = graduations.values('belt').annotate(count=Count('belt'))
+    chart_labels = []
+    chart_data = []
+    belt_names = dict(Graduation.BELT_CHOICES)
+    
+    for entry in belt_counts:
+        chart_labels.append(belt_names.get(entry['belt'], entry['belt']))
+        chart_data.append(entry['count'])
+        
+    if export_format == 'pdf':
+        create_log(request.user, 'exportou relatório de graduações (PDF)')
+        template = get_template('academia/professor/graduations_report_pdf.html')
+        context = {
+            'graduations': graduations,
+            'report_title': 'Relatório de Graduações',
+            'user': request.user
+        }
+        html = template.render(context)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_graduacoes.pdf"'
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse('We had some errors <pre>' + html + '</pre>')
+        return response
+        
+    if export_format == 'xlsx':
+        create_log(request.user, 'exportou relatório de graduações (XLSX)')
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="relatorio_graduacoes.xlsx"'
+        
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Graduações'
+        
+        headers = ["Aluno", "Faixa", "Grau", "Data"]
+        for col_num, header_title in enumerate(headers, 1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header_title
+            
+        for row_num, grad in enumerate(graduations, 2):
+            worksheet.cell(row=row_num, column=1, value=grad.student.get_full_name())
+            worksheet.cell(row=row_num, column=2, value=grad.get_belt_display())
+            worksheet.cell(row=row_num, column=3, value=grad.degree)
+            worksheet.cell(row=row_num, column=4, value=grad.date.strftime('%d/%m/%Y'))
+            
+        workbook.save(response)
+        return response
+
+    context = {
+        'graduations': graduations,
+        'belt_choices': Graduation.BELT_CHOICES,
+        'students': User.objects.filter(group_role='STD'),
+        'chart_labels': json.dumps(chart_labels),
+        'chart_data': json.dumps(chart_data),
+    }
+    return render(request, 'academia/professor/graduations_report.html', context)
