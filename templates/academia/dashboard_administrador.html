@@ -103,8 +103,25 @@
             <div class="card-body text-center">
                 <i class="bi bi-award fs-1 text-danger mb-3"></i>
                 <h5 class="card-title">Graduações</h5>
-                <p class="card-text">Gerenciar faixas e graus</p>
-                <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-primary">Gerenciar</a>
+                <p class="card-text">
+                    {% if solicitacoes_graduacao_pendentes > 0 %}
+                        <span class="text-warning">{{ solicitacoes_graduacao_pendentes }} solicitação{% if solicitacoes_graduacao_pendentes > 1 %}ões{% endif %} pendente{% if solicitacoes_graduacao_pendentes > 1 %}s{% endif %}</span>
+                    {% else %}
+                        Gerenciar faixas e graus
+                    {% endif %}
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-primary">Gerenciar</a>
+                    <a href="{% url 'professor_solicitacoes_graduacao' %}" class="btn btn-outline-warning position-relative">
+                        Solicitações
+                        {% if solicitacoes_graduacao_pendentes > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ solicitacoes_graduacao_pendentes }}
+                            <span class="visually-hidden">solicitações pendentes</span>
+                        </span>
+                        {% endif %}
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -221,9 +238,17 @@
 
                                                         <div class="mb-3">
                                                             {% if u.graduacao %}
-                                                                {% with faixa_img="faixas/"|add:u.graduacao.faixa|lower|add:".png" %}
-                                                                    <img src="/media/{{ faixa_img }}" alt="{{ u.graduacao.get_faixa_display }}" style="max-width: 100%; height: auto; max-height: 50px;">
-                                                                {% endwith %}
+                                                                <div class="mt-2">
+                                                                    {% if u.graduacao.grau > 0 %}
+                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}_{{ u.graduacao.grau }}_DEGREES.png"
+                                                                             alt="{{ u.graduacao.get_faixa_display }}"
+                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                    {% else %}
+                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}.png"
+                                                                             alt="{{ u.graduacao.get_faixa_display }}"
+                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                                    {% endif %}
+                                                                </div>
                                                             {% else %}
                                                                 <span class="badge bg-secondary">Sem graduação</span>
                                                             {% endif %}

@@ -95,11 +95,6 @@
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_graduacoes' %}"><i
-                                            class="bi bi-award me-2"></i>Controle de Graduações</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
                                     <li><a class="dropdown-item" href="{% url 'professor_itens' %}"><i
                                             class="bi bi-box-seam me-2"></i>Gerenciar Itens</a></li>
                                     <li><a class="dropdown-item" href="{% url 'professor_pedidos' %}"><i
@@ -188,20 +183,6 @@
                                         <div>
                                             <div class="fw-bold">{{ user.first_name }} {{ user.last_name }}</div>
                                             <small class="text-muted">{{ user.email }}</small>
-                                            {% if user.graduacao %}
-                                                <div class="mt-2">
-                                                    {% if user.graduacao.grau > 0 %}
-                                                        <img src="/media/faixas/{{ user.graduacao.faixa }}_{{ user.graduacao.grau }}_DEGREES.png"
-                                                             alt="{{ user.graduacao.get_faixa_display }}"
-                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                    {% else %}
-                                                        <img src="/media/faixas/{{ user.graduacao.faixa }}.png"
-                                                             alt="{{ user.graduacao.get_faixa_display }}"
-                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                    {% endif %}
-
-                                                </div>
-                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>

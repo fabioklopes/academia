@@ -60,7 +60,7 @@
                 <i class="bi bi-award fs-1 text-danger mb-3"></i>
                 <h5 class="card-title">Minhas Graduações</h5>
                 <p class="card-text">Histórico de faixas e graus</p>
-                <a href="{% url 'aluno_graduacoes' %}" class="btn btn-outline-primary">Ver Graduações</a>
+                <a href="{% url 'graduations_student' %}" class="btn btn-outline-primary">Ver Graduações</a>
             </div>
         </div>
     </div>
@@ -179,18 +179,12 @@
                                                         <h5 class="text-muted mb-4">{{ u.get_full_name }}</h5>
 
                                                         <div class="mb-3">
-                                                            {% if u.graduacao %}
+                                                            {% if u.graduations.exists %}
+                                                                {% with latest_grad=u.graduations.first %}
                                                                 <div class="mt-2">
-                                                                    {% if u.graduacao.grau > 0 %}
-                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}_{{ u.graduacao.grau }}_DEGREES.png"
-                                                                             alt="{{ u.graduacao.get_faixa_display }}"
-                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                                    {% else %}
-                                                                        <img src="/media/faixas/{{ u.graduacao.faixa }}.png"
-                                                                             alt="{{ u.graduacao.get_faixa_display }}"
-                                                                             style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
-                                                                    {% endif %}
+                                                                    <span class="badge badge-dark belt-badge belt-{{ latest_grad.belt|lower }}">{{ latest_grad.get_belt_display }} - {{ latest_grad.degree }}º Grau</span>
                                                                 </div>
+                                                                {% endwith %}
                                                             {% else %}
                                                                 <span class="badge bg-secondary">Sem graduação</span>
                                                             {% endif %}

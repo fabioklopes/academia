@@ -1,48 +1,44 @@
 {% extends 'academia/base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-warning text-dark">
-                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Solicitar Alteração de Data de Graduação</h4>
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-award"></i> Solicitar Alteração de Graduação</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="{{ form.nova_faixa.id_for_label }}" class="form-label">Nova Faixa</label>
+                    {{ form.nova_faixa }}
+                    {% if form.nova_faixa.errors %}
+                        <div class="text-danger small">{{ form.nova_faixa.errors }}</div>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Você está solicitando a alteração da data para a graduação:
-                        <strong>{{ history_entry.belt.get_name_display }} - {{ history_entry.degree }}º Grau</strong>
-                        <br>
-                        Data atual: <strong>{{ history_entry.graduation_date|date:"d/m/Y" }}</strong>
-                    </div>
 
-                    <form method="post">
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label for="{{ form.new_graduation_date.id_for_label }}" class="form-label">Nova Data da Graduação</label>
-                            {{ form.new_graduation_date }}
-                            {% if form.new_graduation_date.errors %}
-                                <div class="text-danger small">{{ form.new_graduation_date.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ form.reason.id_for_label }}" class="form-label">Motivo da Alteração (máx. 50 caracteres)</label>
-                            {{ form.reason }}
-                            <div class="form-text">Explique brevemente por que a data precisa ser alterada.</div>
-                            {% if form.reason.errors %}
-                                <div class="text-danger small">{{ form.reason.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'aluno_graduacoes' %}" class="btn btn-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-primary">Enviar Solicitação</button>
-                        </div>
-                    </form>
+                <div class="mb-3">
+                    <label for="{{ form.novo_grau.id_for_label }}" class="form-label">Novo Grau</label>
+                    {{ form.novo_grau }}
+                    <div class="form-text">0 a 4 graus.</div>
+                    {% if form.novo_grau.errors %}
+                        <div class="text-danger small">{{ form.novo_grau.errors }}</div>
+                    {% endif %}
                 </div>
-            </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.observacao.id_for_label }}" class="form-label">Observação (Opcional)</label>
+                    {{ form.observacao }}
+                    {% if form.observacao.errors %}
+                        <div class="text-danger small">{{ form.observacao.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'aluno_graduacoes' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Enviar Solicitação</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

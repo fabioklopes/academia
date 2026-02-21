@@ -1,5 +1,5 @@
 from django import forms
-from .models import Graduacao, Item, Pedido, Turma, User, Meta as MetaModel
+from .models import Item, Pedido, Turma, User, Meta as MetaModel
 from django.contrib.auth.forms import PasswordResetForm
 import datetime
 
@@ -71,12 +71,9 @@ class PerfilEditForm(forms.ModelForm):
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'})
     )
     
-    faixa = forms.ChoiceField(choices=Graduacao.FAIXA_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-select'}))
-    grau = forms.IntegerField(min_value=0, max_value=4, required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
-
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'whatsapp', 'birthday', 'photo', 'faixa', 'grau']
+        fields = ['first_name', 'last_name', 'email', 'whatsapp', 'birthday', 'photo']
         widgets = {
             'photo': forms.FileInput(attrs={'class': 'form-control'}),
         }
@@ -88,11 +85,6 @@ class PerfilEditForm(forms.ModelForm):
                 self.fields['birthday'].disabled = True
                 self.fields['birthday'].required = False
                 self.fields['birthday'].help_text = "A data de nascimento não pode ser alterada após o preenchimento."
-
-        if self.instance and hasattr(self.instance, 'graduacoes') and self.instance.graduacoes.exists():
-            graduacao = self.instance.graduacoes.first()
-            self.fields['faixa'].initial = graduacao.faixa
-            self.fields['grau'].initial = graduacao.grau
 
     def clean_whatsapp(self):
         whatsapp = self.cleaned_data.get('whatsapp')
@@ -111,46 +103,8 @@ class PerfilEditForm(forms.ModelForm):
         
         if commit:
             user.save()
-
-        if user.is_student():
-            faixa = self.cleaned_data.get('faixa')
-            grau = self.cleaned_data.get('grau')
-            
-            # Verifica se já existe graduação
-            graduacao = user.graduacoes.first()
-            
-            if graduacao:
-                # Atualiza existente
-                if faixa:
-                    graduacao.faixa = faixa
-                if grau is not None:
-                    graduacao.grau = grau
-                if commit:
-                    graduacao.save()
-            else:
-                # Cria nova apenas se tivermos dados mínimos ou definimos defaults
-                # Como o banco exige não nulo, precisamos de valores.
-                # Se o usuário não preencheu no form, usamos defaults.
-                if commit:
-                    Graduacao.objects.create(
-                        aluno=user,
-                        faixa=faixa if faixa else 'WHITE',
-                        grau=grau if grau is not None else 0,
-                        data_graduacao=datetime.date.today()
-                    )
             
         return user
-
-class GraduacaoForm(forms.ModelForm):
-    class Meta:
-        model = Graduacao
-        fields = ['aluno', 'faixa', 'grau', 'data_graduacao']
-        widgets = {
-            'aluno': forms.Select(attrs={'class': 'form-select'}),
-            'faixa': forms.Select(attrs={'class': 'form-select'}),
-            'grau': forms.NumberInput(attrs={'class': 'form-control'}),
-            'data_graduacao': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
-        }
 
 class ItemForm(forms.ModelForm):
     class Meta:

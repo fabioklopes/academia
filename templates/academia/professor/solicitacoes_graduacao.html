@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4"><i class="bi bi-bell"></i> Solicitações de Alteração de Graduação</h2>
+    <h2 class="mb-4"><i class="bi bi-award"></i> Solicitações de Alteração de Graduação</h2>
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -10,66 +10,53 @@
                 <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
+                            <th>Data</th>
                             <th>Aluno</th>
-                            <th>Graduação</th>
-                            <th>Data Antiga</th>
-                            <th>Nova Data</th>
-                            <th>Motivo</th>
+                            <th>Nova Faixa</th>
+                            <th>Novo Grau</th>
+                            <th>Observação</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for solicitacao in solicitacoes %}
                         <tr>
-                            <td>{{ solicitacao.student.get_full_name }}</td>
+                            <td>{{ solicitacao.data_solicitacao|date:"d/m/Y H:i" }}</td>
                             <td>
-                                {% with history=solicitacao.current_graduation_history_entry %}
-                                    {{ history.belt.get_name_display }} - {{ history.degree }}º Grau
-                                {% endwith %}
+                                <div class="d-flex align-items-center">
+                                    {% if solicitacao.aluno.photo %}
+                                        <img src="{{ solicitacao.aluno.photo.url }}" alt="{{ solicitacao.aluno.get_full_name }}" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-2" style="width: 40px; height: 40px;">
+                                            {{ solicitacao.aluno.first_name|first }}{{ solicitacao.aluno.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ solicitacao.aluno.get_full_name }}</div>
+                                        <div class="text-muted small">{{ solicitacao.aluno.email }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td>{{ solicitacao.old_graduation_date|date:"d/m/Y" }}</td>
-                            <td class="fw-bold text-success">{{ solicitacao.new_graduation_date|date:"d/m/Y" }}</td>
-                            <td>{{ solicitacao.reason }}</td>
+                            <td>{{ solicitacao.get_nova_faixa_display }}</td>
+                            <td>{{ solicitacao.novo_grau }}º Grau</td>
+                            <td>{{ solicitacao.observacao|default:"-" }}</td>
                             <td>
-                                <div class="d-flex">
-                                    <form method="post" action="{% url 'professor_aprovar_solicitacao_graduacao' solicitacao.id %}" class="me-2">
+                                <div class="d-flex gap-2">
+                                    <form method="post" action="{% url 'professor_aprovar_graduacao' solicitacao.id %}">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-sm btn-success" title="Aprovar">
                                             <i class="bi bi-check-lg"></i>
                                         </button>
                                     </form>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejeitarModal-{{ solicitacao.id }}" title="Rejeitar">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
+                                    <form method="post" action="{% url 'professor_rejeitar_graduacao' solicitacao.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Rejeitar">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- Modal de Rejeição -->
-                        <div class="modal fade" id="rejeitarModal-{{ solicitacao.id }}" tabindex="-1" aria-labelledby="rejeitarModalLabel-{{ solicitacao.id }}" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form method="post" action="{% url 'professor_rejeitar_solicitacao_graduacao' solicitacao.id %}">
-                                        {% csrf_token %}
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="rejeitarModalLabel-{{ solicitacao.id }}">Rejeitar Solicitação</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Tem certeza que deseja rejeitar a solicitação de <strong>{{ solicitacao.student.get_full_name }}</strong>?</p>
-                                            <div class="mb-3">
-                                                <label for="rejection_reason-{{ solicitacao.id }}" class="form-label">Motivo da Rejeição (Opcional)</label>
-                                                <textarea class="form-control" id="rejection_reason-{{ solicitacao.id }}" name="rejection_reason" rows="3"></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-danger">Confirmar Rejeição</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                         {% empty %}
                         <tr>
                             <td colspan="6" class="text-center py-4 text-muted">Nenhuma solicitação pendente.</td>

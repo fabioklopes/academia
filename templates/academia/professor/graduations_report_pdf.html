@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #4e73df;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #4e73df;
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            margin: 5px 0 0;
+            color: #666;
+        }
+        .meta-info {
+            margin-bottom: 20px;
+            font-size: 11px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #4e73df;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ report_title }}</h1>
+        <p>Academia Jiu-Jitsu</p>
+    </div>
+
+    <div class="meta-info">
+        <p><strong>Gerado por:</strong> {{ user.get_full_name }}</p>
+        <p><strong>Data de emissão:</strong> {% now "d/m/Y H:i" %}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Aluno</th>
+                <th>Faixa</th>
+                <th>Grau</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grad in graduations %}
+            <tr>
+                <td>{{ grad.student.get_full_name }}</td>
+                <td>{{ grad.get_belt_display }}</td>
+                <td>{{ grad.degree }}º</td>
+                <td>{{ grad.date|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center;">Nenhum registro encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Este documento foi gerado automaticamente pelo sistema.</p>
+        <p>Página <pdf:pagenumber /> de <pdf:pagecount /></p>
+    </div>
+</body>
+</html>

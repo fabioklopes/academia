@@ -1,5 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
-from .models import AttendanceRequest, Graduacao, User
+from .models import AttendanceRequest, User
 
 def notifications_context(request):
     """
@@ -25,17 +25,6 @@ def notifications_context(request):
                 'text': f'{count} presença(s) aprovada(s).',
                 'url': 'aluno_presencas',
                 'type': 'info'
-            })
-
-        new_graduations = Graduacao.objects.filter(aluno=user, notified=False)
-        if new_graduations.exists():
-            count = new_graduations.count()
-            total_count += count
-            notifications.append({
-                'title': 'Nova Graduação',
-                'text': 'Parabéns! Você tem uma nova graduação.',
-                'url': 'aluno_graduacoes',
-                'type': 'success'
             })
 
     # Para Professores e Admins
@@ -85,25 +74,8 @@ def notifications_context(request):
                 'type': 'danger'
             })
 
-    # 2. DADOS ESPECÍFICOS DE ALUNO (Graduação e Kimono)
+    # 2. DADOS ESPECÍFICOS DE ALUNO (Kimono)
     if user.is_student():
-        # Graduação
-        try:
-            user.graduacoes.first() # Verifica se existe alguma graduação
-        except ObjectDoesNotExist:
-             # Se não existe objeto graduação, conta como pendência de Faixa e Grau
-             # Nota: O modelo original tinha related_name='graduacoes', então user.graduacoes.exists() seria melhor
-             pass
-        
-        if not user.graduacoes.exists():
-            total_count += 1
-            notifications.append({
-                'title': 'Dados do Perfil',
-                'text': 'Informe sua Faixa e Grau.',
-                'url': 'perfil_editar',
-                'type': 'danger'
-            })
-
         # Meu Kimono
         kimono_fields = [
             ('height', 'Altura'),
