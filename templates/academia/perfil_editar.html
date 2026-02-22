@@ -44,23 +44,26 @@
                             {{ form.email }}
                         </div>
                         <div class="col-md-6">
-                            <label for="whatsapp" class="form-label">WhatsApp (apenas números)</label>
+                            <label for="whatsapp" class="form-label">WhatsApp <small>(Apenas números são permitidos)</small></label>
                             {{ form.whatsapp }}
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="birthday" class="form-label">Data de Nascimento</label>
                             {{ form.birthday }}
                         </div>
                         <div class="col-md-4">
-                            <label for="faixa" class="form-label">Faixa</label>
-                            {{ form.faixa }}
+                            <label for="belt" class="form-label">Alterar Faixa</label>
+                            {{ form.belt }}
                         </div>
                         <div class="col-md-4">
-                            <label for="grau" class="form-label">Número de Graus</label>
-                            {{ form.grau }}
+                            <label for="degree" class="form-label">Alterar Grau</label>
+                            {{ form.degree }}
+                            {% if form.degree.errors %}
+                                <div class="text-danger small">{{ form.degree.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
                     

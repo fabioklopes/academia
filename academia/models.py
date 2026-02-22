@@ -127,6 +127,9 @@ class User(AbstractUser):
     def is_professor(self): return self.group_role == 'PRO'
     def is_admin(self): return self.group_role == 'ADM'
     def is_professor_or_admin(self): return self.group_role in ['PRO', 'ADM']
+    
+    def get_current_graduation(self):
+        return self.graduations.order_by('-date', '-degree').first()
 
 class Turma(models.Model):
     nome = models.CharField('Nome da Turma', max_length=100)
@@ -340,7 +343,7 @@ class Graduation(models.Model):
     class Meta:
         verbose_name, verbose_name_plural = 'Graduação', 'Graduações'
         ordering = ['-date']
-        unique_together = ['student', 'belt', 'degree']
+        # unique_together = ['student', 'belt', 'degree'] # Removed unique constraint
 
     def __str__(self):
         return f"{self.student} - {self.get_belt_display()} - {self.degree}º Grau"

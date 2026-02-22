@@ -26,15 +26,25 @@
                             {% endif %}
                             <h5>{{ user.first_name }} {{ user.last_name }}</h5>
                             <p class="text-muted mb-1">{{ user.email }}</p>
-                            {% if graduacao %}
-                                {% if graduacao.grau > 0 %}
-                                    <img src="/media/faixas/{{ graduacao.faixa }}_{{ graduacao.grau }}_DEGREES.png" alt="{{ graduacao.get_faixa_display }} {{ graduacao.grau }}º grau" class="img-fluid mt-2" style="max-height: 40px;">
+                            {% with current_graduacao=user.get_current_graduation %}
+                                {% if current_graduacao %}
+                                    <div class="mt-2">
+                                        {% if current_graduacao.degree > 0 %}
+                                            <img src="/media/faixas/{{ current_graduacao.belt }}_{{ current_graduacao.degree }}_DEGREES.png"
+                                                 alt="{{ current_graduacao.get_belt_display }} {{ current_graduacao.degree }}º grau"
+                                                 class="img-fluid mt-2"
+                                                 style="max-height: 20px; image-rendering: pixelated;">
+                                        {% else %}
+                                            <img src="/media/faixas/{{ current_graduacao.belt }}.png"
+                                                 alt="{{ current_graduacao.get_belt_display }}"
+                                                 class="img-fluid mt-2"
+                                                 style="max-height: 20px; image-rendering: pixelated;">
+                                        {% endif %}
+                                    </div>
                                 {% else %}
-                                    <img src="/media/faixas/{{ graduacao.faixa }}.png" alt="{{ graduacao.get_faixa_display }}" class="img-fluid mt-2" style="max-height: 40px;">
+                                    <span class="badge bg-secondary">Sem graduação</span>
                                 {% endif %}
-                            {% else %}
-                                <span class="badge bg-secondary">Sem graduação</span>
-                            {% endif %}
+                            {% endwith %}
                         </div>
 
                         <div class="mb-2"><strong>Nome:</strong> {{ user.first_name }}</div>
@@ -50,13 +60,12 @@
                         <hr>
                         <div class="d-grid gap-2">
                             <a href="{% url 'perfil_editar' %}" class="btn btn-outline-primary">Editar Perfil</a>
-                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
                         </div>
                     </div>
                 </div>
 
                 <!-- Bloco: Alterar Senha -->
-                <div class="card shadow-sm">
+                <div class="card shadow-sm mb-5">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">Alterar Senha</h5>
                     </div>

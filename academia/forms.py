@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Pedido, Turma, User, Meta as MetaModel
+from .models import Item, Pedido, Turma, User, Meta as MetaModel, Graduation
 from django.contrib.auth.forms import PasswordResetForm
 import datetime
 
@@ -96,6 +96,21 @@ class PerfilEditForm(forms.ModelForm):
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'})
     )
     
+    belt = forms.ChoiceField(
+        choices=Graduation.BELT_CHOICES,
+        required=False,
+        label="Faixa",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    degree = forms.IntegerField(
+        required=False,
+        label="Grau",
+        min_value=0,
+        max_value=6,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'whatsapp', 'birthday', 'photo']
@@ -110,6 +125,12 @@ class PerfilEditForm(forms.ModelForm):
                 self.fields['birthday'].disabled = True
                 self.fields['birthday'].required = False
                 self.fields['birthday'].help_text = "A data de nascimento não pode ser alterada após o preenchimento."
+            
+            # Populate belt and degree from current graduation
+            current_grad = self.instance.get_current_graduation()
+            if current_grad:
+                self.fields['belt'].initial = current_grad.belt
+                self.fields['degree'].initial = current_grad.degree
 
     def clean_whatsapp(self):
         whatsapp = self.cleaned_data.get('whatsapp')
@@ -122,12 +143,43 @@ class PerfilEditForm(forms.ModelForm):
             else:
                 return digits_only
         return whatsapp
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        belt = cleaned_data.get('belt')
+        degree = cleaned_data.get('degree')
+        
+        if belt and degree is not None:
+            if belt != 'Black' and degree > 4:
+                self.add_error('degree', "Para faixas coloridas, o grau máximo é 4.")
+            elif belt == 'Black' and degree > 6:
+                self.add_error('degree', "Para a faixa preta, o grau máximo é 6.")
+        
+        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
         
         if commit:
             user.save()
+            
+            # Handle graduation update/creation
+            belt = self.cleaned_data.get('belt')
+            degree = self.cleaned_data.get('degree')
+            
+            if belt and degree is not None:
+                current_grad = user.get_current_graduation()
+                
+                # Only create a new graduation if it's different from the current one
+                if not current_grad or current_grad.belt != belt or current_grad.degree != degree:
+                    # We create a new graduation record with today's date
+                    # This preserves history while updating the current status
+                    Graduation.objects.create(
+                        student=user,
+                        belt=belt,
+                        degree=degree,
+                        date=datetime.date.today()
+                    )
             
         return user
 
