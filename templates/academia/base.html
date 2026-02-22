@@ -5,6 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="icon" href="{% static 'img/logotipo.ico' %}">
 
     <!-- iOS Compatibility -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -36,7 +39,6 @@
                         </a>
                     </li>
 
-
                     <!-- Apresentação do Menu Log apenas para Administrador -->
                     {% if user.is_admin %}
                         <li class="nav-item">
@@ -44,7 +46,7 @@
                                 <i class="bi bi-list-ul me-2"></i>Logs
                             </a>
                         </li>
-                    {%  endif %}
+                    {% endif %}
 
                     <!-- Dropdown Acadêmico -->
                     {% if user.is_student or user.is_professor_or_admin %}
@@ -125,11 +127,11 @@
                                             class="bi bi-file-earmark-text me-2"></i>Relatórios</a></li>
 
                                     {% if user.is_admin %}
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'logs' %}"><i
-                                            class="bi bi-list-ul me-2"></i>Logs do Sistema</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li><a class="dropdown-item" href="{% url 'logs' %}"><i
+                                                class="bi bi-list-ul me-2"></i>Logs do Sistema</a></li>
                                     {% endif %}
                                 {% endif %}
                             </ul>
@@ -141,15 +143,17 @@
                 <ul class="navbar-nav align-items-center">
                     <!-- Notificações -->
                     {% if has_pending_tasks %}
-                    <li class="nav-item me-3">
-                        <a class="nav-link position-relative d-flex align-items-center" href="#" id="notificationBell">
-                            <i class="bi bi-bell fs-5"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="margin-left: -5px;">
+                        <li class="nav-item me-3">
+                            <a class="nav-link position-relative d-flex align-items-center" href="#"
+                               id="notificationBell">
+                                <i class="bi bi-bell fs-5"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                      style="margin-left: -5px;">
                                 {{ notification_count }}
                                 <span class="visually-hidden">notificações</span>
                             </span>
-                        </a>
-                    </li>
+                            </a>
+                        </li>
                     {% endif %}
 
                     <!-- Menu do Usuário -->
@@ -201,7 +205,7 @@
                                     Administrador</a></li>
                             {% endif %}
 
-                            <!-- Account Switching Logic -->
+                            <!-- Sistema de Troca de Contas -->
                             {% if original_user_id or dependents_list %}
                                 <li>
                                     <hr class="dropdown-divider">
@@ -209,14 +213,14 @@
                                 <li><h6 class="dropdown-header">Gerenciar Contas</h6></li>
 
                                 {% if original_user_id %}
-                                    {# User is logged in as a dependent, show the link to go back #}
+                                    {# Se a conta dependente estiver sendo usada, apresentar o link de voltar para minha conta #}
                                     <li>
                                         <a class="dropdown-item" href="{% url 'switch_account_back' %}">
                                             <i class="bi bi-arrow-left-circle me-2"></i>Voltar para minha conta
                                         </a>
                                     </li>
                                 {% else %}
-                                    {# User is the main account holder, show links to dependents #}
+                                    {# Se a conta principal estiver logada, exibir as contas dependentes #}
                                     {% for dependent in dependents_list %}
                                         {% if user.group_role == "STD" %}
                                             {% if dependent.status != 'PENDENTE' and dependent.status != 'INATIVO' %}
@@ -258,10 +262,11 @@
 {% endif %}
 
 <!-- Toast Container -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11">
     {% if has_pending_tasks %}
         {% for notification in notifications %}
-            <div class="toast notification-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+            <div class="toast notification-toast" role="alert" aria-live="assertive" aria-atomic="true"
+                 data-bs-autohide="false">
                 <div class="toast-header">
                     {% if notification.type == 'danger' %}
                         <i class="bi bi-exclamation-circle-fill me-2 text-danger"></i>
@@ -334,7 +339,7 @@
                 // Re-show toasts when clicking on the bell icon
                 const bellIcon = document.getElementById('notificationBell');
                 if (bellIcon) {
-                    bellIcon.addEventListener('click', function(e) {
+                    bellIcon.addEventListener('click', function (e) {
                         e.preventDefault();
                         toastList.forEach(toast => toast.show());
                     });

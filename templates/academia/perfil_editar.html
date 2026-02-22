@@ -20,8 +20,8 @@
 <div class="row">
     <div class="col-md-8 offset-md-2">
         <div class="card">
-            <div class="card-header">
-                <h4>Editar Perfil</h4>
+            <div class="card-header bg-primary text-white">
+                <h5>Editar Perfil</h5>
             </div>
             <div class="card-body">
                 <form method="post" enctype="multipart/form-data">
@@ -44,24 +44,26 @@
                             {{ form.email }}
                         </div>
                         <div class="col-md-6">
-                            <label for="whatsapp" class="form-label">WhatsApp</label>
+                            <label for="whatsapp" class="form-label">WhatsApp <small>(Apenas números são permitidos)</small></label>
                             {{ form.whatsapp }}
-                            <small class="form-text text-muted">Apenas números são permitidos (xx) xxxxx-xxxx</small>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="birthday" class="form-label">Data de Nascimento</label>
                             {{ form.birthday }}
                         </div>
                         <div class="col-md-4">
-                            <label for="faixa" class="form-label">Faixa</label>
-                            {{ form.faixa }}
+                            <label for="belt" class="form-label">Alterar Faixa</label>
+                            {{ form.belt }}
                         </div>
                         <div class="col-md-4">
-                            <label for="grau" class="form-label">Número de Graus</label>
-                            {{ form.grau }}
+                            <label for="degree" class="form-label">Alterar Grau</label>
+                            {{ form.degree }}
+                            {% if form.degree.errors %}
+                                <div class="text-danger small">{{ form.degree.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
                     
