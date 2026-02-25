@@ -18,7 +18,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="icon" href="{% static 'img/logotipo.ico' %}">
-    <link rel="stylesheet" href="{% static 'academia/css/styles.css' %}">
     <title>Sistema OSS - {% block title %}{% endblock %}</title>
     {% block extra_css %}{% endblock %}
 </head>
@@ -31,6 +30,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+
                 <!-- Lista da Esquerda (Dashboard, Acadêmico) -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
@@ -49,94 +49,75 @@
                     {% endif %}
 
                     <!-- Dropdown Acadêmico -->
-                    {% if user.is_student or user.is_professor_or_admin %}
+                    {% if user.is_professor_or_admin %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                               aria-expanded="false">
-                                <i class="bi bi-journal-text me-1"></i>Acadêmico
-                            </a>
-                            <ul class="dropdown-menu">
-                                <!-- Menu do Aluno -->
-                                {% if user.is_student %}
-                                    <li><h6 class="dropdown-header">Área do Aluno</h6></li>
-                                    <li><a class="dropdown-item" href="{% url 'aluno_presencas' %}"><i
-                                            class="bi bi-calendar-check me-2"></i>Minhas Presenças</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'aluno_pedidos' %}"><i
-                                            class="bi bi-box me-2"></i>Meus Pedidos</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'aluno_relatorios' %}"><i
-                                            class="bi bi-file-earmark-text me-2"></i>Relatórios</a></li>
-                                {% endif %}
-
-                                {% if user.is_student and user.is_professor_or_admin %}
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                {% endif %}
-
-                                <!-- Menu do Professor/Admin -->
-                                {% if user.is_professor_or_admin %}
-                                    <li><h6 class="dropdown-header">Área do Professor</h6></li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_turmas' %}"><i
-                                            class="bi bi-people me-2"></i>Gerenciar Turmas</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_turma_nova' %}"><i
-                                            class="bi bi-plus-circle me-2"></i>Nova Turma</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_presencas' %}"><i
-                                            class="bi bi-calendar-check me-2"></i>Aprovar Presenças</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_alunos' %}"><i
-                                            class="bi bi-person-check me-2"></i>Gerenciar Alunos</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'promover_aluno' %}"><i
-                                            class="bi bi-person-check-fill me-2"></i>Promover Aluno</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'tamanhos_medidas' %}"><i
-                                            class="bi bi-rulers me-2"></i>Tamanhos e Medidas</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_itens' %}"><i
-                                            class="bi bi-box-seam me-2"></i>Gerenciar Itens</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_pedidos' %}"><i
-                                            class="bi bi-box me-2"></i>Gerenciar Pedidos</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_planos_aula' %}"><i
-                                            class="bi bi-journal-text me-2"></i>Gerenciar Planos de Aula</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_plano_aula_novo' %}"><i
-                                            class="bi bi-plus-circle me-2"></i>Novo Plano de Aula</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_rankings' %}"><i
-                                            class="bi bi-bar-chart me-2"></i>Gerenciar Rankings</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_ranking_novo' %}"><i
-                                            class="bi bi-plus-circle me-2"></i>Novo Ranking</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_metas' %}"><i
-                                            class="bi bi-bullseye me-2"></i>Metas de Aulas</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="{% url 'professor_relatorios' %}"><i
-                                            class="bi bi-file-earmark-text me-2"></i>Relatórios</a></li>
-
-                                    {% if user.is_admin %}
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li><a class="dropdown-item" href="{% url 'logs' %}"><i
-                                                class="bi bi-list-ul me-2"></i>Logs do Sistema</a></li>
-                                    {% endif %}
-                                {% endif %}
-                            </ul>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            <i class="bi bi-journal-text me-1"></i>Acadêmico
+                        </a>
+                        <ul class="dropdown-menu">
+                        <!-- Menu apresentado apenas para Professores e Admin -->
+                        <li><h6 class="dropdown-header">Área do Professor</h6></li>
+                        <li><a class="dropdown-item" href="{% url 'professor_turmas' %}"><i
+                                class="bi bi-people me-2"></i>Gerenciar Turmas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'professor_turma_nova' %}"><i
+                                class="bi bi-plus-circle me-2"></i>Nova Turma</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
                         </li>
+                        <li><a class="dropdown-item" href="{% url 'professor_presencas' %}"><i
+                                class="bi bi-calendar-check me-2"></i>Aprovar Presenças</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'professor_alunos' %}"><i
+                                class="bi bi-person-check me-2"></i>Gerenciar Alunos</a></li>
+                        <li><a class="dropdown-item" href="{% url 'promover_aluno' %}"><i
+                                class="bi bi-person-check-fill me-2"></i>Promover Aluno</a></li>
+                        <li><a class="dropdown-item" href="{% url 'tamanhos_medidas' %}"><i
+                                class="bi bi-rulers me-2"></i>Tamanhos e Medidas</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'professor_itens' %}"><i
+                                class="bi bi-box-seam me-2"></i>Gerenciar Itens</a></li>
+                        <li><a class="dropdown-item" href="{% url 'professor_pedidos' %}"><i
+                                class="bi bi-box me-2"></i>Gerenciar Pedidos</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'professor_planos_aula' %}"><i
+                                class="bi bi-journal-text me-2"></i>Gerenciar Planos de Aula</a></li>
+                        <li><a class="dropdown-item" href="{% url 'professor_plano_aula_novo' %}"><i
+                                class="bi bi-plus-circle me-2"></i>Novo Plano de Aula</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'professor_rankings' %}"><i
+                                class="bi bi-bar-chart me-2"></i>Gerenciar Rankings</a></li>
+                        <li><a class="dropdown-item" href="{% url 'professor_ranking_novo' %}"><i
+                                class="bi bi-plus-circle me-2"></i>Novo Ranking</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'professor_metas' %}"><i
+                                class="bi bi-bullseye me-2"></i>Metas de Aulas</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'professor_relatorios' %}"><i
+                                class="bi bi-file-earmark-text me-2"></i>Relatórios</a></li>
+
+                        {% if user.is_admin %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'logs' %}"><i
+                                    class="bi bi-list-ul me-2"></i>Logs do Sistema</a></li>
+                        {% endif %}
                     {% endif %}
+                    </ul>
+                    </li>
                 </ul>
 
                 <!-- Bloco das Notificações -->
@@ -241,9 +222,7 @@
                                             {% endif %}
 
                                             <!-- Bloco de Saída -->
-                                            <li>
-                                                <hr class="dropdown-divider">
-                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
                                             <li>
                                                 <a class="dropdown-item text-danger" href="{% url 'logout' %}">
                                                     <i class="bi bi-door-open me-2"></i>Sair

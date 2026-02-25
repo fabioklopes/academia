@@ -1,5 +1,4 @@
 {% extends 'academia/base.html' %}
-
 {% block title %}Painel do Aluno - Academia de Jiu-Jitsu{% endblock %}
 
 {% block extra_css %}
@@ -7,11 +6,13 @@
     .dashboard-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         height: 100%;
+        background-color: #f8f8f8;
     }
 
     .dashboard-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        background-color: #fff;
     }
 </style>
 {% endblock %}
@@ -28,19 +29,19 @@
                 </div>
             {% endif %}
             <div>
-                <h4 class="mb-0">Olá, {{ user.first_name }}! <a href="{% url 'logout' %}" class="text-decoration-none">(sair)</a></h4>
+                <h1 class="mb-0">Olá, {{ user.first_name }}!</h1>
             </div>
         </div>
     </div>
 </div>
 
-<h2 class="mb-4">Painel do Aluno</h2>
+<h3 class="mb-4">Painel do Aluno</h3>
 
 <div class="row g-4">
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-calendar-check fs-1 text-primary mb-3"></i>
+                <i class="bi bi-calendar-check fs-1 text-success mb-3"></i>
                 <h5 class="card-title">Minhas Presenças</h5>
                 <p class="card-text">
                     {% if presencas_pendentes > 0 %}
@@ -57,7 +58,7 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-award fs-1 text-danger mb-3"></i>
+                <i class="bi bi-award fs-1 text-warning mb-3"></i>
                 <h5 class="card-title">Minhas Graduações</h5>
                 <p class="card-text">Histórico de faixas e graus</p>
                 <a href="{% url 'graduations_student' %}" class="btn btn-outline-primary">Ver Graduações</a>
@@ -68,7 +69,7 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-cart fs-1 text-success mb-3"></i>
+                <i class="bi bi-cart fs-1 text-danger mb-3"></i>
                 <h5 class="card-title">Meus Pedidos</h5>
                 <p class="card-text">Acompanhar pedidos</p>
                 <a href="{% url 'aluno_pedidos' %}" class="btn btn-outline-primary">Ver Pedidos</a>
@@ -79,7 +80,7 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-file-earmark-bar-graph fs-1 text-info mb-3"></i>
+                <i class="bi bi-file-earmark-bar-graph fs-1 text-primary mb-3"></i>
                 <h5 class="card-title">Relatórios</h5>
                 <p class="card-text">Meus relatórios</p>
                 <a href="{% url 'aluno_relatorios' %}" class="btn btn-outline-primary">Acessar</a>
@@ -88,6 +89,7 @@
     </div>
 </div>
 
+<!-- Bloco de Apresentação das Metas -->
 {% if meta_ativa %}
 <div class="row mt-4">
     <div class="col-12">
@@ -121,16 +123,18 @@
 </div>
 {% endif %}
 
+<!-- Bloco Aniversariantes -->
 <div class="row mt-4">
-    <div class="col-12 mb-3">
+    <div class="mb-3">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-cake fs-1 text-success me-2"></i>
-                    <h6 class="mb-0">Aniversariantes</h6>
+                    <h4 class="mb-0">
+                        Aniversariantes
+                    </h4>
                 </div>
                 <form method="get" class="mb-2">
-                    <label for="month" class="form-label">Selecione o mês:</label>
                     <select name="month" id="month" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
                         {% for month in months %}
                             <option value="{{ month.number }}" {% if selected_month == month.number %}selected{% endif %}>
@@ -151,12 +155,12 @@
                             {% for u in aniversariantes %}
                                 {% if u.id != 1 and u.id != 2 and u.id != 7 and u.id != 39 and u.id != 110 %}
                                 <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ u.id }}">
-                                    <td>{{ u.get_full_name }}</td>
+                                    <td>{{ u.get_full_name|title }}</td>
                                     <td>{{ u.birthday|date:"d/m" }}</td>
                                 </tr>
                                 {% endif %}
 
-                                <!-- Modal Detalhes do Aluno -->
+                                <!-- Detalhes do Aluno -->
                                 <div class="modal fade" id="alunoDetalheModal{{ u.id }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
