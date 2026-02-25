@@ -139,9 +139,8 @@
                     {% endif %}
                 </ul>
 
-                <!-- Lista da Direita (Notificações, Usuário) -->
+                <!-- Bloco das Notificações -->
                 <ul class="navbar-nav align-items-center">
-                    <!-- Notificações -->
                     {% if has_pending_tasks %}
                         <li class="nav-item me-3">
                             <a class="nav-link position-relative d-flex align-items-center" href="#"
@@ -160,16 +159,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
                            data-bs-toggle="dropdown" aria-expanded="false">
-                            {% if user.photo %}
-                                <img src="{{ user.photo.url }}" alt="Foto" class="rounded-circle me-2" width="32"
-                                     height="32" style="object-fit: cover;">
-                            {% else %}
-                                <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center"
-                                     style="width: 32px; height: 32px;">
-                                    <i class="bi bi-person text-white"></i>
-                                </div>
-                            {% endif %}
-                            <span>{{ user.first_name.upper }}</span>
+                            <i class="bi bi-person-circle me-2"></i> <span>{{ user.first_name.upper }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
@@ -185,89 +175,84 @@
                                             </div>
                                         {% endif %}
                                         <div>
+
+                                            <!-- Bloco de Apresentação -->
                                             <div class="fw-bold">{{ user.first_name }} {{ user.last_name }}</div>
                                             <small class="text-muted">{{ user.email }}</small>
-                                            {% with current_graduacao=user.get_current_graduation %}
-                                                {% if current_graduacao %}
-                                                    <div class="mt-2">
-                                                        {% if current_graduacao.degree > 0 %}
-                                                            <img src="/media/faixas/{{ current_graduacao.belt|lower }}_{{ current_graduacao.degree }}_DEGREES.png"
-                                                                 alt="{{ current_graduacao.get_belt_display }}"
-                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+
+
+                                            <!-- Bloco de Perfil -->
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <h6 class="dropdown-header">Seu Perfil:
+                                                    {% if user.group_role == "STD" %}
+                                                        Aluno
+                                                    {% elif user.group_role == "PRO" %}
+                                                        Professor
+                                                    {% else %}
+                                                        Administrador
+                                                    {% endif %}
+                                                </h6>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'perfil' %}">
+                                                    <i class="bi bi-person-circle me-2"></i> Ver o meu perfil
+                                                </a>
+                                            </li>
+
+
+                                            <!-- Bloco de Dependentes -->
+                                            {% if original_user_id or dependents_list %}
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><h6 class="dropdown-header">Gerenciar seus dependentes</h6></li>
+
+                                                {% if original_user_id %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'switch_account_back' %}">
+                                                            <i class="bi bi-arrow-left-circle me-2"></i>Voltar para
+                                                            minha conta
+                                                        </a>
+                                                    </li>
+                                                {% else %}
+                                                    {% for dependent in dependents_list %}
+                                                        {% if user.group_role == "STD" %}
+                                                            {% if dependent.status != 'PENDENTE' and dependent.status != 'INATIVO' %}
+                                                                <li>
+                                                                    <a class="dropdown-item"
+                                                                       href="{% url 'switch_account' dependent.id %}">
+                                                                        <i class="bi bi-person-check"></i> {{ dependent.get_full_name }}
+                                                                    </a>
+                                                                </li>
+                                                            {% endif %}
                                                         {% else %}
-                                                            <img src="/media/faixas/{{ current_graduacao.belt|lower }}.png"
-                                                                 alt="{{ current_graduacao.get_belt_display }}"
-                                                                 style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                   href="{% url 'switch_account' dependent.id %}">
+                                                                    <i class="bi bi-person-check"></i> {{ dependent.get_full_name }}
+                                                                </a>
+                                                            </li>
                                                         {% endif %}
-                                                    </div>
+                                                    {% endfor %}
                                                 {% endif %}
-                                            {% endwith %}
+                                            {% endif %}
+
+                                            <!-- Bloco de Saída -->
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                                    <i class="bi bi-door-open me-2"></i>Sair
+                                                </a>
+                                            </li>
                                         </div>
                                     </div>
                                 </div>
                             </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            {% if user.group_role == "STD" %}
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-star-fill"></i> Nível de Acesso:
-                                    Aluno</a></li>
-                            {% elif user.group_role == "PRO" %}
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-star-fill"></i> Nível de Acesso:
-                                    Professor</a></li>
-                            {% else %}
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-star-fill"></i> Nível de Acesso:
-                                    Administrador</a></li>
-                            {% endif %}
-
-                            <!-- Sistema de Troca de Contas -->
-                            {% if original_user_id or dependents_list %}
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li><h6 class="dropdown-header">Gerenciar Contas</h6></li>
-
-                                {% if original_user_id %}
-                                    {# Se a conta dependente estiver sendo usada, apresentar o link de voltar para minha conta #}
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'switch_account_back' %}">
-                                            <i class="bi bi-arrow-left-circle me-2"></i>Voltar para minha conta
-                                        </a>
-                                    </li>
-                                {% else %}
-                                    {# Se a conta principal estiver logada, exibir as contas dependentes #}
-                                    {% for dependent in dependents_list %}
-                                        {% if user.group_role == "STD" %}
-                                            {% if dependent.status != 'PENDENTE' and dependent.status != 'INATIVO' %}
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                       href="{% url 'switch_account' dependent.id %}">
-                                                        <i class="bi bi-person-check me-2"></i>{{ dependent.get_full_name }}
-                                                    </a>
-                                                </li>
-                                            {% endif %}
-                                        {% else %}
-                                            <li>
-                                                <a class="dropdown-item" href="{% url 'switch_account' dependent.id %}">
-                                                    <i class="bi bi-person-check me-2"></i>{{ dependent.get_full_name }}
-                                                </a>
-                                            </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endif %}
-                            {% endif %}
-
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="{% url 'perfil' %}"><i
-                                    class="bi bi-person-circle me-2"></i>Meu Perfil</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                                <i class="bi bi-box-arrow-right me-2"></i>Sair
-                            </a></li>
                         </ul>
                     </li>
                 </ul>
