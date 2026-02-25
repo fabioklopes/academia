@@ -135,6 +135,7 @@
                     </h4>
                 </div>
                 <form method="get" class="mb-2">
+                    <input type="hidden" name="page" value="1">
                     <select name="month" id="month" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
                         {% for month in months %}
                             <option value="{{ month.number }}" {% if selected_month == month.number %}selected{% endif %}>
@@ -143,7 +144,7 @@
                         {% endfor %}
                     </select>
                 </form>
-                <div style="max-height: 250px; overflow-y: auto;">
+                <div>
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
@@ -153,12 +154,10 @@
                         </thead>
                         <tbody>
                             {% for u in aniversariantes %}
-                                {% if u.id != 1 and u.id != 2 and u.id != 7 and u.id != 39 and u.id != 110 %}
                                 <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ u.id }}">
                                     <td>{{ u.get_full_name|title }}</td>
                                     <td>{{ u.birthday|date:"d/m" }}</td>
                                 </tr>
-                                {% endif %}
 
                                 <!-- Detalhes do Aluno -->
                                 <div class="modal fade" id="alunoDetalheModal{{ u.id }}" tabindex="-1" aria-hidden="true">
@@ -222,6 +221,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                {% if aniversariantes.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-3">
+                        {% include 'academia/partials/_pagination.html' with page_obj=aniversariantes %}
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

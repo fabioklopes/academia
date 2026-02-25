@@ -11,6 +11,20 @@
                 <a href="{% url 'aluno_marcar_presenca' %}" class="btn btn-outline-primary">Nova Solicitação</a>
             </div>
             <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <form method="get" class="d-flex align-items-center">
+                            <label for="items_per_page" class="me-2">Itens por página:</label>
+                            <select name="items_per_page" id="items_per_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                                <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10</option>
+                                <option value="20" {% if items_per_page == 20 %}selected{% endif %}>20</option>
+                                <option value="30" {% if items_per_page == 30 %}selected{% endif %}>30</option>
+                                <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50</option>
+                            </select>
+                        </form>
+                    </div>
+                </div>
+
                 {% if attendance_requests %}
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
@@ -68,6 +82,13 @@
                             </tbody>
                         </table>
                     </div>
+
+                    {% if attendance_requests.has_other_pages %}
+                        <div class="d-flex justify-content-center mt-3">
+                            {% include 'academia/partials/_pagination.html' with page_obj=attendance_requests %}
+                        </div>
+                    {% endif %}
+
                 {% else %}
                     <p class="text-muted">Nenhuma solicitação de presença encontrada.</p>
                 {% endif %}

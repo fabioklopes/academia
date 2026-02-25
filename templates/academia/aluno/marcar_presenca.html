@@ -17,7 +17,7 @@
                         <select name="turma_id" id="turma_id" class="form-select" required>
                             <option value="">Selecione a turma</option>
                             {% for turma_aluno in turmas_aluno %}
-                                <option value="{{ turma_aluno.turma.id }}">{{ turma_aluno.turma.nome }}</option>
+                                <option value="{{ turma_aluno.turma.id }}" {% if turmas_aluno|length == 1 %}selected{% endif %}>{{ turma_aluno.turma.nome }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -113,6 +113,17 @@
         /* justify-content: space-between; */
         /* align-items: center; */
     }
+
+    @media (max-width: 768px) {
+        .calendar-day {
+            padding: 5px;
+            min-height: 40px;
+        }
+        .calendar-header {
+            padding: 5px;
+            font-size: 0.9em;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -134,9 +145,11 @@ $(document).ready(function() {
     const attendanceData = {{ attendance_data_json|safe }}; // Data de presenças do Django
 
     const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
     function renderCalendar() {
+        const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
+        const dayNames = isSmallScreen ? ["D", "S", "T", "Q", "Q", "S", "S"] : ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
         const calendarEl = $('#calendar');
         calendarEl.empty();
         $('#currentMonthYear').text(`${monthNames[currentMonth]} ${currentYear}`);
@@ -163,56 +176,67 @@ $(document).ready(function() {
             const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
             
             let dayClass = 'calendar-day current-month';
-            let isDisabled = false;
             let iconHtml = '';
-            let isCancelled = false;
 
-            // Check for attendance data
-            if (attendanceData[dateString]) {
-                const dayAttendance = attendanceData[dateString];
+            const hasExistingRequests = attendanceData[dateString] && attendanceData[dateString].length > 0;
+            const isWithinNewRequestWindow = (date >= limitDate && date <= today); // Dates from limitDate to today
 
-                let iconsHtml = '<div class="status-icons" style="position: absolute; top: 5px; right: 5px; display: flex; gap: 2px;">';
+            let canSelectForNew = false;
+            let canViewHistory = false;
+            let isCompletelyDisabled = false;
 
-                dayAttendance.forEach(att => {
-                    let iconClass = '';
-                    if (att.status === 'REJ') {
-                        iconClass = 'bi-x-circle-fill text-danger';
-                    } else if (att.status === 'APR') {
-                        iconClass = 'bi-check-circle-fill text-success';
-                    } else if (att.status === 'PEN') {
-                        iconClass = 'bi-info-circle-fill text-warning';
-                    } else if (att.status === 'CAN') {
-                        // Cancelled status
-                        isCancelled = true;
-                    }
-
-                    if (iconClass) {
-                        if (att.class_type === 'As duas aulas') {
-                            iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
-                            iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
-                        } else {
-                            iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
-                        }
-                    }
-                });
-                iconsHtml += '</div>';
-
-                // Only show icons if there are any non-cancelled statuses or if we want to show cancelled history
-                // Currently, cancelled requests don't show icons, but allow re-selection
-                if (iconsHtml.includes('bi-')) {
-                    iconHtml = iconsHtml;
+            if (date > today) { // Future dates
+                isCompletelyDisabled = true;
+            } else if (date < limitDate) { // Dates older than 15 days ago
+                if (hasExistingRequests) {
+                    canViewHistory = true; // Can only view history
+                } else {
+                    isCompletelyDisabled = true; // Older than 15 days, no history, completely disabled
+                }
+            } else { // Dates within the 15-day window (limitDate <= date <= today)
+                if (hasExistingRequests) {
+                    canViewHistory = true; // Has existing requests, so view history
+                } else {
+                    canSelectForNew = true; // No existing requests, within window, can select for new
                 }
             }
 
-            // Disable future dates
-            if (date > today) {
+            if (isCompletelyDisabled) {
                 dayClass += ' disabled';
-                isDisabled = true;
             }
-            // Disable dates older than 15 days, UNLESS it was cancelled previously
-            else if (date < limitDate && !isCancelled) {
-                dayClass += ' disabled';
-                isDisabled = true;
+
+            // Icon generation (remains mostly the same, based on hasExistingRequests)
+            if (hasExistingRequests) {
+                if (isSmallScreen) {
+                    iconHtml = '<div class="status-icons" style="position: absolute; top: 5px; right: 5px;"><i class="bi bi-info-circle-fill text-primary" style="font-size: 0.8em;"></i></div>';
+                } else {
+                    let iconsHtml = '<div class="status-icons" style="position: absolute; top: 5px; right: 5px; display: flex; gap: 2px;">';
+                    attendanceData[dateString].forEach(att => {
+                        let iconClass = '';
+                        if (att.status === 'REJ') {
+                            iconClass = 'bi-x-circle-fill text-danger';
+                        } else if (att.status === 'APR') {
+                            iconClass = 'bi-check-circle-fill text-success';
+                        } else if (att.status === 'PEN') {
+                            iconClass = 'bi-info-circle-fill text-warning';
+                        } else if (att.status === 'CAN') {
+                            iconClass = 'bi-dash-circle-fill text-secondary'; // Show cancelled icon
+                        }
+
+                        if (iconClass) {
+                            if (att.class_type === 'As duas aulas') {
+                                iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
+                                iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
+                            } else {
+                                iconsHtml += `<i class="bi ${iconClass} status-icon-item" style="font-size: 0.8em;"></i>`;
+                            }
+                        }
+                    });
+                    iconsHtml += '</div>';
+                    if (iconsHtml.includes('bi-')) { // Ensure iconsHtml is not just the empty div
+                        iconHtml = iconsHtml;
+                    }
+                }
             }
 
             if (selectedDates.has(dateString)) {
@@ -222,19 +246,17 @@ $(document).ready(function() {
             const dayEl = $(`<div class="${dayClass}" data-date="${dateString}"><span class="day-number"></span>${iconHtml}</div>`);
             dayEl.find('.day-number').text(day);
 
-            if (!isDisabled) {
+            if (!isCompletelyDisabled) {
                 dayEl.on('click', function() {
-                    if ($(this).find('.status-icons').length > 0) {
-                        // If there's an icon (meaning active request), show details modal
+                    if (canViewHistory) {
                         showAttendanceDetails(dateString);
-                    } else {
-                        // Otherwise, select/deselect date for attendance request
+                    } else if (canSelectForNew) {
                         toggleDateSelection(dateString, dayEl);
                     }
                 });
             } else {
                 dayEl.css('cursor', 'not-allowed');
-                dayEl.attr('title', 'Data fora do período permitido (15 dias)');
+                dayEl.attr('title', 'Data indisponível');
             }
             calendarEl.append(dayEl);
         }
@@ -333,7 +355,10 @@ $(document).ready(function() {
                         } else if (detail.status === 'Rejeitado') {
                             statusClass = 'text-danger';
                             statusIcon = '<i class="bi bi-x-circle-fill"></i>';
-                        } else { // Pendente ou Cancelado
+                        } else if (detail.status === 'Cancelado') {
+                            statusClass = 'text-secondary';
+                            statusIcon = '<i class="bi bi-dash-circle-fill"></i>';
+                        } else { // Pendente
                             statusClass = 'text-warning';
                             statusIcon = '<i class="bi bi-info-circle-fill"></i>';
                         }
@@ -379,6 +404,11 @@ $(document).ready(function() {
             currentMonth = 0;
             currentYear++;
         }
+        renderCalendar();
+    });
+
+    // Resize handler
+    $(window).resize(function() {
         renderCalendar();
     });
 

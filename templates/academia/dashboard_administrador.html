@@ -199,7 +199,7 @@
                         {% endfor %}
                     </select>
                 </form>
-                <div style="max-height: 250px; overflow-y: auto;">
+                <div>
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
@@ -274,6 +274,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                {% if aniversariantes.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-3">
+                        {% include 'academia/partials/_pagination.html' with page_obj=aniversariantes %}
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

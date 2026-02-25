@@ -177,6 +177,7 @@
                     <h6 class="mb-0">Aniversariantes</h6>
                 </div>
                 <form method="get" class="mb-2">
+                    <input type="hidden" name="page" value="1">
                     <label for="month" class="form-label">Selecione o mês:</label>
                     <select name="month" id="month" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
                         {% for month in months %}
@@ -186,7 +187,7 @@
                         {% endfor %}
                     </select>
                 </form>
-                <div style="max-height: 250px; overflow-y: auto;">
+                <div>
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
@@ -263,6 +264,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                {% if aniversariantes.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-3">
+                        {% include 'academia/partials/_pagination.html' with page_obj=aniversariantes %}
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

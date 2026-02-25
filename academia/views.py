@@ -308,7 +308,22 @@ def dashboard(request):
     except (ValueError, TypeError):
         selected_month = today.month
 
-    aniversariantes = User.objects.filter(birthday__month=selected_month, status='ATIVO').order_by('birthday__day')
+    # Filter out specific IDs as requested in templates
+    excluded_ids = [1, 2, 7, 39, 110]
+    aniversariantes_list = User.objects.filter(
+        birthday__month=selected_month, 
+        status='ATIVO'
+    ).exclude(id__in=excluded_ids).order_by('birthday__day')
+    
+    paginator = Paginator(aniversariantes_list, 4)
+    page = request.GET.get('page')
+    
+    try:
+        aniversariantes = paginator.page(page)
+    except PageNotAnInteger:
+        aniversariantes = paginator.page(1)
+    except EmptyPage:
+        aniversariantes = paginator.page(paginator.num_pages)
     
     month_names = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     months = [{'number': i + 1, 'name': name} for i, name in enumerate(month_names)]
@@ -320,10 +335,12 @@ def dashboard(request):
     }
 
     if request.user.is_student():
+        turmas_aluno = TurmaAluno.objects.filter(aluno=request.user, status='APRO').select_related('turma')
         context = {
             'presencas_pendentes': AttendanceRequest.objects.filter(student=request.user, status='PEN').count(),
             'presencas_aprovadas': AttendanceRequest.objects.filter(student=request.user, status='APR').count(),
-            'turmas': TurmaAluno.objects.filter(aluno=request.user),
+            'turmas': turmas_aluno,
+            'turmas_count': turmas_aluno.count(),
         }
         
         meta_ativa = MetaModel.objects.filter(data_inicio__lte=today, data_fim__gte=today).first()
@@ -577,8 +594,10 @@ def aluno_marcar_presenca(request):
             'class_type': extract_class_type(req.reason),
         })
 
+    turmas_aluno = TurmaAluno.objects.filter(aluno=request.user, status='APRO').select_related('turma')
     context = {
-        'turmas_aluno': TurmaAluno.objects.filter(aluno=request.user, status='APRO').select_related('turma'),
+        'turmas_aluno': turmas_aluno,
+        'turmas_count': turmas_aluno.count(),
         'current_year': year,
         'current_month': month,
         'attendance_data_json': json.dumps(attendance_data),
@@ -648,8 +667,28 @@ def aluno_presencas(request):
     
     AttendanceRequest.objects.filter(student=request.user, status='APR', notified=False).update(notified=True)
     
-    attendance_requests = AttendanceRequest.objects.filter(student=request.user).exclude(status='CAN').select_related('turma').order_by('-attendance_date')
-    return render(request, 'academia/aluno/presencas.html', {'attendance_requests': attendance_requests})
+    attendance_requests_list = AttendanceRequest.objects.filter(student=request.user).exclude(status='CAN').select_related('turma').order_by('-attendance_date')
+
+    items_per_page = request.GET.get('items_per_page', 10)
+    try:
+        items_per_page = int(items_per_page)
+    except ValueError:
+        items_per_page = 10
+
+    paginator = Paginator(attendance_requests_list, items_per_page)
+    page = request.GET.get('page')
+    
+    try:
+        attendance_requests = paginator.page(page)
+    except PageNotAnInteger:
+        attendance_requests = paginator.page(1)
+    except EmptyPage:
+        attendance_requests = paginator.page(paginator.num_pages)
+
+    return render(request, 'academia/aluno/presencas.html', {
+        'attendance_requests': attendance_requests,
+        'items_per_page': items_per_page
+    })
 
 @login_required
 def aluno_pedidos(request):
@@ -900,9 +939,10 @@ def aluno_relatorio_presenca(request):
         for row_num, data in enumerate(report_data, 2):
             weekday = WEEKDAYS[data['data'].weekday()]
             worksheet.cell(row=row_num, column=1, value=f"{data['data'].strftime('%d/%m/%Y')} {weekday}")
-            worksheet.cell(row=row_num, column=2, value=data['status'])
-            worksheet.cell(row=row_num, column=3, value=data['motivo'])
-            worksheet.cell(row=row_num, column=4, value=data['qty'])
+            worksheet.cell(row=row_num, column=2, value=data['aluno'])
+            worksheet.cell(row=row_num, column=3, value=data['status'])
+            worksheet.cell(row=row_num, column=4, value=data['motivo'])
+            worksheet.cell(row=row_num, column=5, value=data['qty'])
 
         workbook.save(response)
         return response
