@@ -30,12 +30,12 @@
                                 {% if current_graduacao %}
                                     <div class="mt-2">
                                         {% if current_graduacao.degree > 0 %}
-                                            <img src="/media/faixas/{{ current_graduacao.belt }}_{{ current_graduacao.degree }}_DEGREES.png"
+                                            <img src="/media/faixas/{{ current_graduacao.belt|lower }}_{{ current_graduacao.degree }}_DEGREES.png"
                                                  alt="{{ current_graduacao.get_belt_display }} {{ current_graduacao.degree }}º grau"
                                                  class="img-fluid mt-2"
                                                  style="max-height: 20px; image-rendering: pixelated;">
                                         {% else %}
-                                            <img src="/media/faixas/{{ current_graduacao.belt }}.png"
+                                            <img src="/media/faixas/{{ current_graduacao.belt|lower }}.png"
                                                  alt="{{ current_graduacao.get_belt_display }}"
                                                  class="img-fluid mt-2"
                                                  style="max-height: 20px; image-rendering: pixelated;">

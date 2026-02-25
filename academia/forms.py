@@ -49,6 +49,21 @@ class SolicitacaoAcessoForm(forms.Form):
     photo = forms.ImageField(required=True)
     has_responsible = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     responsible_email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    
+    belt = forms.ChoiceField(
+        choices=Graduation.BELT_CHOICES,
+        required=False,
+        label="Faixa",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    degree = forms.IntegerField(
+        required=False,
+        label="Grau",
+        min_value=0,
+        max_value=6,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,6 +110,12 @@ class PerfilEditForm(forms.ModelForm):
         required=True,
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'})
     )
+
+    training_start_date = forms.DateField(
+        label="Início dos Treinos",
+        required=True,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'})
+    )
     
     belt = forms.ChoiceField(
         choices=Graduation.BELT_CHOICES,
@@ -113,7 +134,7 @@ class PerfilEditForm(forms.ModelForm):
     
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'whatsapp', 'birthday', 'photo']
+        fields = ['first_name', 'last_name', 'email', 'whatsapp', 'birthday', 'training_start_date', 'photo']
         widgets = {
             'photo': forms.FileInput(attrs={'class': 'form-control'}),
         }
@@ -126,11 +147,9 @@ class PerfilEditForm(forms.ModelForm):
                 self.fields['birthday'].required = False
                 self.fields['birthday'].help_text = "A data de nascimento não pode ser alterada após o preenchimento."
             
-            # Populate belt and degree from current graduation
-            current_grad = self.instance.get_current_graduation()
-            if current_grad:
-                self.fields['belt'].initial = current_grad.belt
-                self.fields['degree'].initial = current_grad.degree
+            # Populate belt and degree from user model
+            self.fields['belt'].initial = self.instance.actual_belt
+            self.fields['degree'].initial = self.instance.actual_degree
 
     def clean_whatsapp(self):
         whatsapp = self.cleaned_data.get('whatsapp')
@@ -145,41 +164,44 @@ class PerfilEditForm(forms.ModelForm):
         return whatsapp
     
     def clean(self):
-        cleaned_data = super().clean()
-        belt = cleaned_data.get('belt')
-        degree = cleaned_data.get('degree')
+        super().clean()
+        belt = self.cleaned_data.get('belt')
+        degree = self.cleaned_data.get('degree')
         
         if belt and degree is not None:
-            if belt != 'Black' and degree > 4:
+            if belt != 'BLACK' and degree > 4:
                 self.add_error('degree', "Para faixas coloridas, o grau máximo é 4.")
-            elif belt == 'Black' and degree > 6:
+            elif belt == 'BLACK' and degree > 6:
                 self.add_error('degree', "Para a faixa preta, o grau máximo é 6.")
         
-        return cleaned_data
+        return self.cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
         
+        belt = self.cleaned_data.get('belt')
+        degree = self.cleaned_data.get('degree')
+        
+        if belt and degree is not None:
+            # Check if graduation changed
+            if user.actual_belt != belt or user.actual_degree != degree:
+                user.actual_belt = belt
+                user.actual_degree = degree
+                
+                # Create history record
+                graduation_date = datetime.date.today()
+                if user.birthday and graduation_date < user.birthday:
+                    graduation_date = user.birthday
+                
+                Graduation.objects.create(
+                    student=user,
+                    belt=belt,
+                    degree=degree,
+                    date=graduation_date
+                )
+            
         if commit:
             user.save()
-            
-            # Handle graduation update/creation
-            belt = self.cleaned_data.get('belt')
-            degree = self.cleaned_data.get('degree')
-            
-            if belt and degree is not None:
-                current_grad = user.get_current_graduation()
-                
-                # Only create a new graduation if it's different from the current one
-                if not current_grad or current_grad.belt != belt or current_grad.degree != degree:
-                    # We create a new graduation record with today's date
-                    # This preserves history while updating the current status
-                    Graduation.objects.create(
-                        student=user,
-                        belt=belt,
-                        degree=degree,
-                        date=datetime.date.today()
-                    )
             
         return user
 

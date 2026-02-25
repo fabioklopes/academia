@@ -50,15 +50,22 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="birthday" class="form-label">Data de Nascimento</label>
                             {{ form.birthday }}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
+                            <label for="training_start_date" class="form-label">Início dos Treinos</label>
+                            {{ form.training_start_date }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
                             <label for="belt" class="form-label">Alterar Faixa</label>
                             {{ form.belt }}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="degree" class="form-label">Alterar Grau</label>
                             {{ form.degree }}
                             {% if form.degree.errors %}

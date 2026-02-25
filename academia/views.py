@@ -32,7 +32,7 @@ from django.urls import reverse_lazy
 
 # --- HELPERS ---
 
-WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sáb', 'Dom']
 
 def get_student_stats(student, start_date, end_date):
     presencas_qs = AttendanceRequest.objects.filter(
@@ -204,13 +204,26 @@ def solicitar_acesso(request):
                 first_name=data['first_name'], last_name=data['last_name'],
                 birthday=data['birthday'], whatsapp=whatsapp_number, status='PENDENTE',
                 responsible=responsible_user,
-                photo=data.get('photo')
+                photo=data.get('photo'),
+                actual_belt=data.get('belt'),
+                actual_degree=data.get('degree'),
+                training_start_date=datetime.date.today()
             )
             
             user.set_password(data['password'])
             
             try:
                 user.save()
+                
+                # Create initial graduation for history
+                if user.actual_belt and user.actual_degree is not None:
+                    Graduation.objects.create(
+                        student=user,
+                        belt=user.actual_belt,
+                        degree=user.actual_degree,
+                        date=user.training_start_date
+                    )
+
                 create_log(user, 'solicitou acesso ao sistema')
             except Exception as e:
                 create_log(None, f'erro ao solicitar acesso: {str(e)}', status='FALHA', email=email, first_name=data['first_name'])
@@ -2161,14 +2174,16 @@ def graduations_student(request):
     
     graduations = Graduation.objects.filter(student=request.user).order_by('-date')
     
-    current_graduation = graduations.first()
+    current_graduation = request.user.get_current_graduation()
     
-    belt_order = ['White', 'Grey', 'Yellow', 'Orange', 'Green', 'Blue', 'Purple', 'Brown', 'Black', 'Red']
-    belt_names = {
-        'White': 'Branca', 'Grey': 'Cinza', 'Yellow': 'Amarela', 'Orange': 'Laranja',
-        'Green': 'Verde', 'Blue': 'Azul', 'Purple': 'Roxa', 'Brown': 'Marrom',
-        'Black': 'Preta', 'Red': 'Vermelha'
-    }
+    belt_order = [
+        'WHITE', 'GRAY_WHITE', 'GRAY', 'GRAY_BLACK',
+        'YELLOW_WHITE', 'YELLOW', 'YELLOW_BLACK',
+        'ORANGE_WHITE', 'ORANGE', 'ORANGE_BLACK',
+        'GREEN_WHITE', 'GREEN', 'GREEN_BLACK',
+        'BLUE', 'PURPLE', 'BROWN', 'BLACK'
+    ]
+    belt_names = dict(Graduation.BELT_CHOICES)
     
     current_belt_index = -1
     if current_graduation:
@@ -2178,16 +2193,16 @@ def graduations_student(request):
             pass
             
     progress_data = []
-    for i, belt in enumerate(belt_order):
+    for i, belt_key in enumerate(belt_order):
         is_completed = i < current_belt_index
         is_current = i == current_belt_index
         
         progress_data.append({
-            'belt': belt,
-            'name': belt_names[belt],
+            'belt': belt_key,
+            'name': belt_names.get(belt_key, belt_key),
             'is_completed': is_completed,
             'is_current': is_current,
-            'icon': f'img/belts/{belt.lower()}.png' # Assuming icons exist or will be created
+            'icon': f'img/belts/{belt_key.lower()}.png' # Assuming icons exist or will be created
         })
 
     context = {
@@ -2232,6 +2247,14 @@ def graduation_add(request):
                 photo2=photo2,
                 photo3=photo3
             )
+            
+            # Update user fields if this is the latest graduation
+            latest_grad = request.user.graduations.order_by('-date', '-id').first()
+            if latest_grad:
+                 request.user.actual_belt = latest_grad.belt
+                 request.user.actual_degree = latest_grad.degree
+                 request.user.save()
+
             messages.success(request, 'Graduação adicionada com sucesso!')
             create_log(request.user, f'adicionou graduação: {belt} - {degree}º grau')
         except Exception as e:

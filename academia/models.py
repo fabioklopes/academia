@@ -28,7 +28,34 @@ class User(AbstractUser):
     STATUS_CHOICES = [('ATIVO', 'Ativo'), ('INATIVO', 'Inativo'), ('PENDENTE', 'Pendente')]
     GROUP_ROLE_CHOICES = [('STD', 'Aluno'), ('PRO', 'Professor'), ('ADM', 'Administrador')]
     KIMONO_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'), ('A5', 'A5'), ('A6', 'A6')]
-    BELT_SIZE_CHOICES = [('A0', 'A0'), ('A1', 'A1'), ('A2', 'A2'), ('A3', 'A3'), ('A4', 'A4'), ('A5', 'A5'), ('A6', 'A6')]
+    BELT_SIZE_CHOICES = [
+        ('A0', 'A0'),
+        ('A1', 'A1'),
+        ('A2', 'A2'),
+        ('A3', 'A3'),
+        ('A4', 'A4'),
+        ('A5', 'A5'),
+        ('A6', 'A6')
+    ]
+    BELT_CHOICES = [
+        ('WHITE', 'Branca'),
+        ('GRAY_WHITE', 'Cinza e Branca'),
+        ('GRAY', 'Cinza'),
+        ('GRAY_BLACK', 'Cinza e Preta'),
+        ('YELLOW_WHITE', 'Amarela e Branca'),
+        ('YELLOW', 'Amarela'),
+        ('YELLOW_BLACK', 'Amarela e Preta'),
+        ('ORANGE_WHITE', 'Laranja e Branca'),
+        ('ORANGE', 'Laranja'),
+        ('ORANGE_BLACK', 'Laranja e Preta'),
+        ('GREEN_WHITE', 'Verde e Branca'),
+        ('GREEN', 'Verde'),
+        ('GREEN_BLACK', 'Verde e Preta'),
+        ('BLUE', 'Azul'),
+        ('PURPLE', 'Roxa'),
+        ('BROWN', 'Marrom'),
+        ('BLACK', 'Preta'),
+    ]
 
     birthday = models.DateField('Data de Nascimento', null=True, blank=True)
     group_role = models.CharField('Perfil', max_length=3, choices=GROUP_ROLE_CHOICES, default='STD')
@@ -40,6 +67,11 @@ class User(AbstractUser):
     belt_size = models.CharField('Tamanho da Faixa', max_length=2, choices=BELT_SIZE_CHOICES, null=True, blank=True)
     whatsapp = models.CharField('WhatsApp', max_length=20, null=True, blank=True)
     responsible = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='dependents')
+    
+    # New fields for unified graduation
+    training_start_date = models.DateField('Data de Início no Treino', null=True, blank=True)
+    actual_belt = models.CharField('Faixa Atual', max_length=20, choices=BELT_CHOICES, null=True, blank=True, default='WHITE')
+    actual_degree = models.IntegerField('Grau Atual', default=0, validators=[MinValueValidator(0), MaxValueValidator(6)])
     
     class Meta:
         verbose_name, verbose_name_plural = 'Usuário', 'Usuários'
@@ -129,7 +161,15 @@ class User(AbstractUser):
     def is_professor_or_admin(self): return self.group_role in ['PRO', 'ADM']
     
     def get_current_graduation(self):
-        return self.graduations.order_by('-date', '-degree').first()
+        # Returns an object-like structure compatible with templates
+        class CurrentGraduation:
+            def __init__(self, belt, degree, belt_display):
+                self.belt = belt
+                self.degree = degree
+                self.get_belt_display = belt_display
+        
+        belt_display = dict(self.BELT_CHOICES).get(self.actual_belt, self.actual_belt)
+        return CurrentGraduation(self.actual_belt, self.actual_degree, belt_display)
 
 class Turma(models.Model):
     nome = models.CharField('Nome da Turma', max_length=100)
@@ -319,16 +359,23 @@ class Log(models.Model):
 
 class Graduation(models.Model):
     BELT_CHOICES = [
-        ('White', 'Branca'),
-        ('Grey', 'Cinza'),
-        ('Yellow', 'Amarela'),
-        ('Orange', 'Laranja'),
-        ('Green', 'Verde'),
-        ('Blue', 'Azul'),
-        ('Purple', 'Roxa'),
-        ('Brown', 'Marrom'),
-        ('Black', 'Preta'),
-        ('Red', 'Vermelha')
+        ('WHITE', 'Branca'),
+        ('GRAY_WHITE', 'Cinza e Branca'),
+        ('GRAY', 'Cinza'),
+        ('GRAY_BLACK', 'Cinza e Preta'),
+        ('YELLOW_WHITE', 'Amarela e Branca'),
+        ('YELLOW', 'Amarela'),
+        ('YELLOW_BLACK', 'Amarela e Preta'),
+        ('ORANGE_WHITE', 'Laranja e Branca'),
+        ('ORANGE', 'Laranja'),
+        ('ORANGE_BLACK', 'Laranja e Preta'),
+        ('GREEN_WHITE', 'Verde e Branca'),
+        ('GREEN', 'Verde'),
+        ('GREEN_BLACK', 'Verde e Preta'),
+        ('BLUE', 'Azul'),
+        ('PURPLE', 'Roxa'),
+        ('BROWN', 'Marrom'),
+        ('BLACK', 'Preta'),
     ]
 
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'group_role': 'STD'}, related_name='graduations')

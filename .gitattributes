@@ -1,5 +1,5 @@
 # Força arquivos de texto a usar LF no repositório
-* text=auto
+* text eol=lf
 *.py text eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf

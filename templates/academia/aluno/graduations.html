@@ -20,10 +20,23 @@
         border: 1px solid #ccc;
     }
     .belt-white { background-color: #f8f9fa; color: #333; border: 1px solid #ddd; }
-    .belt-grey { background-color: #858796; }
+
+    .belt-gray_white { background: linear-gradient(to right, #858796 50%, #f8f9fa 50%); }
+    .belt-gray { background-color: #858796; }
+    .belt-gray_black { background: linear-gradient(to right, #858796 50%, #000 50%); }
+
+    .belt-yellow_white { background: linear-gradient(to right, #f6c23e 50%, #f8f9fa 50%); }
     .belt-yellow { background-color: #f6c23e; }
+    .belt-yellow_black { background: linear-gradient(to right, #f6c23e 50%, #000 50%); }
+
+    .belt-orange_white { background: linear-gradient(to right, #fd7e14 50%, #f8f9fa 50%); }
     .belt-orange { background-color: #fd7e14; }
+    .belt-orange_black { background: linear-gradient(to right, #fd7e14 50%, #000 50%); }
+
+    .belt-green_white { background: linear-gradient(to right, #1cc88a 50%, #f8f9fa 50%); }
     .belt-green { background-color: #1cc88a; }
+    .belt-green_black { background: linear-gradient(to right, #1cc88a 50%, #000 50%); }
+
     .belt-blue { background-color: #4e73df; }
     .belt-purple { background-color: #6f42c1; }
     .belt-brown { background-color: #5a5c69; }
@@ -36,10 +49,23 @@
     }
     /* Added !important to override Bootstrap defaults */
     .belt-badge.belt-white { background-color: #fff !important; color: #333 !important; border: 1px solid #ccc !important; }
-    .belt-badge.belt-grey { background-color: #858796 !important; color: white !important; }
+
+    .belt-badge.belt-gray_white { background: linear-gradient(to right, #858796 50%, #f8f9fa 50%) !important; color: white !important; text-shadow: 1px 1px 1px #000; }
+    .belt-badge.belt-gray { background-color: #858796 !important; color: white !important; }
+    .belt-badge.belt-gray_black { background: linear-gradient(to right, #858796 50%, #000 50%) !important; color: white !important; }
+
+    .belt-badge.belt-yellow_white { background: linear-gradient(to right, #f6c23e 50%, #f8f9fa 50%) !important; color: white !important; text-shadow: 1px 1px 1px #000; }
     .belt-badge.belt-yellow { background-color: #f6c23e !important; color: white !important; }
+    .belt-badge.belt-yellow_black { background: linear-gradient(to right, #f6c23e 50%, #000 50%) !important; color: white !important; }
+
+    .belt-badge.belt-orange_white { background: linear-gradient(to right, #fd7e14 50%, #f8f9fa 50%) !important; color: white !important; text-shadow: 1px 1px 1px #000; }
     .belt-badge.belt-orange { background-color: #fd7e14 !important; color: white !important; }
+    .belt-badge.belt-orange_black { background: linear-gradient(to right, #fd7e14 50%, #000 50%) !important; color: white !important; }
+
+    .belt-badge.belt-green_white { background: linear-gradient(to right, #1cc88a 50%, #f8f9fa 50%) !important; color: white !important; text-shadow: 1px 1px 1px #000; }
     .belt-badge.belt-green { background-color: #1cc88a !important; color: white !important; }
+    .belt-badge.belt-green_black { background: linear-gradient(to right, #1cc88a 50%, #000 50%) !important; color: white !important; }
+
     .belt-badge.belt-blue { background-color: #4e73df !important; color: white !important; }
     .belt-badge.belt-purple { background-color: #6f42c1 !important; color: white !important; }
     .belt-badge.belt-brown { background-color: #5a5c69 !important; color: white !important; }
@@ -117,7 +143,7 @@
                         {% endif %}
 
                         <div class="belt-display belt-{{ item.belt|lower }} {% if not item.is_completed and not item.is_current %}grayscale{% endif %}">
-                            <span class="belt-name">{{ item.name }}</span>
+                            <span class="belt-name" style="font-size: 0.7rem;">{{ item.name }}</span>
                         </div>
 
                         {% if item.is_completed %}
@@ -137,16 +163,16 @@
                 <h4 class="small font-weight-bold">Progresso na Faixa Atual: {{ current_graduation.get_belt_display }} <span class="float-end">{{ current_graduation.degree }}º Grau</span></h4>
                 <div class="progress mb-4" style="height: 25px;">
                     {% with max_degree=4 %}
-                        {% if current_graduation.belt == 'Black' %}{% with max_degree=6 %}{% endwith %}{% endif %}
+                        {% if current_graduation.belt == 'BLACK' %}{% with max_degree=6 %}{% endwith %}{% endif %}
                         {% widthratio current_graduation.degree 4 100 as width_percent %}
-                        {% if current_graduation.belt == 'Black' %}
+                        {% if current_graduation.belt == 'BLACK' %}
                             {% widthratio current_graduation.degree 6 100 as width_percent %}
                         {% endif %}
-                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ width_percent }}%" aria-valuenow="{{ current_graduation.degree }}" aria-valuemin="0" aria-valuemax="{% if current_graduation.belt == 'Black' %}6{% else %}4{% endif %}"></div>
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ width_percent }}%" aria-valuenow="{{ current_graduation.degree }}" aria-valuemin="0" aria-valuemax="{% if current_graduation.belt == 'BLACK' %}6{% else %}4{% endif %}"></div>
                     {% endwith %}
                 </div>
                 <div class="text-center">
-                    {% if current_graduation.belt == 'Black' %}
+                    {% if current_graduation.belt == 'BLACK' %}
                         {% for i in "0123456"|make_list %}
                             <span class="badge rounded-pill belt-badge belt-{{ current_graduation.belt|lower }} {% if forloop.counter0 > current_graduation.degree %}degree-locked{% endif %} me-1" style="width: 30px; height: 30px; line-height: 20px; font-size: 14px;">{{ forloop.counter0 }}</span>
                         {% endfor %}
@@ -365,7 +391,7 @@
         degreeSelect.innerHTML = '';
 
         let maxDegree = 4;
-        if (belt === 'Black') {
+        if (belt === 'BLACK') {
             maxDegree = 6;
         }
 
