@@ -196,14 +196,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for u in aniversariantes %}
-                                <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ u.id }}">
-                                    <td>{{ u.get_full_name }}</td>
-                                    <td>{{ u.birthday|date:"d/m" }}</td>
+                            {% for niver in aniversariantes %}
+                                <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#alunoDetalheModal{{ niver.user.id }}">
+                                    <td>{{ niver.user.get_full_name|title }}</td>
+                                    <td>{{ niver.user.birthday|date:"d/m" }}</td>
                                 </tr>
 
-                                <!-- Modal Detalhes do Aluno -->
-                                <div class="modal fade" id="alunoDetalheModal{{ u.id }}" tabindex="-1" aria-hidden="true">
+                                <!-- Detalhes do Aluno -->
+                                <div class="modal fade" id="alunoDetalheModal{{ niver.user.id }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -213,28 +213,28 @@
                                             <div class="modal-body text-center">
                                                 <div class="card border-0">
                                                     <div class="card-body">
-                                                        {% if u.photo %}
-                                                            <img src="{{ u.photo.url }}" alt="Foto de {{ u.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
+                                                        {% if niver.user.photo %}
+                                                            <img src="{{ niver.user.photo.url }}" alt="Foto de {{ niver.user.first_name }}" class="rounded-circle mb-3" width="200" height="200" style="object-fit: cover;">
                                                         {% else %}
                                                             <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 200px; height: 200px;">
                                                                 <i class="bi bi-person text-white" style="font-size: 100px;"></i>
                                                             </div>
                                                         {% endif %}
 
-                                                        <h2 class="fw-bold mb-1">{{ u.first_name }}</h2>
-                                                        <h5 class="text-muted mb-4">{{ u.get_full_name }}</h5>
+                                                        <h2 class="fw-bold mb-1">{{ niver.user.first_name }}</h2>
+                                                        <h5 class="text-muted mb-4">{{ niver.user.get_full_name }}</h5>
 
                                                         <div class="mb-3">
-                                                            {% with current_graduacao=u.graduacoes.first %}
-                                                                {% if current_graduacao %}
+                                                            {% with current_graduacao=niver.user.get_current_graduation %}
+                                                                {% if current_graduacao and current_graduacao.belt %}
                                                                     <div class="mt-2">
-                                                                        {% if current_graduacao.grau > 0 %}
-                                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}_{{ current_graduacao.grau }}_DEGREES.png"
-                                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                        {% if current_graduacao.degree > 0 %}
+                                                                            <img src="/media/faixas/{{ current_graduacao.belt }}_{{ current_graduacao.degree }}_DEGREES.png"
+                                                                                 alt="{{ current_graduacao.get_belt_display }}"
                                                                                  style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
                                                                         {% else %}
-                                                                            <img src="/media/faixas/{{ current_graduacao.faixa }}.png"
-                                                                                 alt="{{ current_graduacao.get_faixa_display }}"
+                                                                            <img src="/media/faixas/{{ current_graduacao.belt }}.png"
+                                                                                 alt="{{ current_graduacao.get_belt_display }}"
                                                                                  style="height: 25px; image-rendering: pixelated; border: 1px solid #000;">
                                                                         {% endif %}
                                                                     </div>
@@ -246,8 +246,8 @@
 
                                                         <p class="card-text fs-5">
                                                             <i class="bi bi-cake2 me-2 text-primary"></i>
-                                                            {% if u.birthday %}
-                                                                {{ u.birthday|date:"d/m/Y" }}
+                                                            {% if niver.user.birthday %}
+                                                                {{ niver.user.birthday|date:"d/m/Y" }} ({{ niver.age }} anos)
                                                             {% else %}
                                                                 Não informado
                                                             {% endif %}

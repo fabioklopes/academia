@@ -315,7 +315,12 @@ def dashboard(request):
         status='ATIVO'
     ).exclude(id__in=excluded_ids).order_by('birthday__day')
     
-    paginator = Paginator(aniversariantes_list, 4)
+    aniversariantes_com_idade = []
+    for u in aniversariantes_list:
+        age = today.year - u.birthday.year - ((today.month, today.day) < (u.birthday.month, u.birthday.day))
+        aniversariantes_com_idade.append({'user': u, 'age': age})
+
+    paginator = Paginator(aniversariantes_com_idade, 4)
     page = request.GET.get('page')
     
     try:
@@ -332,6 +337,7 @@ def dashboard(request):
         'aniversariantes': aniversariantes,
         'selected_month': selected_month,
         'months': months,
+        'today': today,
     }
 
     if request.user.is_student():
