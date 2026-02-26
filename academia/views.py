@@ -113,8 +113,7 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 
 def index(request):
     if request.user.is_authenticated:
-        if request.user.is_student():
-            return redirect('dashboard')
+        return redirect('dashboard')
     
     context = {}
     if not request.user.is_authenticated:

@@ -101,34 +101,6 @@
     <div class="col-md-3">
         <div class="card h-100 dashboard-card">
             <div class="card-body text-center">
-                <i class="bi bi-award fs-1 text-danger mb-3"></i>
-                <h5 class="card-title">Graduações</h5>
-                <p class="card-text">
-                    {% if solicitacoes_graduacao_pendentes > 0 %}
-                        <span class="text-warning">{{ solicitacoes_graduacao_pendentes }} solicitação{% if solicitacoes_graduacao_pendentes > 1 %}ões{% endif %} pendente{% if solicitacoes_graduacao_pendentes > 1 %}s{% endif %}</span>
-                    {% else %}
-                        Gerenciar faixas e graus
-                    {% endif %}
-                </p>
-                <div class="d-flex justify-content-center gap-2">
-                    <a href="{% url 'professor_graduacoes' %}" class="btn btn-outline-primary">Gerenciar</a>
-                    <a href="{% url 'professor_solicitacoes_graduacao' %}" class="btn btn-outline-warning position-relative">
-                        Solicitações
-                        {% if solicitacoes_graduacao_pendentes > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            {{ solicitacoes_graduacao_pendentes }}
-                            <span class="visually-hidden">solicitações pendentes</span>
-                        </span>
-                        {% endif %}
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card h-100 dashboard-card">
-            <div class="card-body text-center">
                 <i class="bi bi-book fs-1 text-info mb-3"></i>
                 <h5 class="card-title">Planos de Aula</h5>
                 <p class="card-text">Criar e editar planos</p>
